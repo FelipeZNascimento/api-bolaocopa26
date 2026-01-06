@@ -1,0 +1,21 @@
+{
+  "extends": "@tsconfig/node22/tsconfig.json",
+  // "typeRoots": ["./src/shared", "./node_modules/@types"],
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "es2015",
+    "moduleResolution": "bundler",
+    "outDir": "./dist/",
+    "rootDir": "./src/",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "lib": ["es5", "es6", "dom", "dom.iterable"],
+    "paths": {
+      // Define path aliases
+      "#*": ["./src/*"]
+    }
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["dist"]
+}
