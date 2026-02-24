@@ -6,7 +6,7 @@ export interface IRankingLine {
   betsCount: number;
   matchesCount: number;
   score: IRankingScore;
-  user: Pick<IUser, "color" | "icon" | "id" | "isOnline" | "name" | "position">;
+  user: Pick<IUser, "id" | "isActive" | "name" | "nickname">;
 }
 
 export interface IRankingScore {

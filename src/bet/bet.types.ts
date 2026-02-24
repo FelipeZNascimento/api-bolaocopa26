@@ -1,21 +1,27 @@
 import type { IUser } from "#user/user.types.js";
-
 export interface IBet {
-  betValue: number;
   id: number;
   matchId: number;
-  user: Omit<IUser, "timestamp, fullname, seasonId, email">[];
-  userColor: string;
-  userIcon: string;
+  scoreAway: number;
+  scoreHome: number;
+  timestamp: number;
+  user: Pick<IUser, "id" | "nickname">;
+}
+export interface IBetRaw {
+  id: number;
+  matchId: number;
+  nickname: string;
+  scoreAway: number;
+  scoreHome: number;
+  timestamp: number;
   userId: number;
-  userName: string;
 }
 
 export interface IExtraBet {
   idSeason: number;
-  idUser: number;
   json: string;
   userColor: string;
   userIcon: string;
+  userId: number;
   userName: string;
 }

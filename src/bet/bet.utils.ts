@@ -1,5 +1,7 @@
 import type { ITeam } from "#team/team.types.js";
 
+import { IBet, IBetRaw } from "./bet.types";
+
 /* eslint-disable perfectionist/sort-objects */
 const SUPERBOWL_WINNER_POINTS = 100;
 const CONFERENCE_CHAMPION_POINTS = 50;
@@ -147,4 +149,22 @@ export const processExtraBets = (extraBetsJson: string, teams: ITeam[]) => {
 
     return { teams: teamsArray, type: parseInt(key) };
   });
+};
+
+export const parseBetQueryResponse = (rawBets: IBetRaw[]) => {
+  const bets: IBet[] = rawBets.map((rawBet) => {
+    return {
+      scoreAway: rawBet.scoreAway,
+      scoreHome: rawBet.scoreHome,
+      id: rawBet.id,
+      matchId: rawBet.matchId,
+      timestamp: rawBet.timestamp,
+      user: {
+        id: rawBet.userId,
+        nickname: rawBet.nickname,
+      },
+    };
+  });
+
+  return bets;
 };

@@ -10,17 +10,17 @@ const userController = new UserController(userService, mailerService);
 
 // Post routes
 router.post("/login", userController.login);
-router.post("/register", userController.register);
-router.post("/profile", userController.updateProfile);
-router.post("/preferences", userController.updatePreferences);
-router.post("/password", userController.updatePassword);
-router.post("/password-token", userController.updatePasswordFromToken);
-router.post("/forgot-password", userController.forgotPassword);
+// router.post("/register", userController.register);
+// router.post("/profile", userController.updateProfile);
+// router.post("/preferences", userController.updatePreferences);
+// router.post("/password", userController.updatePassword);
+// router.post("/password-token", userController.updatePasswordFromToken);
+// router.post("/forgot-password", userController.forgotPassword);
 
 // Get routes
 router.get("/logout", userController.logout);
 router.get("/activeProfile", userController.getActiveProfile);
-router.get("/:userId", userController.getById);
-router.get("/", userController.getAll);
+router.get("/all{/:edition}", userController.getAll);
+router.get("/:userId{/:edition}", userController.getById);
 
 export default router;
