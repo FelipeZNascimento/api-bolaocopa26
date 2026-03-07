@@ -6,10 +6,12 @@ import { UserService } from "#user/user.service.js";
 // import { checkExistingEntries, generateVerificationToken, validateEmail } from "#user/user.utils.js";
 // import { isRejected } from "#utils/apiResponse.js";
 import { AppError } from "#utils/appError.js";
-// import { cachedInfo } from "#utils/dataCache.js";
+import { cachedInfo } from "#utils/dataCache.js";
 import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { NextFunction, Request, Response } from "express";
+
+import { generateVerificationToken } from "./user.utils";
 
 // Extend express-session types to include 'user' property
 declare module "express-session" {
@@ -26,21 +28,21 @@ export class UserController extends BaseController {
     super();
   }
 
-  // forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  //   await this.handleRequest(req, res, next, async () => {
-  //     const reqBody = req.body as { email: string };
-  //     const { email } = reqBody;
+  forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    await this.handleRequest(req, res, next, async () => {
+      const reqBody = req.body as { email: string };
+      const { email } = reqBody;
 
-  //     if (!email) {
-  //       throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-  //     }
+      if (!email) {
+        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+      }
 
-  //     const resetToken = generateVerificationToken();
-  //     cachedInfo.set(`PASSWORD_RESET_${email}`, resetToken, 60 * 60); // 60 minutes expiration
+      const resetToken = generateVerificationToken();
+      cachedInfo.set(`PASSWORD_RESET_${email}`, resetToken, 60 * 60); // 60 minutes expiration
 
-  //     await this.mailerService.sendPasswordResetEmail(email, "", resetToken);
-  //   });
-  // };
+      await this.mailerService.sendPasswordResetEmail(email, "", resetToken);
+    });
+  };
 
   getActiveProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
@@ -235,7 +237,6 @@ export class UserController extends BaseController {
   //       throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
   //     }
 
-  //     // void this.userService.updateLastOnlineTime(user.id);
   //     const cachedToken = cachedInfo.get(`PASSWORD_RESET_${email}`);
   //     if (cachedToken !== token) {
   //       throw new AppError("Token inválido ou expirado", 409, ErrorCode.VALIDATION_ERROR);
@@ -244,6 +245,7 @@ export class UserController extends BaseController {
   //     const user = await this.userService.getByEmail(email);
 
   //     cachedInfo.del(`PASSWORD_RESET_${email}`);
+  //     void this.userService.updateLastOnlineTime(user.id);
   //     return await this.userService.updatePasswordFromToken(newPassword, user.id);
   //   });
   // };

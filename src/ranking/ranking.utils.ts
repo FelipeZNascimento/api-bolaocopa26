@@ -1,322 +1,370 @@
-// import type { IBet, IExtraBet } from "#bet/bet.types.js";
-// import type { IMatch } from "#match/match.types.js";
-// import type { IRankingLine, IRawExtras } from "#ranking/ranking.types.js";
-// import type { IUser } from "#user/user.types.js";
+import { IBet, IExtraBet, IExtraBetResult } from "#bet/bet.types.js";
+import { FOOTBALL_MATCH_STATUS, MATCH_STATUS } from "#match/match.constants.js";
+import { IMatch } from "#match/match.types.js";
+import { IUser } from "#user/user.types.js";
+import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
 
-// import { BET_VALUES, BetsValues, EXTRA_BETS_MAPPING, maxPointsPerBet } from "#bet/bet.utils.js";
-// import { isMatchEnded } from "#match/match.utils.js";
-// /**
-//  * sortRankingLine - Sorts ranking by points, bullseye and name and returns it
-//  *
-//  * @users: All users to include in the ranking.
-//  *
-//  * @return: The sorted ranking.
-//  */
-// export const sortRankingLine = (rankingLine: IRankingLine[]) => {
-//   return rankingLine.sort(
-//     (a, b) =>
-//       b.score.total - a.score.total || b.score.bullseye - a.score.bullseye || a.user.name.localeCompare(b.user.name),
-//   );
-// };
+import { AWARD_POINTS, DEFAULT_ROUND_MULTIPLIER, ROUND_MULTIPLIERS } from "./ranking.constants";
+import {
+  ICalculatedRankingLine,
+  IRankingScore,
+  IRankingScoreExtras,
+  IRoundRanking,
+  TRankingWinner,
+} from "./ranking.types";
 
-// /**
-//  * buildWeeklyUserRanking - Builds the weekly ranking.
-//  *
-//  * @users: All users to include in the ranking.
-//  * @matches: The set of matches to calculate the points from.
-//  * @bets: The bets placed by the users.
-//  * @totalPossiblePoints: The total possible points a user could have achieved in that set of matches.
-//  *
-//  * @return: The ranking line for all users.
-//  */
-// export const buildWeeklyUserRanking = (
-//   users: IUser[],
-//   matches: IMatch[],
-//   bets: IBet[],
-//   totalPossiblePoints: number,
-// ) => {
-//   const ranking = users.map((user) => calculateUserPoints(user, matches, bets, totalPossiblePoints));
-//   const sortedRanking = sortRankingLine(ranking);
-//   let position = 1;
+const FINAL_ROUND_STATUSES = new Set<number>([FOOTBALL_MATCH_STATUS.FINAL, FOOTBALL_MATCH_STATUS.FINAL_PENALTIES]);
+export const getSeasonRanking = (
+  roundsRanking: IRoundRanking[],
+  baseComparisonRoundNumber: number,
+  extraBets: {
+    champion: IExtraBet[];
+    defense: IExtraBet[];
+    offense: IExtraBet[];
+    striker: IExtraBet[];
+  },
+  extraBetsResults: {
+    champion: IExtraBetResult[];
+    defense: IExtraBetResult[];
+    offense: IExtraBetResult[];
+    striker: IExtraBetResult[];
+  },
+) => {
+  const lastRound = Math.max(...roundsRanking.map((r) => r.round));
+  const lastRoundRanking = roundsRanking.find((r) => r.round === lastRound)?.ranking;
+  const isSeasonFinished =
+    baseComparisonRoundNumber === lastRound && (lastRoundRanking?.every((line) => line.isFinished) ?? false);
 
-//   sortedRanking.forEach((rankingLine, index) => {
-//     if (index === 0) {
-//       rankingLine.user.position = position;
-//     } else {
-//       if (
-//         rankingLine.score.total === sortedRanking[index - 1].score.total &&
-//         rankingLine.score.bullseye === sortedRanking[index - 1].score.bullseye
-//       ) {
-//         rankingLine.user.position = sortedRanking[index - 1].user.position;
-//       } else {
-//         rankingLine.user.position = position;
-//       }
-//     }
-//     position++;
-//   });
+  let seasonRanking: ICalculatedRankingLine[] =
+    lastRoundRanking?.map((line) => {
+      const calculatedExtraBets = calculateExtraBets(line.user.id, extraBets, extraBetsResults);
+      const extrasTotal =
+        calculatedExtraBets.champion +
+        calculatedExtraBets.defense +
+        calculatedExtraBets.offense +
+        calculatedExtraBets.striker;
+      calculatedExtraBets.points = extrasTotal;
 
-//   return sortedRanking;
-// };
+      return {
+        accumulatedScore: {
+          ...line.accumulatedScore,
+          extras: calculatedExtraBets,
+          points: line.accumulatedScore.points + extrasTotal,
+        },
+        isFinished: isSeasonFinished,
+        score: {
+          ...line.accumulatedScore,
+          extras: calculatedExtraBets,
+          points: line.accumulatedScore.points + extrasTotal,
+        },
+        user: line.user,
+      };
+    }) ?? [];
 
-// /**
-//  * buildSeasonUserRanking - Builds the seasonal ranking.
-//  *
-//  * @users: All users to include in the ranking.
-//  * @matches: The set of matches to calculate the points from.
-//  * @bets: The bets placed by the users.
-//  * @extras: The extra bets placed by the users.
-//  * @extrasResults: The correct extra bets results.
-//  * @totalPossiblePoints: The total possible points a user could have achieved in that set of matches.
-//  *
-//  * @return: The ranking line for all users.
-//  */
-// export const buildSeasonUserRanking = (
-//   users: IUser[],
-//   matches: IMatch[],
-//   bets: IBet[],
-//   extras: IExtraBet[],
-//   extrasResults: IExtraBet | null | undefined,
-//   totalPossiblePoints: number,
-// ) => {
-//   const ranking = users
-//     .map((user) => {
-//       const extrasReward = calculateExtrasReward(user, extras, extrasResults);
-//       const rankingLine = calculateUserPoints(user, matches, bets, totalPossiblePoints);
+  seasonRanking = sortRanking(seasonRanking);
+  seasonRanking = addPositioning(seasonRanking);
+  return seasonRanking;
+};
 
-//       rankingLine.score.total += extrasReward;
-//       rankingLine.score.extras = extrasReward;
+export const calculateExtraBets = (
+  userId: number,
+  extraBets: {
+    champion: IExtraBet[];
+    defense: IExtraBet[];
+    offense: IExtraBet[];
+    striker: IExtraBet[];
+  },
+  extraBetsResults: {
+    champion: IExtraBetResult[];
+    defense: IExtraBetResult[];
+    offense: IExtraBetResult[];
+    striker: IExtraBetResult[];
+  },
+): IRankingScoreExtras => {
+  const championBet = extraBets.champion.find((bet) => bet.user.id === userId);
+  const defenseBet = extraBets.defense.find((bet) => bet.user.id === userId);
+  const offenseBet = extraBets.offense.find((bet) => bet.user.id === userId);
+  const strikerBet = extraBets.striker.find((bet) => bet.user.id === userId);
 
-//       return rankingLine;
-//     })
-//     .sort(
-//       (a, b) =>
-//         b.score.total - a.score.total || b.score.bullseye - a.score.bullseye || a.user.name.localeCompare(b.user.name),
-//     );
+  const hasChampionMatch =
+    championBet && extraBetsResults.champion.some((result) => result.team.id === championBet.team.id);
+  const hasDefenseMatch =
+    defenseBet && extraBetsResults.defense.some((result) => result.team.id === defenseBet.team.id);
+  const hasOffenseMatch =
+    offenseBet && extraBetsResults.offense.some((result) => result.team.id === offenseBet.team.id);
+  const hasStrikerMatch =
+    strikerBet && extraBetsResults.striker.some((result) => result.player.id === strikerBet.player.id);
 
-//   let position = 1;
-//   ranking.forEach((rankingLine, index) => {
-//     if (index === 0) {
-//       rankingLine.user.position = position;
-//     } else {
-//       if (
-//         rankingLine.score.total === ranking[index - 1].score.total &&
-//         rankingLine.score.bullseye === ranking[index - 1].score.bullseye
-//       ) {
-//         rankingLine.user.position = ranking[index - 1].user.position;
-//       } else {
-//         rankingLine.user.position = position;
-//       }
-//     }
-//     position++;
-//   });
+  return {
+    champion: hasChampionMatch ? AWARD_POINTS.extraChampion : 0,
+    defense: hasDefenseMatch ? AWARD_POINTS.extraDefense : 0,
+    offense: hasOffenseMatch ? AWARD_POINTS.extraOffense : 0,
+    points: 0,
+    striker: hasStrikerMatch ? AWARD_POINTS.extraStriker : 0,
+  };
+};
 
-//   return ranking;
-// };
+export const getRoundsRanking = (
+  season: number,
+  users: IUser[],
+  matches: IMatch[],
+  startedMatches: IMatch[],
+  bets: IBet[],
+): IRoundRanking[] => {
+  const roundsRanking: IRoundRanking[] = [];
+  const rounds = [...new Set(matches.map((match) => match.round))];
 
-// /**
-//  * calculateUserPoints - For a specific user and for a set of matches, calculates how many points they will be rewarded from their bets.
-//  *
-//  * @user: The user to calculate the points for.
-//  * @matches: The set of matches to calculate the points from.
-//  * @bets: The bets placed by the user.
-//  * @totalPossiblePoints: The total possible points the user could have achieved in that set of matches.
-//  *
-//  * @return: The ranking line for that user in that set of matches.
-//  */
-// const calculateUserPoints = (user: IUser, matches: IMatch[], bets: IBet[], totalPossiblePoints: number) => {
-//   let points = 0;
-//   let bullseyeCount = 0;
-//   let winnersCount = 0;
-//   let betsCount = 0;
+  rounds.forEach((round) => {
+    const roundCacheKey = getRoundCacheKey(season, round);
+    const cachedRanking = cachedInfo.get<ICalculatedRankingLine[]>(roundCacheKey);
+    // If a cached ranking for the finished round exists, use it.
+    if (cachedRanking) {
+      roundsRanking.push({ ranking: cachedRanking, round });
+      return;
+    }
 
-//   matches.forEach((match) => {
-//     // Returns the bullseye value for this bet depending on season and week
-//     const maxPoints = maxPointsPerBet.season(match.season, match.week);
+    const previousRound = round - 1;
+    const previousRoundRanking =
+      previousRound > 0 ? roundsRanking.find((r) => r.round === previousRound)?.ranking : undefined;
 
-//     // From all bets, filter the ones related to current user and match
-//     const matchBets = bets.filter((bet) => bet.matchId === match.id && bet.userId === user.id);
+    // If not, calculate the ranking for the finished round and cache it.
+    const roundRanking = calculateRound(users, startedMatches, bets, round, previousRoundRanking);
+    roundsRanking.push({ ranking: roundRanking, round });
 
-//     // If there are no bets for this match, stop calculating
-//     if (matchBets.length === 0) {
-//       return;
-//     }
+    if (isRoundFinished(matches, round)) {
+      cachedInfo.set(roundCacheKey, roundRanking);
+    }
+  });
 
-//     betsCount++;
-//     const userBet: BetsValues = matchBets[0].betValue; // 0, 1, 2, 3 (away hard, away easy, home easy, home hard)
-//     const betPoints = calculateBetReward(match, userBet, maxPoints); // Calculate how many points the user will be rewarded considering bet and maxPoints
-//     points += betPoints;
+  return roundsRanking;
+};
 
-//     if (betPoints > 0) {
-//       winnersCount++;
-//     }
+const isRoundFinished = (matches: IMatch[], round: number): boolean => {
+  const roundMatches = matches.filter((match) => match.round === round);
+  return roundMatches.length > 0 && roundMatches.every((match) => FINAL_ROUND_STATUSES.has(match.status));
+};
 
-//     if (betPoints === maxPoints) {
-//       bullseyeCount++;
-//     }
-//   });
+const getRoundCacheKey = (season: number, round: number): string => {
+  return String(CACHE_KEYS.WEEKLY_RANKING) + "_" + String(season) + "_" + String(round);
+};
 
-//   const totalPercentage = totalPossiblePoints > 0 ? (points / totalPossiblePoints) * 100 : 0;
+const calculateRound = (
+  users: IUser[],
+  matches: IMatch[],
+  bets: IBet[],
+  round: number,
+  previousRoundRanking?: ICalculatedRankingLine[],
+): ICalculatedRankingLine[] => {
+  const filteredMatches = matches.filter((match) => match.status !== MATCH_STATUS.NOT_STARTED && match.round === round);
 
-//   const fiveMinAgo = Math.floor(Date.now() / 1000) - 60 * 5;
-//   let isOnline = false;
-//   if (user.timestamp >= fiveMinAgo) {
-//     isOnline = true;
-//   }
+  const gameCount = filteredMatches.length;
+  const matchById = new Map(filteredMatches.map((match) => [match.id, match]));
+  const maxPoints = AWARD_POINTS.exactScore * getRoundMultiplier(round);
 
-//   const rankingLine: IRankingLine = {
-//     betsCount,
-//     matchesCount: matches.length,
-//     score: {
-//       accumulatedBullseye: 0,
-//       accumulatedPoints: 0,
-//       accumulatedPosition: 1,
-//       bullseye: bullseyeCount,
-//       extras: 0,
-//       percentage: totalPercentage.toFixed(1),
-//       total: points,
-//       winner: winnersCount,
-//     },
-//     user: {
-//       color: user.color,
-//       icon: user.icon,
-//       id: user.id,
-//       isOnline: isOnline,
-//       name: user.name,
-//     },
-//   };
+  const ranking: ICalculatedRankingLine[] = users.map((user) => {
+    const previousUserLine = previousRoundRanking?.find((line) => line.user.id === user.id);
+    const accumulatedScore: IRankingScore = previousUserLine?.accumulatedScore ?? {
+      betCount: 0,
+      exacts: 0,
+      gameCount: 0,
+      misses: 0,
+      oneScores: 0,
+      percentage: 0,
+      points: 0,
+      position: 0,
+      positionVariation: 0,
+      winnersOnly: 0,
+    };
 
-//   return rankingLine;
-// };
+    const score: IRankingScore = {
+      betCount: 0,
+      exacts: 0,
+      gameCount: gameCount,
+      misses: 0,
+      oneScores: 0,
+      percentage: 0,
+      points: 0,
+      position: 0,
+      positionVariation: 0,
+      winnersOnly: 0,
+    };
 
-// /**
-//  * calculateBetReward - For a specific match, calculates the points a user will be rewarded from their bet.
-//  *
-//  * @match: The match where the bet was placed.
-//  * @betValue: The bet placed by the user, in BetsValues.
-//  * @maxPoints: Maximum points that match can award.
-//  *
-//  * @return: The maximum points for the user in that set of matches, in that season.
-//  */
-// const calculateBetReward = (match: IMatch, betValue: BetsValues, maxPoints: number) => {
-//   if (match.awayScore - match.homeScore > 0) {
-//     // away team won
-//     if (match.awayScore - match.homeScore > 7) {
-//       // away team won by more than 7 points (easy win)
-//       if (betValue === BET_VALUES.AWAY_EASY) {
-//         return maxPoints;
-//       } else if (betValue === 1) {
-//         return maxPoints / 2;
-//       } else {
-//         return 0;
-//       }
-//     } else {
-//       // hard win
-//       if (betValue === BET_VALUES.AWAY_EASY) {
-//         return maxPoints / 2;
-//       } else if (betValue === 1) {
-//         return maxPoints;
-//       } else {
-//         return 0;
-//       }
-//     }
-//   } else if (match.homeScore - match.awayScore > 0) {
-//     // home team won
-//     if (match.homeScore - match.awayScore > 7) {
-//       // home team won by more than 7 points (easy win)
-//       if (betValue === BET_VALUES.HOME_EASY) {
-//         return maxPoints;
-//       } else if (betValue === 2) {
-//         return maxPoints / 2;
-//       } else {
-//         return 0;
-//       }
-//     } else {
-//       if (betValue === BET_VALUES.HOME_EASY) {
-//         return maxPoints / 2;
-//       } else if (betValue === 2) {
-//         return maxPoints;
-//       } else {
-//         return 0;
-//       }
-//     }
-//   } else {
-//     if (betValue === BET_VALUES.AWAY_HARD || betValue === BET_VALUES.HOME_HARD) {
-//       return maxPoints / 2;
-//     }
-//   }
+    const userBets = bets.filter((bet) => bet.user.id === user.id);
+    userBets.forEach((bet) => {
+      const match = matchById.get(bet.matchId);
+      if (!match) {
+        return;
+      }
 
-//   return 0;
-// };
+      score.betCount += 1;
 
-// /**
-//  * calculateExtrasReward - Calculates how many points a user will be rewarded from Extra Bets.
-//  *
-//  * @user: The user to calculate the points for.
-//  * @extras: The extra bets that user made.
-//  * @extrasResults: The correct results of the extra bets.
-//  *
-//  * @return: The maximum points for the user in that set of matches, in that season.
-//  */
-// const calculateExtrasReward = (user: IUser, extras: IExtraBet[], extrasResults: IExtraBet | null | undefined) => {
-//   // return 0;
+      const actualWinner = getWinner(match.score.home, match.score.away);
+      const predictedWinner = getWinner(bet.scoreHome, bet.scoreAway);
+      const isWinnerCorrect = actualWinner === predictedWinner;
 
-//   if (extras.length === 0 || !extrasResults) {
-//     return 0;
-//   }
+      if (!isWinnerCorrect) {
+        score.misses += 1;
+        return;
+      }
 
-//   const userExtras = extras.find((extraBet) => extraBet.userId === user.id);
-//   if (userExtras === undefined) {
-//     return 0;
-//   }
+      const isHomeScoreCorrect = match.score.home === bet.scoreHome;
+      const isAwayScoreCorrect = match.score.away === bet.scoreAway;
+      const roundMultiplier = getRoundMultiplier(match.round);
 
-//   let extraBetsPoints = 0;
-//   const userExtrasParsed = JSON.parse(userExtras.json) as IRawExtras;
-//   const extrasResultsParsed = JSON.parse(extrasResults.json) as IRawExtras;
+      if (isHomeScoreCorrect && isAwayScoreCorrect) {
+        score.points += AWARD_POINTS.exactScore * roundMultiplier;
+        score.exacts += 1;
+      } else if (isHomeScoreCorrect || isAwayScoreCorrect) {
+        score.points += AWARD_POINTS.oneScore * roundMultiplier;
+        score.oneScores += 1;
+      } else {
+        score.points += AWARD_POINTS.winnerOnly * roundMultiplier;
+        score.winnersOnly += 1;
+      }
+    });
 
-//   const keys = Object.keys(userExtrasParsed) as (keyof typeof userExtrasParsed)[];
+    score.percentage = gameCount > 0 ? Number(((score.points / (gameCount * maxPoints)) * 100).toFixed(1)) : 0;
+    const totalGameCount = accumulatedScore.gameCount + score.gameCount;
+    const accumulatedPercentage =
+      totalGameCount > 0
+        ? Number(
+            (
+              (accumulatedScore.percentage * accumulatedScore.gameCount + score.percentage * score.gameCount) /
+              totalGameCount
+            ).toFixed(1),
+          )
+        : 0;
 
-//   keys.forEach((key) => {
-//     if (
-//       parseInt(key) === EXTRA_BETS_MAPPING.AFC_WILDCARD.TYPE ||
-//       parseInt(key) === EXTRA_BETS_MAPPING.NFC_WILDCARD.TYPE
-//     ) {
-//       const keyValue = userExtrasParsed[key] as number[];
-//       keyValue.forEach((wildCardBet) => {
-//         const resultsKeyValue = extrasResultsParsed[key] as number[];
-//         if (resultsKeyValue.find((wildCardBetResult) => wildCardBetResult === wildCardBet) !== undefined) {
-//           extraBetsPoints += maxPointsPerBet.extra(parseInt(key));
-//         }
-//       });
-//     } else if (userExtrasParsed[key] === extrasResultsParsed[key]) {
-//       extraBetsPoints += maxPointsPerBet.extra(parseInt(key));
-//     }
-//   });
+    return {
+      accumulatedScore: {
+        betCount: accumulatedScore.betCount + score.betCount,
+        exacts: accumulatedScore.exacts + score.exacts,
+        gameCount: accumulatedScore.gameCount + score.gameCount,
+        misses: accumulatedScore.misses + score.misses,
+        oneScores: accumulatedScore.oneScores + score.oneScores,
+        percentage: accumulatedPercentage,
+        points: accumulatedScore.points + score.points,
+        position: 0,
+        positionVariation: 0,
+        winnersOnly: accumulatedScore.winnersOnly + score.winnersOnly,
+      },
+      isFinished: isRoundFinished(matches, round),
+      round: round,
+      score: score,
+      user: user,
+    };
+  });
 
-//   return extraBetsPoints;
-// };
+  // Sort by accumulated score first to ensure the correct position variation calculation, then by score for the final ranking.
+  let rankingByAccumulated = sortRanking(ranking, true);
+  rankingByAccumulated = addPositioning(rankingByAccumulated, true);
 
-// /**
-//  * calculateMaxPoints - Calculates the maximum points for a set of matches in a season.
-//  *
-//  * @season: The season to calculate the points for.
-//  * @matches: The matches to calculate the points from.
-//  *
-//  * @return: The maximum points for the user in that set of matches, in that season.
-//  */
-// export const calculateMaxPoints = (season: number, matches: IMatch[]): number => {
-//   return matches.reduce(
-//     (acumulator: number, match: IMatch) => acumulator + maxPointsPerBet.season(season, match.week),
-//     0,
-//   );
-// };
+  let rankingByScore = sortRanking(rankingByAccumulated);
+  rankingByScore = addPositioning(rankingByScore);
 
-// /**
-//  * isWeekLocked - Calculates whether a week is locked based on the matches statuses.
-//  *
-//  * @matches: The matches to be checked.
-//  *
-//  * @return: Whether the week is locked.
-//  */
-// export const isWeekLocked = (matches: IMatch[]): boolean => {
-//   return matches.every((match: IMatch) => isMatchEnded(match.status));
-// };
+  rankingByScore.forEach((line) => {
+    const previousRoundLine = previousRoundRanking?.find((l) => l.user.id === line.user.id);
+    if (previousRoundLine) {
+      line.accumulatedScore.positionVariation =
+        previousRoundLine.accumulatedScore.position - line.accumulatedScore.position;
+    }
+  });
+
+  return rankingByScore;
+};
+
+const getRoundMultiplier = (round: number): number => {
+  return ROUND_MULTIPLIERS[round] ?? DEFAULT_ROUND_MULTIPLIER;
+};
+
+const getWinner = (scoreHome: number, scoreAway: number): TRankingWinner => {
+  if (scoreHome > scoreAway) {
+    return "home";
+  }
+
+  if (scoreAway > scoreHome) {
+    return "away";
+  }
+
+  return "draw";
+};
+
+const sortRanking = (ranking: ICalculatedRankingLine[], isAccumulated = false): ICalculatedRankingLine[] => {
+  // Sort by points, then by exacts, then by one scores and finally by name.
+  // Returns a new array to avoid mutating the original one.
+
+  if (isAccumulated) {
+    return [...ranking].sort((a, b) => {
+      if (b.accumulatedScore.points !== a.accumulatedScore.points) {
+        return b.accumulatedScore.points - a.accumulatedScore.points;
+      }
+
+      if (b.accumulatedScore.exacts !== a.accumulatedScore.exacts) {
+        return b.accumulatedScore.exacts - a.accumulatedScore.exacts;
+      }
+
+      if (b.accumulatedScore.oneScores !== a.accumulatedScore.oneScores) {
+        return b.accumulatedScore.oneScores - a.accumulatedScore.oneScores;
+      }
+
+      return a.user.name.localeCompare(b.user.name);
+    });
+  } else {
+    return [...ranking].sort((a, b) => {
+      if (b.score.points !== a.score.points) {
+        return b.score.points - a.score.points;
+      }
+
+      if (b.score.exacts !== a.score.exacts) {
+        return b.score.exacts - a.score.exacts;
+      }
+
+      if (b.score.oneScores !== a.score.oneScores) {
+        return b.score.oneScores - a.score.oneScores;
+      }
+
+      return a.user.name.localeCompare(b.user.name);
+    });
+  }
+};
+
+const addPositioning = (ranking: ICalculatedRankingLine[], isAccumulated = false): ICalculatedRankingLine[] => {
+  // Adds position to each ranking line.
+  // If drawn with the previous line, it will have the same position as the previous one - then skip one.
+  // Returns a new array to avoid mutating the original one.
+  const rankingWithPosition = [...ranking];
+
+  if (isAccumulated) {
+    rankingWithPosition.forEach((rankingLine, index) => {
+      if (index === 0) {
+        rankingLine.accumulatedScore.position = 1;
+        return;
+      }
+
+      const previous = rankingWithPosition[index - 1];
+      const isDraw =
+        rankingLine.accumulatedScore.points === previous.accumulatedScore.points &&
+        rankingLine.accumulatedScore.exacts === previous.accumulatedScore.exacts &&
+        rankingLine.accumulatedScore.oneScores === previous.accumulatedScore.oneScores;
+
+      rankingLine.accumulatedScore.position = isDraw ? previous.accumulatedScore.position : index + 1;
+    });
+  } else {
+    rankingWithPosition.forEach((rankingLine, index) => {
+      if (index === 0) {
+        rankingLine.score.position = 1;
+        return;
+      }
+
+      const previous = rankingWithPosition[index - 1];
+      const isDraw =
+        rankingLine.score.points === previous.score.points &&
+        rankingLine.score.exacts === previous.score.exacts &&
+        rankingLine.score.oneScores === previous.score.oneScores;
+
+      rankingLine.score.position = isDraw ? previous.score.position : index + 1;
+    });
+  }
+
+  return rankingWithPosition;
+};

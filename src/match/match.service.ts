@@ -63,7 +63,7 @@ export class MatchService {
   // }
   async getByEdition(editionId: number) {
     const rows: IMatchRaw[] = await db.query(
-      `SELECT matches.id, matches.id_fifa as idFifa, matches.timestamp, matches.round, matches.goals_home as goalsHome, matches.goals_away as goalsAway,
+      `SELECT matches.id, matches.id_fifa as idFifa, matches.timestamp, matches.round, matches.goals_home as scoreHome, matches.goals_away as scoreAway,
         matches.penalties_home as penaltiesHome, matches.penalties_away as penaltiesAway, matches.id_referee as idReferee, matches.id_stadium as idStadium,
         matches.status,
         

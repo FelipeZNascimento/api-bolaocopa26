@@ -1,10 +1,11 @@
 // import betRoutes from "#bet/bet.routes.js";
+import betRoutes from "#bet/bet.routes.js";
 import config from "#database/config.js";
 import { connection } from "#database/db.js";
 import matchRoutes from "#match/match.routes.js";
 import { errorHandler } from "#middlewares/errorHandler.js";
 import { cache, middleware } from "#middlewares/middlewares.js";
-// import rankingRoutes from "#ranking/ranking.routes.js";
+import rankingRoutes from "#ranking/ranking.routes.js";
 import seasonRoutes from "#season/season.routes.js";
 import teamRoutes from "#team/team.routes.js";
 import userRoutes from "#user/user.routes.js";
@@ -79,8 +80,10 @@ app.use(cors(corsOptions));
 
 app.use("/team", cache(), teamRoutes);
 app.use("/match", matchRoutes);
+app.use("/bet", betRoutes);
 app.use("/user", userRoutes);
 app.use("/season", seasonRoutes);
+app.use("/ranking", rankingRoutes);
 
 // app.use("/bolaonflv2/season", seasonRoutes);
 // app.use("/bolaonflv2/bet", betRoutes);

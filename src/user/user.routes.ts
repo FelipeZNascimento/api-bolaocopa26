@@ -10,12 +10,12 @@ const userController = new UserController(userService, mailerService);
 
 // Post routes
 router.post("/login", userController.login);
+router.post("/forgot-password", userController.forgotPassword);
 // router.post("/register", userController.register);
 // router.post("/profile", userController.updateProfile);
 // router.post("/preferences", userController.updatePreferences);
 // router.post("/password", userController.updatePassword);
 // router.post("/password-token", userController.updatePasswordFromToken);
-// router.post("/forgot-password", userController.forgotPassword);
 
 // Get routes
 router.get("/logout", userController.logout);

@@ -65,7 +65,7 @@ export class MatchController extends BaseController {
         throw new AppError("Parâmetro inválido", 400, ErrorCode.INVALID_INPUT);
       }
 
-      const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, editionId, currentEdition);
+      const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, editionId);
       const stadiums: IStadium[] = await getStadiumsFromCacheOrFetch(this.matchService, editionId, currentEdition);
       const referees: IReferee[] = await getRefereesFromCacheOrFetch(this.matchService, editionId, currentEdition);
       const matchesResponse: IMatchRaw[] = await this.matchService.getByEdition(editionId);
@@ -76,7 +76,6 @@ export class MatchController extends BaseController {
         filteredMatches = filteredMatches.filter((match) => match.round === round);
       }
 
-      console.log(filteredMatches[0]);
       const matchesIds = filteredMatches.map((match) => match.id);
       const queries = [this.betService.getStartedMatchesBetsByMatchIds(matchesIds)];
 

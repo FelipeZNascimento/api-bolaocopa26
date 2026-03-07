@@ -28,7 +28,8 @@ export interface IStadium {
 export interface ITeam {
   abbreviation: string;
   abbreviationEn: string;
-  colors: string;
+  colors: string[];
+  colorsRaw: string;
   confederation?: IConfederation | null;
   goals: number;
   group: string;

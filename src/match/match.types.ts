@@ -17,8 +17,6 @@ export interface IMatch extends RowDataPacket {
 }
 
 export interface IMatchRaw extends RowDataPacket {
-  goalsAway: number;
-  goalsHome: number;
   id: number;
   idAway: number;
   idFifa: number;
@@ -28,6 +26,8 @@ export interface IMatchRaw extends RowDataPacket {
   penaltiesAway: number;
   penaltiesHome: number;
   round: number;
+  scoreAway: number;
+  scoreHome: number;
   status: number;
   timestamp: number;
 }

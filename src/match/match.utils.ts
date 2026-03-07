@@ -26,9 +26,9 @@ export const parseMatchQueryResponse = (
     referee: referees.find((referee) => referee.id === match.idReferee) ?? null,
     round: match.round,
     score: {
-      away: match.goalsAway,
+      away: match.scoreAway,
       awayPenalties: match.penaltiesAway,
-      home: match.goalsHome,
+      home: match.scoreHome,
       homePenalties: match.penaltiesHome,
     },
     stadium: stadiums.find((stadium) => stadium.id === match.idStadium) ?? null,

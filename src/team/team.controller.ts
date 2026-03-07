@@ -43,7 +43,7 @@ export class TeamController extends BaseController {
       }
 
       if (formattedTeams.length === 0) {
-        formattedTeams = await getTeamsFromCacheOrFetch(this.teamService, editionId, currentEdition);
+        formattedTeams = await getTeamsFromCacheOrFetch(this.teamService, editionId);
       }
 
       return formattedTeams;

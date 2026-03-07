@@ -1,35 +1,46 @@
-import type { IBetRaw } from "#bet/bet.types.js";
+import type { IBetRaw, IExtraBetRaw, IExtraBetResultRaw } from "#bet/bet.types.js";
 
 import db from "#database/db.js";
 // import { ResultSetHeader } from "mysql2/promise";
 
 export class BetService {
-  // async getExtras(season: number, seasonStart: number) {
-  //   const rows = (await db.query(
-  //     `SELECT SQL_NO_CACHE extra_bets_new.id_user as userId, extra_bets_new.id_season as idSeason, extra_bets_new.json,
-  //       users.name as userName, users_icon.icon as userIcon, users_icon.color as userColor
-  //       FROM extra_bets_new
-  //       INNER JOIN users 		ON users.id = extra_bets_new.id_user
-  //       LEFT JOIN users_icon    ON users.id = users_icon.id_user
-  //       WHERE id_season = ?
-  //       AND UNIX_TIMESTAMP() >= ?`,
-  //     [season, seasonStart],
-  //   )) as IExtraBet[];
+  async getExtras(edition: number, editionStart: number) {
+    const rows = await db.query(
+      `SELECT extra_bets.id, extra_bets.id_user as userId, extra_bets.id_extra_type as extraType, extra_bets.id_team as teamId,
+        extra_bets.id_player as playerId, extra_bets.timestamp,
+        users.nickname as nickname, users.name as name,
+        users_edition.is_active as isActive,
+        players.name as playerName, players.number as playerNumber,
+        players.date_of_birth as playerBirth, players.height as playerHeight, players.weight as playerWeight,
+        positions.id as positionId, positions.description as positionDescription, positions.abbreviation as positionAbbreviation
+        FROM extra_bets
+        LEFT JOIN users ON extra_bets.id_user = users.id
+        LEFT JOIN users_edition ON extra_bets.id_user = users_edition.id_user
+        LEFT JOIN players ON players.id = extra_bets.id_player
+        LEFT JOIN positions ON positions.id = players.id_position
+        WHERE extra_bets.id_edition = ? AND users_edition.is_active = 1 AND ? < UNIX_TIMESTAMP()`,
+      [edition, editionStart],
+    );
 
-  //   return rows;
-  // }
+    return rows as IExtraBetRaw[];
+  }
 
-  // async getExtrasResults(season: number, seasonStart: number) {
-  //   const row = (await db.query(
-  //     `SELECT SQL_NO_CACHE id_season as idSeason, json
-  //       FROM extra_bets_results_new
-  //       WHERE id_season = ?
-  //       AND UNIX_TIMESTAMP() >= ?`,
-  //     [season, seasonStart],
-  //   )) as IExtraBet[] | undefined;
+  async getExtrasResults(season: number, editionStart: number) {
+    const row = await db.query(
+      `SELECT extra_bets_results.id_player as playerId, extra_bets_results.id_team as teamId,
+        extra_bets_results.id_type as extraType,
+        players.name as playerName, players.number as playerNumber,
+        players.date_of_birth as playerBirth, players.height as playerHeight, players.weight as playerWeight,
+        positions.id as positionId, positions.description as positionDescription, positions.abbreviation as positionAbbreviation
+        FROM extra_bets_results
+        LEFT JOIN players ON players.id = extra_bets_results.id_player
+        LEFT JOIN positions ON positions.id = players.id_position
+        WHERE extra_bets_results.id_edition = ? AND ? < UNIX_TIMESTAMP()`,
+      [season, editionStart],
+    );
 
-  //   return row;
-  // }
+    return row as IExtraBetResultRaw[];
+  }
 
   async getStartedMatchesBetsByMatchIds(matchIds: number[]) {
     if (matchIds.length === 0) {

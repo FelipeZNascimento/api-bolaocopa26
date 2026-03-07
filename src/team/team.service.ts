@@ -9,7 +9,7 @@ export class TeamService {
         countries.id_confederation as idConfederation, countries.name as name,
         countries.name_en as nameEn, countries.abbreviation as abbreviation,
         countries.abbreviation_en as abbreviationEn, countries.iso_code as isoCode, 
-        GROUP_CONCAT(DISTINCT teams_colors.color ORDER BY teams_colors.id) colors
+        GROUP_CONCAT(DISTINCT teams_colors.color ORDER BY teams_colors.id) colorsRaw
         FROM teams
         LEFT JOIN countries ON countries.id = teams.id_country
         LEFT JOIN teams_colors ON teams_colors.id_team = teams.id
@@ -24,14 +24,14 @@ export class TeamService {
 
   async getById(teamId: number, editionId: number) {
     const [row]: ITeam[] = await db.query(
-      `SELECT teams.id as id, teams.group as teamGroup, teams.id_fifa as teamIdFifa,
-        countries.id_confederation as teamIdConfederation, countries.name as teamName,
-        countries.name_en as teamNameEn, countries.abbreviation as teamAbbreviation,
-        countries.abbreviation_en as teamAbbreviationEn, countries.iso_code as teamIsoCode, 
+      `SELECT teams.id as id, teams.group as teamGroup, teams.id_fifa as idFifa,
+        countries.id_confederation as idConfederation, countries.name as name,
+        countries.name_en as nameEn, countries.abbreviation as abbreviation,
+        countries.abbreviation_en as abbreviationEn, countries.iso_code as isoCode, 
         confederations.id as confederationId, confederations.name as confederationName,
         confederations.name_en as confederationNameEn,
         confederations.abbreviation as confederationAbbreviation,
-        GROUP_CONCAT(DISTINCT teams_colors.color ORDER BY teams_colors.id) teamColors
+        GROUP_CONCAT(DISTINCT teams_colors.color ORDER BY teams_colors.id) colorsRaw
         FROM teams
         LEFT JOIN countries ON countries.id = teams.id_country
         LEFT JOIN confederations ON countries.id_confederation = confederations.id

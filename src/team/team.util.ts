@@ -12,11 +12,10 @@ import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
 export const getTeamsFromCacheOrFetch = async (
   teamService: TeamService,
   requestedEdition: number,
-  currentEdition: number,
 ): Promise<ITeam[]> => {
   const cachedTeams: ITeam[] | undefined = cachedInfo.get(CACHE_KEYS.TEAMS);
 
-  if (cachedTeams && requestedEdition === currentEdition) {
+  if (cachedTeams) {
     console.log("Returning teams from cache");
     return cachedTeams;
   }
@@ -25,16 +24,13 @@ export const getTeamsFromCacheOrFetch = async (
   const teamsRaw = await teamService.getAll(requestedEdition);
   const confederations = await getConfederationsFromCacheOrFetch(teamService);
 
-  // const formattedTeams = formatTeams(teamsRaw, confederations);
   const formattedTeams = teamsRaw.map((team) => ({
     ...team,
+    colors: team.colorsRaw.split(",").map((color: string) => color.trim()),
     confederation: confederations.find((conf) => conf.id === team.idConfederation) ?? null,
   }));
 
-  if (requestedEdition === currentEdition) {
-    setTeamsCache(formattedTeams);
-  }
-
+  setTeamsCache(formattedTeams);
   return [...formattedTeams];
 };
 
@@ -42,7 +38,7 @@ export const getConfederationsFromCacheOrFetch = async (teamService: TeamService
   const cachedConfederations: IConfederation[] | undefined = cachedInfo.get(CACHE_KEYS.CONFEDERATIONS);
 
   if (cachedConfederations) {
-    console.log("Returning conferences from cache");
+    console.log("Returning confederations from cache");
     return cachedConfederations;
   }
 

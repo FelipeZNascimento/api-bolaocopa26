@@ -1,4 +1,6 @@
 import type { IUser } from "#user/user.types.js";
+
+import { ITeam } from "#team/team.types.js";
 export interface IBet {
   id: number;
   matchId: number;
@@ -18,10 +20,73 @@ export interface IBetRaw {
 }
 
 export interface IExtraBet {
-  idSeason: number;
-  json: string;
-  userColor: string;
-  userIcon: string;
+  extraType: number;
+  id: number;
+  player: {
+    dateOfBirth: Date | null;
+    height: null | number;
+    id: null | number;
+    name: null | string;
+    number: null | number;
+    position: {
+      abbreviation: null;
+      description: null | string;
+      id: null | number;
+    };
+    weight: null | number;
+  };
+  team: ITeam;
+  timestamp: Date;
+  user: Pick<IUser, "id" | "isActive" | "name" | "nickname">;
+}
+
+export interface IExtraBetRaw {
+  extraType: number;
+  id: number;
+  isActive: number;
+  name: string;
+  nickname: string;
+  playerBirth: Date | null;
+  playerHeight: null | number;
+  playerId: null | number;
+  playerName: null | string;
+  playerNumber: null | number;
+  playerWeight: null | number;
+  positionAbbreviation: null;
+  positionDescription: null | string;
+  positionId: null | number;
+  teamId: number;
+  timestamp: Date;
   userId: number;
-  userName: string;
+}
+
+export interface IExtraBetResult {
+  extraType: number;
+  player: {
+    dateOfBirth: Date | null;
+    height: null | number;
+    id: null | number;
+    name: null | string;
+    number: null | number;
+    position: {
+      abbreviation: null;
+      description: null | string;
+      id: null | number;
+    };
+    weight: null | number;
+  };
+  team: ITeam;
+}
+export interface IExtraBetResultRaw {
+  extraType: number;
+  playerBirth: Date | null;
+  playerHeight: null | number;
+  playerId: null | number;
+  playerName: null | string;
+  playerNumber: null | number;
+  playerWeight: null | number;
+  positionAbbreviation: null;
+  positionDescription: null | string;
+  positionId: null | number;
+  teamId: number;
 }
