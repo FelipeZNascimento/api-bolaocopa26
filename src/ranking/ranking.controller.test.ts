@@ -57,6 +57,7 @@ vi.mock("./ranking.utils", () => ({
 const createUser = (id: number, name: string): IUser => ({
   id,
   isActive: true,
+  isOnline: true,
   name,
   nickname: name,
   timestamp: 0,

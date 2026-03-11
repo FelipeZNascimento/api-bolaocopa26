@@ -228,27 +228,31 @@ export class UserController extends BaseController {
   //   });
   // };
 
-  // updatePasswordFromToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  //   await this.handleRequest(req, res, next, async () => {
-  //     const reqBody = req.body as { email: string; newPassword: string; token: string };
-  //     const { email, newPassword, token } = reqBody;
+  updatePassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    await this.handleRequest(req, res, next, async () => {
+      const reqBody = req.body as { email: string; newPassword: string; token: string };
+      const { email, newPassword, token } = reqBody;
 
-  //     if (!email || !token || !newPassword) {
-  //       throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-  //     }
+      if (!email || !token || !newPassword) {
+        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+      }
 
-  //     const cachedToken = cachedInfo.get(`PASSWORD_RESET_${email}`);
-  //     if (cachedToken !== token) {
-  //       throw new AppError("Token inválido ou expirado", 409, ErrorCode.VALIDATION_ERROR);
-  //     }
+      const cachedToken = cachedInfo.get(`PASSWORD_RESET_${email}`);
+      console.log("Cached token:", cachedToken, "Provided token:", token); // Debug log
+      if (cachedToken !== token) {
+        throw new AppError("Token inválido ou expirado", 409, ErrorCode.VALIDATION_ERROR);
+      }
 
-  //     const user = await this.userService.getByEmail(email);
+      const user = await this.userService.getByEmail(email);
+      if (user) {
+        cachedInfo.del(`PASSWORD_RESET_${email}`);
+        void this.userService.updateLastOnlineTime(user.id);
+        return await this.userService.updatePasswordFromToken(newPassword, user.id);
+      }
 
-  //     cachedInfo.del(`PASSWORD_RESET_${email}`);
-  //     void this.userService.updateLastOnlineTime(user.id);
-  //     return await this.userService.updatePasswordFromToken(newPassword, user.id);
-  //   });
-  // };
+      return null;
+    });
+  };
 
   // updatePreferences = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   //   await this.handleRequest(req, res, next, async () => {

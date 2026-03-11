@@ -5,7 +5,7 @@ import db from "#database/db.js";
 export class TeamService {
   async getAll(editionId: number) {
     const rows: ITeam[] = await db.query(
-      `SELECT teams.id as id, teams.group as idGroup, teams.id_fifa as idFifa,
+      `SELECT teams.id as id, teams.group, teams.id_fifa as idFifa,
         countries.id_confederation as idConfederation, countries.name as name,
         countries.name_en as nameEn, countries.abbreviation as abbreviation,
         countries.abbreviation_en as abbreviationEn, countries.iso_code as isoCode, 

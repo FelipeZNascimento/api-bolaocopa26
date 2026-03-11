@@ -8,6 +8,7 @@ export const CACHE_KEYS = {
   CONFEDERATIONS: 3,
   STADIUMS: 4,
   REFEREES: 5,
+  MATCHES: 6,
 };
 
 export const cachedInfo = new NodeCache();

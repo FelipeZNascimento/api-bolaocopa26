@@ -2,31 +2,15 @@ import type { IUser } from "#user/user.types.js";
 
 import db from "#database/db.js";
 // import { ICount } from "#shared/shared.types.js";
-// import { ResultSetHeader } from "mysql2/promise";
+import { ResultSetHeader } from "mysql2/promise";
 
 export class UserService {
-  // async getByEmail(email: string) {
-  //   const [row] = (await db.query(
-  //     `SELECT SQL_NO_CACHE users.id, users.login as email, users.name, users.full_name as fullName,
-  //       users_icon.icon, users_icon.color, unix_timestamp(users_online.timestamp) as timestamp,
-  //       users_edition.id AS seasonId
-  //       FROM users
-  //       INNER JOIN users_edition ON users.id = users_edition.id_user
-  //       LEFT JOIN users_icon ON users.id = users_icon.id_user
-  //       LEFT JOIN users_online ON users.id = users_online.id_user
-  //       WHERE users.login = ?
-  //       GROUP BY users.id`,
-  //     [email],
-  //   )) as IUser[];
-
-  //   return row;
-  // }
-
   async getByEdition(edition: number) {
     const rows: IUser[] = await db.query(
       `SELECT SQL_NO_CACHE users.id, users.name, users.nickname,
         users_edition.is_active as isActive,
-        users.timestamp
+        users.timestamp,
+        (UNIX_TIMESTAMP(NOW()) - users.timestamp) < 600 AS isOnline
         FROM users
         JOIN users_edition ON users.id = users_edition.id_user
         WHERE users_edition.id_edition = ? AND users_edition.is_active = 1
@@ -37,9 +21,22 @@ export class UserService {
     return rows;
   }
 
+  async getByEmail(email: string) {
+    const row: IUser[] = await db.query(
+      `SELECT SQL_NO_CACHE users.id, users.email, users.name, users.nickname,
+        users_edition.id AS seasonId, users_edition.is_active as isActive
+        FROM users
+        INNER JOIN users_edition ON users.id = users_edition.id_user
+        WHERE users.email = ?`,
+      [email],
+    );
+
+    return row.length > 0 ? row[0] : null;
+  }
+
   async getById(userId: number, editionId: number) {
     const row: IUser[] = await db.query(
-      `SELECT SQL_NO_CACHE users.id, users.name, users.nickname,
+      `SELECT SQL_NO_CACHE users.id, users.name, users.nickname, users.email,
         users_edition.is_active as isActive,
         users.timestamp
         FROM users
@@ -136,16 +133,16 @@ export class UserService {
   //   return rows;
   // }
 
-  // async updatePasswordFromToken(newPassword: string, id: number) {
-  //   const rows = (await db.query(
-  //     `UPDATE users
-  //       SET password = ?
-  //       WHERE id = ?`,
-  //     [newPassword, id],
-  //   )) as ResultSetHeader;
+  async updatePasswordFromToken(newPassword: string, id: number) {
+    const rows: ResultSetHeader = await db.query(
+      `UPDATE users
+        SET password = ?
+        WHERE id = ?`,
+      [newPassword, id],
+    );
 
-  //   return rows;
-  // }
+    return rows;
+  }
 
   // async updateProfile(email: string, name: string, username: string, id: number) {
   //   const rows = (await db.query(

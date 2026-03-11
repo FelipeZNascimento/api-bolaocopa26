@@ -185,6 +185,32 @@ export const getStadiumsFromCacheOrFetch = async (
   return [...stadiums];
 };
 
+export const getMatchesFromCacheOrFetch = async (
+  matchService: MatchService,
+  requestedEdition: number,
+  currentEdition: number,
+  teams: ITeam[],
+  stadiums: IStadium[],
+  referees: IReferee[],
+): Promise<IMatch[]> => {
+  const cachedMatches: IMatch[] | undefined = cachedInfo.get(CACHE_KEYS.MATCHES);
+
+  if (cachedMatches && requestedEdition === currentEdition) {
+    console.log("Returning matches from cache");
+    return cachedMatches;
+  }
+
+  const matchesRaw: IMatchRaw[] = await matchService.getByEdition(requestedEdition);
+  const filteredMatches: IMatch[] = matchesRaw.map((match) =>
+    parseMatchQueryResponse(match, teams, stadiums, referees),
+  );
+
+  if (requestedEdition === currentEdition) {
+    setMatchesCache(filteredMatches);
+  }
+  return [...filteredMatches];
+};
+
 export const getRefereesFromCacheOrFetch = async (
   matchService: MatchService,
   requestedEdition: number,
@@ -211,4 +237,8 @@ export const setStadiumsCache = (stadiums: IStadium[]): void => {
 
 export const setRefereesCache = (referees: IReferee[]): void => {
   cachedInfo.set(CACHE_KEYS.REFEREES, referees, 60 * 60 * 24 * 14); // Cache for 14 days
+};
+
+export const setMatchesCache = (matches: IMatch[]): void => {
+  cachedInfo.set(CACHE_KEYS.MATCHES, matches, 60 * 60 * 24 * 14); // Cache for 14 days
 };

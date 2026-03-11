@@ -40,7 +40,7 @@ export class MailerService {
       throw new Error("BASE_URL is not defined in environment variables");
     }
 
-    const resetUrl = `${process.env.BASE_URL}/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.BASE_URL}/reset-password?token=${resetToken}&email=${encodeURIComponent(to)}`;
 
     await this.transporter.sendMail({
       from: this.fromAddress,

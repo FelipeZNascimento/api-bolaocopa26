@@ -8,59 +8,6 @@ import { IReferee, IStadium } from "#team/team.types.js";
 // import { ResultSetHeader } from "mysql2/promise";
 
 export class MatchService {
-  // async getByEdition(edition: number) {
-  //   return (await db.query(
-  //     `SELECT matches.id, matches.id_fifa, matches.timestamp, matches.round, matches.goals_home as goalsHome, matches.goals_away as goalsAway,
-  //       matches.penalties_home as penaltiesHome, matches.penalties_away as penaltiesAway, matches.id_referee as idReferee, matches.id_stadium as idStadium,
-  //       matches.status,
-
-  //       homeTeam.id as homeId, homeTeam.group as homeGroup, homeTeam.id_fifa as homeIdFifa,
-
-  //       homeTeamCountry.id_confederation as homeIdConfederation,
-  //       homeTeamCountry.name as homeName, homeTeamCountry.name_en as homeNameEn,
-  //       homeTeamCountry.abbreviation as homeNameAbbreviation,
-  //       homeTeamCountry.abbreviation_en as homeNameAbbreviationEn,
-  //       homeTeamCountry.iso_code as homeIsoCode,
-
-  //       awayTeam.id as awayId, awayTeam.group as awayGroup, awayTeam.id_fifa as awayIdFifa,
-
-  //       awayTeamCountry.id_confederation as awayIdConfederation,
-  //       awayTeamCountry.name as awayName, awayTeamCountry.name_en as awayNameEn,
-  //       awayTeamCountry.abbreviation as awayNameAbbreviation,
-  //       awayTeamCountry.abbreviation_en as awayNameAbbreviationEn,
-  //       awayTeamCountry.iso_code as awayIsoCode,
-
-  //       referees.name as refereeName, referees.date_of_birth as refereeBirth,
-  //       referees.id_country as refereeIdCountry,
-  //       stadiums.name as stadiumName, stadiums.city as stadiumCity,
-  //       stadiums.capacity as stadiumCapacity, stadiums.geo_latitude as stadiumGeoLatitude,
-  //       stadiums.geo_longitude as stadiumGeoLongitude,
-  //       homeConfederation.id as homeConfederationId, homeConfederation.name as homeConfederationName,
-  //       homeConfederation.name_en as homeConfederationNameEn, homeConfederation.abbreviation as homeConfederationAbbreviation,
-  //       awayConfederation.id as awayConfederationId, awayConfederation.name as awayConfederationName,
-  //       awayConfederation.name_en as awayConfederationNameEn, awayConfederation.abbreviation as awayConfederationAbbreviation,
-  //       refereeCountry.name as refereeCountryName, refereeCountry.name_en as refereeCountryNameEn,
-  //       refereeCountry.abbreviation as refereeCountryAbbreviation,
-  //       GROUP_CONCAT(DISTINCT homeTeamColors.color ORDER BY homeTeamColors.id) homeTeamColors,
-  //       GROUP_CONCAT(DISTINCT awayTeamColors.color ORDER BY awayTeamColors.id) awayTeamColors
-  //       FROM matches
-  //       LEFT JOIN teams as homeTeam ON matches.id_home = homeTeam.id
-  //       LEFT JOIN teams as awayTeam ON matches.id_away = awayTeam.id
-  //       LEFT JOIN countries as homeTeamCountry ON homeTeamCountry.id = homeTeam.id_country
-  //       LEFT JOIN countries as awayTeamCountry ON awayTeamCountry.id = awayTeam.id_country
-  //       LEFT JOIN referees ON matches.id_referee = referees.id
-  //       LEFT JOIN stadiums ON matches.id_stadium = stadiums.id
-  //       LEFT JOIN confederations as homeConfederation ON homeTeamCountry.id_confederation = homeConfederation.id
-  //       LEFT JOIN confederations as awayConfederation ON awayTeamCountry.id_confederation = awayConfederation.id
-  //       LEFT JOIN countries as refereeCountry ON referees.id_country = refereeCountry.id
-  //       LEFT JOIN teams_colors as homeTeamColors ON homeTeamColors.id_team = matches.id_home
-  //       LEFT JOIN teams_colors as awayTeamColors ON awayTeamColors.id_team = matches.id_away
-  //       WHERE matches.id_edition = ?
-  //       GROUP BY matches.id
-  //       ORDER BY matches.timestamp ASC`,
-  //     [edition],
-  //   )) as IMatch[];
-  // }
   async getByEdition(editionId: number) {
     const rows: IMatchRaw[] = await db.query(
       `SELECT matches.id, matches.id_fifa as idFifa, matches.timestamp, matches.round, matches.goals_home as scoreHome, matches.goals_away as scoreAway,
@@ -203,36 +150,6 @@ export class MatchService {
   //       AND week = ?
   //       AND id_season = ?`,
   //     [awayPoints, homePoints, matchStatus, possession, clock, awayTeamCode, homeTeamCode, week, season],
-  //   )) as ResultSetHeader;
-  // }
-
-  // async updateOddsByMatchInfo(
-  //   overUnder: string,
-  //   homeTeamOdds: string,
-  //   awayTeamCode: string,
-  //   homeTeamCode: string,
-  //   week: number,
-  //   matchStatus: MatchStatus,
-  //   season: number,
-  // ) {
-  //   return (await db.query(
-  //     `UPDATE matches
-  //       SET overUnder = ?,
-  //       homeTeamOdds = ?
-  //       WHERE id_away_team = (
-  //           SELECT id
-  //           FROM teams
-  //           WHERE code = ?
-  //       )
-  //       AND id_home_team = (
-  //           SELECT id
-  //           FROM teams
-  //           WHERE code = ?
-  //       )
-  //       AND week = ?
-  //       AND id_season = ?
-  //       AND status = ?`,
-  //     [overUnder, homeTeamOdds, awayTeamCode, homeTeamCode, week, season, matchStatus],
   //   )) as ResultSetHeader;
   // }
 }

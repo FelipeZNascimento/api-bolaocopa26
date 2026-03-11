@@ -19,6 +19,4 @@ const matchController = new MatchController(matchService, userService, betServic
 router.get("/", matchController.getByEdition);
 router.get("/:edition{/:round}", matchController.getByEdition);
 
-// router.post("/update/:key", matchController.updateFromKey);
-
 export default router;

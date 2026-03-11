@@ -50,10 +50,7 @@ export class BetController extends BaseController {
       }
 
       const { edition, editionStart } = checkEdition(req.params.season);
-
       const extraBetsResults: IExtraBetResultRaw[] = await this.betService.getExtrasResults(edition, editionStart);
-      console.log("Extras results fetched:", extraBetsResults);
-
       const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
 
       return groupExtraBetsByType(extraBetsResults, parseExtraBetResult, teams, "results");
