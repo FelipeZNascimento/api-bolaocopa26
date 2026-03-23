@@ -1,11 +1,11 @@
-import type { IMatchRaw } from "#match/match.types.js";
+import type { IEventRaw, IMatch, IMatchRaw } from "#match/match.types.js";
 // import type { IMatch, IMatchRaw, IWeek } from "#match/match.types.js";
 // import type { ICount } from "#shared/shared.types.js";
 
 import db from "#database/db.js";
 // import { MatchStatus } from "#match/match.constants.js";
 import { IReferee, IStadium } from "#team/team.types.js";
-// import { ResultSetHeader } from "mysql2/promise";
+import { ResultSetHeader } from "mysql2/promise";
 
 export class MatchService {
   async getByEdition(editionId: number) {
@@ -20,6 +20,20 @@ export class MatchService {
         FROM matches
         WHERE matches.id_edition = ?
         GROUP BY matches.id
+        ORDER BY matches.timestamp ASC`,
+      [editionId],
+    );
+    return rows;
+  }
+
+  async getEvents(editionId: number) {
+    const rows: IEventRaw[] = await db.query(
+      `SELECT events.id, events.id_match as matchId, events.gametime, events.id_player as playerId, events.id_player_two as playerTwoId,
+        events.id_event_info as eventId, events_info.description as eventDescription, events_info.description_en as eventDescriptionEn
+        FROM events
+        LEFT JOIN events_info ON events_info.id = events.id_event_info
+        LEFT JOIN matches ON matches.id = events.id_match
+        WHERE matches.id_edition = ?
         ORDER BY matches.timestamp ASC`,
       [editionId],
     );
@@ -152,4 +166,38 @@ export class MatchService {
   //     [awayPoints, homePoints, matchStatus, possession, clock, awayTeamCode, homeTeamCode, week, season],
   //   )) as ResultSetHeader;
   // }
+
+  /**
+   * Update a match in the database
+   * @param match - The match object with updated data
+   * @returns The result of the update operation
+   */
+  async updateMatch(match: IMatch): Promise<ResultSetHeader> {
+    return await db.query(
+      `UPDATE matches
+        SET 
+          timestamp = ?,
+          round = ?,
+          goals_home = ?,
+          goals_away = ?,
+          penalties_home = ?,
+          penalties_away = ?,
+          status = ?,
+          id_referee = ?,
+          id_stadium = ?
+        WHERE id = ?`,
+      [
+        match.timestamp,
+        match.round,
+        match.score.home,
+        match.score.away,
+        match.score.homePenalties ?? null,
+        match.score.awayPenalties ?? null,
+        match.status,
+        match.referee?.id ?? null,
+        match.stadium?.id ?? null,
+        match.id,
+      ],
+    );
+  }
 }

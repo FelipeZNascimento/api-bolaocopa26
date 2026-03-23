@@ -9,6 +9,9 @@ export const CACHE_KEYS = {
   STADIUMS: 4,
   REFEREES: 5,
   MATCHES: 6,
+  PLAYERS: 7,
+  CLUBS: 8,
+  EVENTS: 9,
 };
 
 export const cachedInfo = new NodeCache();

@@ -63,7 +63,7 @@ export const parseExtraBets = (extraBets: IExtraBetRaw, teams: ITeam[]) => {
   };
 };
 
-export const parseBetQueryResponse = (rawBets: IBetRaw[]) => {
+export const parseRawBets = (rawBets: IBetRaw[]) => {
   const bets: IBet[] = rawBets.map((rawBet) => {
     return {
       id: rawBet.id,

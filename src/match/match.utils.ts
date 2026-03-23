@@ -1,5 +1,5 @@
-import type { IMatch, IMatchRaw } from "#match/match.types.js";
-import type { IReferee, IStadium, ITeam } from "#team/team.types.js";
+import type { IEvent, IEventRaw, IMatch, IMatchRaw } from "#match/match.types.js";
+import type { IPlayer, IReferee, IStadium, ITeam } from "#team/team.types.js";
 
 import { IBet } from "#bet/bet.types.js";
 import { MATCH_STATUS, MatchStatus } from "#match/match.constants.js";
@@ -11,18 +11,39 @@ export const isMatchEnded = (status: MatchStatus) => {
   return status === MATCH_STATUS.FINAL || status === MATCH_STATUS.FINAL_OVERTIME || status === MATCH_STATUS.CANCELLED;
 };
 
-export const parseMatchQueryResponse = (
-  match: IMatchRaw,
-  teams: ITeam[],
-  stadiums: IStadium[],
-  referees: IReferee[],
-) => {
+export const parseRawEvents = (eventsRaw: IEventRaw[], players: IPlayer[]): IEvent[] => {
+  return eventsRaw.map((event) => {
+    const player = players.find((p) => p.id === event.playerId);
+    const playerTwo = event.playerTwoId ? players.find((p) => p.id === event.playerTwoId) : null;
+
+    if (!player) {
+      throw new Error(`Player with ID ${event.playerId.toString()} not found for event ${event.id.toString()}`);
+    }
+
+    return {
+      event: {
+        description: event.eventDescription,
+        descriptionEn: event.eventDescriptionEn,
+        gametime: event.gametime,
+        id: event.eventId,
+      },
+      id: event.id,
+      matchId: event.matchId,
+      player,
+      playerAssist: playerTwo ?? null,
+    };
+  });
+};
+
+export const parseRawMatch = (match: IMatchRaw, teams: ITeam[], stadiums: IStadium[], referees: IReferee[]) => {
   const parsedMatch: IMatch = {
     awayTeam: teams.find((team) => team.id === match.idAway) ?? null,
     bets: [],
+    events: [],
     homeTeam: teams.find((team) => team.id === match.idHome) ?? null,
     id: match.id,
     idFifa: match.idFifa,
+    loggedUserBets: null,
     referee: referees.find((referee) => referee.id === match.idReferee) ?? null,
     round: match.round,
     score: {
@@ -39,91 +60,15 @@ export const parseMatchQueryResponse = (
   return parsedMatch;
 };
 
-// export const parseMatchQueryResponse = (match: IMatchRaw, homeTeam: ITeam, awayTeam: ITeam) => {
-//   return {
-//     away: {
-//       alias: awayTeam.alias,
-//       background: awayTeam.background,
-//       code: awayTeam.code,
-//       foreground: awayTeam.foreground,
-//       id: awayTeam.id,
-//       name: awayTeam.name,
-//       possession: match.possession === "away",
-//       score: match.awayScore,
-//     },
-//     clock: match.clock,
-//     home: {
-//       alias: homeTeam.alias,
-//       background: homeTeam.background,
-//       code: homeTeam.code,
-//       foreground: homeTeam.foreground,
-//       id: homeTeam.id,
-//       name: homeTeam.name,
-//       possession: match.possession === "home",
-//       score: match.homeScore,
-//     },
-//     homeTeamOdds: match.homeTeamOdds,
-//     id: match.id,
-//     overUnder: match.overUnder,
-//     status: match.status,
-//     timestamp: match.timestamp,
-//   };
-// };
-
-// export const mergeBetsToMatches = (matches: IMatch[], bets: IBet[], userBets: IBet[], userId: null | number = null) => {
-//   const normalizedMatches: IMatch[] = matches.map((match) => {
-//     let loggedUserBetsObject = null;
-
-//     // Filter logged user bets
-//     if (userBets.length > 0) {
-//       loggedUserBetsObject = userBets
-//         .filter((bet) => bet.matchId === match.id && bet.user.id === userId)
-//         .map((bet) => ({
-//           goalsAway: bet.goalsAway,
-//           goalsHome: bet.goalsHome,
-//           id: bet.id,
-//           matchId: bet.matchId,
-//           timestamp: bet.timestamp,
-//           user: {
-//             id: bet.user.id,
-//             nickname: bet.user.nickname,
-//           },
-//         }))[0];
-//     }
-
-//     const allBetsObject = bets
-//       .filter((bet) => bet.matchId === match.id && bet.user.id !== userId)
-//       .sort((a, b) => a.user.nickname.localeCompare(b.user.nickname))
-//       .map((bet) => ({
-//         goalsAway: bet.goalsAway,
-//         goalsHome: bet.goalsHome,
-//         id: bet.id,
-//         matchId: bet.matchId,
-//         timestamp: bet.timestamp,
-//         user: {
-//           id: bet.user.id,
-//           nickname: bet.user.nickname,
-//         },
-//       }));
-
-//     const normalizedMatch: IMatch = {
-//       ...match,
-//       bets: allBetsObject,
-//       loggedUserBets: loggedUserMatchBets,
-//     };
-//     return normalizedMatch;
-//   });
-
-//   return normalizedMatches;
-// };
-
 export const formatMatches = (
   matches: IMatch[],
   bets: IBet[],
   userBets: IBet[],
+  events: IEvent[],
   userId: null | number = null,
 ): IMatch[] => {
   return matches.map((match: IMatch) => {
+    const matchEvents = events.filter((event) => event.matchId === match.id);
     const matchBets = bets
       .filter((bet) => bet.matchId === match.id && bet.user.id !== userId)
       .sort((a, b) => a.user.nickname.localeCompare(b.user.nickname))
@@ -160,9 +105,28 @@ export const formatMatches = (
 
     match.bets = matchBets;
     match.loggedUserBets = loggedUserMatchBets;
+    match.events = matchEvents;
 
     return match;
   });
+};
+
+export const getEventsFromCacheOrFetch = async (
+  matchService: MatchService,
+  editionId: number,
+  players: IPlayer[],
+): Promise<IEvent[]> => {
+  const cachedEvents: IEvent[] | undefined = cachedInfo.get(CACHE_KEYS.EVENTS);
+
+  if (cachedEvents) {
+    console.log("Returning events from cache");
+    return cachedEvents;
+  }
+
+  const eventsRaw: IEventRaw[] = await matchService.getEvents(editionId);
+  const events: IEvent[] = parseRawEvents(eventsRaw, players);
+  cachedInfo.set(CACHE_KEYS.EVENTS, events, 60 * 60 * 24 * 14); // Cache for 14 days
+  return [...events];
 };
 
 export const getStadiumsFromCacheOrFetch = async (
@@ -201,9 +165,7 @@ export const getMatchesFromCacheOrFetch = async (
   }
 
   const matchesRaw: IMatchRaw[] = await matchService.getByEdition(requestedEdition);
-  const filteredMatches: IMatch[] = matchesRaw.map((match) =>
-    parseMatchQueryResponse(match, teams, stadiums, referees),
-  );
+  const filteredMatches: IMatch[] = matchesRaw.map((match) => parseRawMatch(match, teams, stadiums, referees));
 
   if (requestedEdition === currentEdition) {
     setMatchesCache(filteredMatches);

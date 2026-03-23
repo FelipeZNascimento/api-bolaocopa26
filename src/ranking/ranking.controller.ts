@@ -1,11 +1,11 @@
 import { EXTRA_TYPE_CHAMPION, EXTRA_TYPE_DEFENSE, EXTRA_TYPE_OFFENSE, EXTRA_TYPE_STRIKER } from "#bet/bet.constants.js";
 import { BetService } from "#bet/bet.service.js";
 import { IExtraBet, IExtraBetRaw, IExtraBetResult, IExtraBetResultRaw } from "#bet/bet.types.js";
-import { groupExtraBetsByType, parseBetQueryResponse, parseExtraBetResult, parseExtraBets } from "#bet/bet.utils.js";
+import { groupExtraBetsByType, parseExtraBetResult, parseExtraBets, parseRawBets } from "#bet/bet.utils.js";
 import { MATCH_STATUS } from "#match/match.constants.js";
 import { MatchService } from "#match/match.service.js";
 import { IMatch, IMatchRaw } from "#match/match.types.js";
-import { parseMatchQueryResponse } from "#match/match.utils.js";
+import { parseRawMatch } from "#match/match.utils.js";
 import { BaseController } from "#shared/base.controller.js";
 import { TeamService } from "#team/team.service.js";
 import { ITeam } from "#team/team.types.js";
@@ -63,7 +63,7 @@ export class RankingController extends BaseController {
 
       let matches: IMatch[] = [];
       if (isFulfilled(matchesResponse)) {
-        matches = matchesResponse.value.map((match) => parseMatchQueryResponse(match, [], [], []));
+        matches = matchesResponse.value.map((match) => parseRawMatch(match, [], [], []));
       }
 
       const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
@@ -115,7 +115,7 @@ export class RankingController extends BaseController {
       // Only consider bets from matches that already started to calculate the ranking.
       const startedMatches = matches.filter((match) => match.status !== MATCH_STATUS.NOT_STARTED);
       const betsResponse = await this.betService.getStartedMatchesBetsByMatchIds(startedMatches.map((m) => m.id));
-      const bets = parseBetQueryResponse(betsResponse);
+      const bets = parseRawBets(betsResponse);
 
       const roundsRanking = getRoundsRanking(edition, users, matches, startedMatches, bets);
       const seasonRanking = getSeasonRanking(roundsRanking, baseComparisonRound, extraBets, extraBetsResults);

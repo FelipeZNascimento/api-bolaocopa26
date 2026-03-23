@@ -16,8 +16,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RankingController } from "./ranking.controller";
 
 const apiResponseSuccess = vi.hoisted(() => vi.fn());
-const parseMatchQueryResponseMock = vi.hoisted(() => vi.fn((match: IMatch) => match));
-const parseBetQueryResponseMock = vi.hoisted(() => vi.fn((bets: IBet[]) => bets));
+const parseRawMatchMock = vi.hoisted(() => vi.fn((match: IMatch) => match));
+const parseRawBetsMock = vi.hoisted(() => vi.fn((bets: IBet[]) => bets));
 const getRoundsRankingMock = vi.hoisted(() => vi.fn());
 const getSeasonRankingMock = vi.hoisted(() => vi.fn());
 const getTeamsFromCacheOrFetchMock = vi.hoisted(() => vi.fn());
@@ -35,14 +35,14 @@ vi.mock("#utils/apiResponse.js", () => ({
 }));
 
 vi.mock("#match/match.utils.js", () => ({
-  parseMatchQueryResponse: parseMatchQueryResponseMock,
+  parseRawMatch: parseRawMatchMock,
 }));
 
 vi.mock("#bet/bet.utils.js", () => ({
   groupExtraBetsByType: groupExtraBetsByTypeMock,
-  parseBetQueryResponse: parseBetQueryResponseMock,
   parseExtraBetResult: parseExtraBetResultMock,
   parseExtraBets: parseExtraBetsMock,
+  parseRawBets: parseRawBetsMock,
 }));
 
 vi.mock("#team/team.util.js", () => ({
@@ -67,9 +67,11 @@ const createMatch = (id: number, scoreHome: number, scoreAway: number, status = 
   ({
     awayTeam: null,
     bets: [],
+    events: [],
     homeTeam: null,
     id,
     idFifa: id,
+    loggedUserBets: null,
     referee: null,
     round,
     score: {
@@ -167,8 +169,8 @@ describe("RankingController", () => {
     expect(mockBetService.getExtrasResults).toHaveBeenCalledWith(2026, 2026);
     expect(getTeamsFromCacheOrFetchMock).toHaveBeenCalledWith(mockTeamService, 2026);
     expect(mockBetService.getStartedMatchesBetsByMatchIds).toHaveBeenCalledWith([100]);
-    expect(parseMatchQueryResponseMock).toHaveBeenCalledTimes(2);
-    expect(parseBetQueryResponseMock).toHaveBeenCalledWith(bets);
+    expect(parseRawMatchMock).toHaveBeenCalledTimes(2);
+    expect(parseRawBetsMock).toHaveBeenCalledWith(bets);
     expect(groupExtraBetsByTypeMock).toHaveBeenCalledTimes(2);
     expect(getRoundsRankingMock).toHaveBeenCalledWith(2026, users, matches, [matches[0]], bets);
     expect(getSeasonRankingMock).toHaveBeenCalledWith(

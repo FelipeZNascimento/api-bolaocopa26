@@ -1,13 +1,39 @@
 import { IBet } from "#bet/bet.types.js";
-import { IReferee, IStadium, ITeam } from "#team/team.types.js";
+import { IPlayer, IReferee, IStadium, ITeam } from "#team/team.types.js";
 import { RowDataPacket } from "mysql2/promise";
+
+export interface IEvent {
+  event: {
+    description: string;
+    descriptionEn: string;
+    gametime: string;
+    id: number;
+  };
+  id: number;
+  matchId: number;
+  player: IPlayer;
+  playerAssist: IPlayer | null;
+}
+
+export interface IEventRaw {
+  eventDescription: string;
+  eventDescriptionEn: string;
+  eventId: number;
+  gametime: string;
+  id: number;
+  matchId: number;
+  playerId: number;
+  playerTwoId: null | number;
+}
 
 export interface IMatch extends RowDataPacket {
   awayTeam: ITeam | null;
   bets: IBet[];
+  events: IEvent[];
   homeTeam: ITeam | null;
   id: number;
   idFifa: number;
+  loggedUserBets: IBet | null;
   referee: IReferee | null;
   round: number;
   score: IScore;

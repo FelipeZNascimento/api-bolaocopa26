@@ -1,19 +1,20 @@
 import type { IBet } from "#bet/bet.types.js";
-import type { IMatch } from "#match/match.types.js";
-import type { IReferee, IStadium, ITeam } from "#team/team.types.js";
+import type { IEvent, IMatch } from "#match/match.types.js";
+import type { IPlayer, IReferee, IStadium, ITeam } from "#team/team.types.js";
 
 import { BetService } from "#bet/bet.service.js";
-import { parseBetQueryResponse } from "#bet/bet.utils.js";
+import { parseRawBets } from "#bet/bet.utils.js";
 import { MatchService } from "#match/match.service.js";
 import {
   formatMatches,
+  getEventsFromCacheOrFetch,
   getMatchesFromCacheOrFetch,
   getRefereesFromCacheOrFetch,
   getStadiumsFromCacheOrFetch,
 } from "#match/match.utils.js";
 import { BaseController } from "#shared/base.controller.js";
 import { TeamService } from "#team/team.service.js";
-import { getTeamsFromCacheOrFetch } from "#team/team.util.js";
+import { getPlayersFromCacheOrFetch, getTeamsFromCacheOrFetch } from "#team/team.util.js";
 import { UserService } from "#user/user.service.js";
 import { isFulfilled, isRejected } from "#utils/apiResponse.js";
 import { AppError } from "#utils/appError.js";
@@ -61,6 +62,8 @@ export class MatchController extends BaseController {
       const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, editionId);
       const stadiums: IStadium[] = await getStadiumsFromCacheOrFetch(this.matchService, editionId, currentEdition);
       const referees: IReferee[] = await getRefereesFromCacheOrFetch(this.matchService, editionId, currentEdition);
+      const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, editionId, teams);
+      const events: IEvent[] = await getEventsFromCacheOrFetch(this.matchService, editionId, players);
       const matches: IMatch[] = await getMatchesFromCacheOrFetch(
         this.matchService,
         editionId,
@@ -89,16 +92,16 @@ export class MatchController extends BaseController {
 
       let startedMatchesBets: IBet[] = [];
       if (isFulfilled(startedMatchesBetsResponse)) {
-        startedMatchesBets = parseBetQueryResponse(startedMatchesBetsResponse.value);
+        startedMatchesBets = parseRawBets(startedMatchesBetsResponse.value);
       }
 
       let userBets: IBet[] = [];
       if (user && isFulfilled(userBetsResponse)) {
-        userBets = parseBetQueryResponse(userBetsResponse.value);
+        userBets = parseRawBets(userBetsResponse.value);
       }
 
       try {
-        const formattedMatches = formatMatches(filteredMatches, startedMatchesBets, userBets, user?.id);
+        const formattedMatches = formatMatches(filteredMatches, startedMatchesBets, userBets, events, user?.id);
         return formattedMatches;
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
