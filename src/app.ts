@@ -35,10 +35,9 @@ const sessionSettings: ISessionSettings = {
   secret: sessionSecret,
   user: undefined,
 };
-// @ts-expect-error Types are correct, but check is failing
-const expressStore = mySqlSession(expressSession);
-// @ts-expect-error Types are correct, but check is failing
-const sessionStore = new expressStore(config.db, connection);
+
+const MySQLStore = mySqlSession(expressSession as never);
+const sessionStore = new MySQLStore(config.db, connection as never);
 
 app.use(
   expressSession({
