@@ -4,20 +4,25 @@ import { ErrorCode } from "#utils/errorCodes.js";
 
 import { UserService } from "./user.service.js";
 
-export const checkExistingEntries = async (userService: UserService, email: string, name: string, userId?: number) => {
-  const [emailCheckResponse, usernameCheckResponse] = await Promise.allSettled([
+export const checkExistingEntries = async (
+  userService: UserService,
+  email: string,
+  nickname: string,
+  userId?: number,
+) => {
+  const [emailCheckResponse, nicknameCheckResponse] = await Promise.allSettled([
     userService.isEmailValid(email, userId),
-    userService.isUsernameValid(name, userId),
+    userService.isNicknameValid(nickname, userId),
   ]);
 
-  if (isRejected(emailCheckResponse) || isRejected(usernameCheckResponse)) {
+  if (isRejected(emailCheckResponse) || isRejected(nicknameCheckResponse)) {
     throw new AppError("Base de dados inacessível", 204, ErrorCode.DB_ERROR);
   }
 
   const isEmailValid = isFulfilled(emailCheckResponse) ? emailCheckResponse.value : false;
-  const isUsernameValid = isFulfilled(usernameCheckResponse) ? usernameCheckResponse.value : false;
+  const isNicknameValid = isFulfilled(nicknameCheckResponse) ? nicknameCheckResponse.value : false;
 
-  return isEmailValid && isUsernameValid;
+  return isEmailValid && isNicknameValid;
 };
 
 export const validateEmail = (email: string) => {

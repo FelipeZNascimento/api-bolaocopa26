@@ -6,7 +6,7 @@ const router = express.Router();
 const teamService = new TeamService();
 const teamController = new TeamController(teamService);
 
-router.get("/", teamController.getAll);
-router.get("/conferenceAndDivision", teamController.getByConferenceAndDivision);
+router.get("/all{/:edition}", teamController.getAll);
+router.get("/:teamId", teamController.getById);
 
 export default router;
