@@ -97,15 +97,6 @@ async function query<T = unknown>(sql: string, params: QueryParams = []): Promis
   }
 }
 
-// // Soft shutdown handler
-// const handleShutdown = () => {
-//   console.log("Shutting down database connection");
-//   connection.destroy();
-// };
-
-// process.on("SIGTERM", handleShutdown);
-// process.on("SIGINT", handleShutdown);
-
 export default {
   query,
 };
