@@ -20,7 +20,7 @@ export const errorHandler = (error: Error, req: Request, res: Response, _next: N
   //   metricsService.recordHttpRequest(req.method, route, statusCode, 0);
 
   if (error instanceof AppError) {
-    ApiResponse.error(res, error.message, error.statusCode);
+    ApiResponse.error(res, error.message, error.statusCode, error.code);
     return;
   }
 

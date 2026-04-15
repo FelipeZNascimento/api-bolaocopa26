@@ -16,9 +16,7 @@ const teamService = new TeamService();
 
 const matchController = new MatchController(matchService, userService, betService, teamService, websocketInstance);
 
-router.get("/", matchController.getBySeasonWeek);
-router.get("/:season/:week", matchController.getBySeasonWeek);
-
-router.post("/update/:key", matchController.updateFromKey);
+router.get("/", matchController.getByEdition);
+router.get("/:edition{/:round}", matchController.getByEdition);
 
 export default router;

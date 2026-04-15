@@ -1,23 +1,39 @@
 import type { IUser } from "#user/user.types.js";
 
-import { IMatch } from "#match/match.types.js";
-
-export interface IRankingLine {
-  betsCount: number;
-  matchesCount: number;
+export interface ICalculatedRankingLine {
+  accumulatedScore: IRankingScore;
+  isFinished: boolean;
+  round?: number;
   score: IRankingScore;
-  user: Pick<IUser, "color" | "icon" | "id" | "isOnline" | "name" | "position">;
+  user: Pick<IUser, "id" | "isActive" | "name" | "nickname">;
+}
+
+export interface ICumulativePointsByRound {
+  exactScoreHits: number;
+  pointsVariation: number;
+  round: number;
+  totalPoints: number;
 }
 
 export interface IRankingScore {
-  accumulatedBullseye: number;
-  accumulatedPoints: number;
-  accumulatedPosition: number;
-  bullseye: number;
-  extras: number;
-  percentage: string;
-  total: number;
-  winner: number;
+  betCount: number;
+  exacts: number;
+  extras?: IRankingScoreExtras;
+  gameCount: number;
+  misses: number;
+  oneScores: number;
+  percentage: number;
+  points: number;
+  position: number;
+  positionVariation: number;
+  winnersOnly: number;
+}
+export interface IRankingScoreExtras {
+  champion: number;
+  defense: number;
+  offense: number;
+  points: number;
+  striker: number;
 }
 
 export interface IRawExtras {
@@ -37,9 +53,9 @@ export interface IRawExtras {
   TExtraType: number;
 }
 
-export interface IWeeklyRanking {
-  matchCount: number;
-  matches: IMatch[];
-  ranking: IRankingLine[];
-  week: number;
+export interface IRoundRanking {
+  ranking: ICalculatedRankingLine[];
+  round: number;
 }
+
+export type TRankingWinner = "away" | "draw" | "home";

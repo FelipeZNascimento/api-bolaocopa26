@@ -1,14 +1,18 @@
 import type { IUser } from "#user/user.types.js";
 
 import { MailerService } from "#mailer/mailer.service.js";
+import { clearRankingCache } from "#ranking/ranking.utils.js";
 import { BaseController } from "#shared/base.controller.js";
 import { UserService } from "#user/user.service.js";
-import { checkExistingEntries, generateVerificationToken, validateEmail } from "#user/user.utils.js";
-import { isRejected } from "#utils/apiResponse.js";
+import { checkExistingEntries } from "#user/user.utils.js";
+// import { generateVerificationToken, validateEmail } from "#user/user.utils.js";
 import { AppError } from "#utils/appError.js";
 import { cachedInfo } from "#utils/dataCache.js";
+import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { NextFunction, Request, Response } from "express";
+
+import { generateVerificationToken } from "./user.utils";
 
 // Extend express-session types to include 'user' property
 declare module "express-session" {
@@ -49,36 +53,47 @@ export class UserController extends BaseController {
         return null;
       }
 
-      const userResponse: IUser = await this.userService.getById(user.id);
+      const edition = req.params.edition || process.env.EDITION;
+      if (!edition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
+      await this.userService.updateLastOnlineTime(user.id);
+      const userResponse = await this.userService.getById(user.id, editionId);
       return userResponse;
     });
   };
 
   getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const season = process.env.SEASON;
-      if (!season) {
-        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+      const edition = req.params.edition || process.env.EDITION;
+      if (!edition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
 
-      const response: IUser[] = await this.userService.getBySeason(parseInt(season));
+      const response: IUser[] = await this.userService.getByEdition(parseInt(edition));
       return response;
     });
   };
 
   getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const season = process.env.SEASON;
       const userId = req.params.userId;
-      if (!season) {
-        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+      const edition = req.params.edition || process.env.EDITION;
+
+      if (!edition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+
+      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
+      if (editionId === 0) {
+        throw new AppError("Parâmetro inválido", 400, ErrorCode.INVALID_INPUT);
       }
 
       if (!userId) {
-        const response: IUser[] = await this.userService.getBySeason(parseInt(season));
-        return response;
+        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
       } else {
-        const response: IUser = await this.userService.getById(parseInt(userId));
+        const response = await this.userService.getById(parseInt(userId), editionId);
         return response;
       }
     });
@@ -86,6 +101,12 @@ export class UserController extends BaseController {
 
   login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
+      const edition = req.params.edition || process.env.EDITION;
+
+      if (!edition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+
       if (req.session.user) {
         return req.session.user;
       }
@@ -96,11 +117,13 @@ export class UserController extends BaseController {
         throw new AppError("Credenciais inválidas", 401, ErrorCode.UNAUTHORIZED);
       }
 
-      const response: IUser[] = await this.userService.login(email, password);
-      if (response.length > 0) {
-        const user: IUser | null = response[0];
-        req.session.user = user;
-        await this.userService.updateLastOnlineTime(user.id);
+      const response = await this.userService.login(email, password, parseInt(edition));
+      if (response) {
+        const user = response;
+        void this.userService.updateLastOnlineTime(user.id);
+
+        user.timestamp = Date.now();
+        req.session.user = response;
         return user;
       } else {
         throw new AppError("Credenciais inválidas", 401, ErrorCode.UNAUTHORIZED);
@@ -129,52 +152,41 @@ export class UserController extends BaseController {
 
   register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const season = req.params.season || process.env.SEASON;
+      const edition = req.params.edition || process.env.EDITION;
+      if (!edition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
 
-      if (!season) {
+      const reqBody = req.body as { email: string; name: string; nickname: string; password: string };
+      const { email, name, nickname, password } = reqBody;
+
+      if (!email || !password || !name || !nickname) {
         throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
       }
 
-      const reqBody = req.body as {
-        color: string;
-        email: string;
-        fullName: string;
-        icon: string;
-        name: string;
-        password: string;
-      };
-      const { color, email, fullName, icon, name, password } = reqBody;
-
-      if (!email || !password || !name || !fullName) {
-        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-      }
-
-      const isValid = await checkExistingEntries(this.userService, email, name);
+      const isValid = await checkExistingEntries(this.userService, email, nickname);
       if (!isValid) {
-        throw new AppError("Email ou nome já registrado", 409, ErrorCode.VALIDATION_ERROR);
+        throw new AppError("Email ou apelido já registrado", 409, ErrorCode.VALIDATION_ERROR);
       }
 
-      const registerResponse = await this.userService.register(email, fullName, name, password);
+      const registerResponse = await this.userService.register(email, name, nickname, password);
       if (registerResponse.affectedRows === 0) {
         throw new AppError("Registro falhou", 500, ErrorCode.DB_ERROR);
       }
 
       const { insertId } = registerResponse;
-      const [setOnCurrentSeasonResponse, setIconsResponse] = await Promise.allSettled([
-        this.userService.setOnCurrentSeason(parseInt(season), insertId),
-        this.userService.setIcons(insertId, icon, color),
-      ]);
+      const setOnCurrentSeasonResponse = await this.userService.setOnCurrentSeason(parseInt(edition), insertId);
 
-      if (isRejected(setOnCurrentSeasonResponse) || isRejected(setIconsResponse)) {
-        throw new AppError("Base de dados inacessível", 204, ErrorCode.DB_ERROR);
+      if (setOnCurrentSeasonResponse.affectedRows === 0) {
+        throw new AppError("Registro falhou (edição)", 204, ErrorCode.DB_ERROR);
       }
 
-      const loginResponse: IUser[] = await this.userService.login(email, password);
+      const loginResponse = await this.userService.login(email, password, parseInt(edition));
 
-      if (loginResponse.length > 0) {
-        req.session.user = loginResponse[0];
-        void this.userService.updateLastOnlineTime(loginResponse[0].id);
-        return loginResponse[0];
+      if (loginResponse) {
+        req.session.user = loginResponse;
+        void this.userService.updateLastOnlineTime(loginResponse.id);
+        return loginResponse;
       }
 
       return;
@@ -183,95 +195,123 @@ export class UserController extends BaseController {
 
   updatePassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      if (!req.session.user) {
-        throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
-      }
+      const reqBody = req.body as { currentPassword: string; email: string; newPassword: string; token: string };
+      const { currentPassword, email, newPassword, token } = reqBody;
 
-      const user = req.session.user;
-      const reqBody = req.body as { currentPassword: string; newPassword: string };
-      const { currentPassword, newPassword } = reqBody;
+      if (token) {
+        // If token is provided, it's a password reset request
+        if (!email || !newPassword) {
+          throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
 
-      if (!currentPassword || !newPassword) {
+        const cachedToken = cachedInfo.get(`PASSWORD_RESET_${email}`);
+        if (cachedToken !== token) {
+          throw new AppError("Token inválido ou expirado", 409, ErrorCode.VALIDATION_ERROR);
+        }
+
+        const user = await this.userService.getByEmail(email);
+        if (user) {
+          cachedInfo.del(`PASSWORD_RESET_${email}`);
+          void this.userService.updateLastOnlineTime(user.id);
+          return await this.userService.updatePasswordFromToken(newPassword, user.id);
+        }
+
+        return null;
+      } else if (currentPassword) {
+        // If currentPassword is provided, it's a regular password update request
+        if (!req.session.user) {
+          throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
+        }
+        if (!newPassword) {
+          throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+        const user = req.session.user;
+        void this.userService.updateLastOnlineTime(user.id);
+
+        const updatePasswordResponse = await this.userService.updatePassword(currentPassword, newPassword, user.id);
+        if (updatePasswordResponse.affectedRows === 0) {
+          throw new AppError("Senha incorreta", 409, ErrorCode.INVALID_PASSWORD);
+        }
+
+        return;
+      } else {
         throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
       }
-
-      void this.userService.updateLastOnlineTime(user.id);
-
-      const updatePasswordResponse = await this.userService.updatePassword(currentPassword, newPassword, user.id);
-      if (updatePasswordResponse.affectedRows === 0) {
-        throw new AppError("Senha incorreta", 409, ErrorCode.VALIDATION_ERROR);
-      }
-
-      return;
-    });
-  };
-
-  updatePasswordFromToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    await this.handleRequest(req, res, next, async () => {
-      const reqBody = req.body as { email: string; newPassword: string; token: string };
-      const { email, newPassword, token } = reqBody;
-
-      if (!email || !token || !newPassword) {
-        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-      }
-
-      // void this.userService.updateLastOnlineTime(user.id);
-      const cachedToken = cachedInfo.get(`PASSWORD_RESET_${email}`);
-      if (cachedToken !== token) {
-        throw new AppError("Token inválido ou expirado", 409, ErrorCode.VALIDATION_ERROR);
-      }
-
-      const user = await this.userService.getByEmail(email);
-
-      cachedInfo.del(`PASSWORD_RESET_${email}`);
-      return await this.userService.updatePasswordFromToken(newPassword, user.id);
-    });
-  };
-
-  updatePreferences = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    await this.handleRequest(req, res, next, async () => {
-      if (!req.session.user) {
-        throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
-      }
-
-      const user = req.session.user;
-
-      void this.userService.updateLastOnlineTime(user.id);
-
-      const reqBody = req.body as { color: string; icon: string };
-      const { color, icon } = reqBody;
-      await this.userService.setIcons(user.id, color, icon);
-      return await this.userService.getById(user.id);
     });
   };
 
   updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      if (!req.session.user) {
+      const user = req.session.user;
+      if (!user) {
         throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
       }
 
-      const user = req.session.user;
-      void this.userService.updateLastOnlineTime(user.id);
+      const edition = req.params.edition || process.env.EDITION;
+      if (!edition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
 
-      const reqBody = req.body as { email: string; name: string; username: string };
-      const { email, name, username } = reqBody;
+      const reqBody = req.body as { name: string; nickname: string };
+      const { name, nickname } = reqBody;
 
-      if (!email || !name || !username) {
+      if (!name || !nickname) {
         throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
       }
 
-      if (!validateEmail(email)) {
-        throw new AppError("Email inválido", 409, ErrorCode.VALIDATION_ERROR);
-      }
-
-      const isValid = await checkExistingEntries(this.userService, email, username, user.id);
+      const isValid = await checkExistingEntries(this.userService, user.email, nickname, user.id);
       if (!isValid) {
-        throw new AppError("Email ou nome de usuário já em uso", 409, ErrorCode.VALIDATION_ERROR);
+        throw new AppError("Email ou apelido já registrado", 409, ErrorCode.VALIDATION_ERROR);
       }
 
-      await this.userService.updateProfile(email, name, username, user.id);
-      return await this.userService.getById(user.id);
+      void this.userService.updateLastOnlineTime(user.id);
+
+      const updateProfileResponse = await this.userService.updateProfile(user.id, name, nickname);
+      if (updateProfileResponse.affectedRows > 0) {
+        // update session data
+        user.name = name;
+        user.nickname = nickname;
+        req.session.user = user;
+
+        // clear cached rankings to reflect name change
+        clearRankingCache();
+
+        return req.session.user;
+      }
+
+      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
+
+      return await this.userService.getById(user.id, editionId);
     });
   };
+
+  // updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  //   await this.handleRequest(req, res, next, async () => {
+  //     if (!req.session.user) {
+  //       throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
+  //     }
+
+  //     const user = req.session.user;
+  //     void this.userService.updateLastOnlineTime(user.id);
+
+  //     const reqBody = req.body as { email: string; name: string; username: string };
+  //     const { email, name, username } = reqBody;
+
+  //     if (!email || !name || !username) {
+  //       throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+  //     }
+
+  //     if (!validateEmail(email)) {
+  //       throw new AppError("Email inválido", 409, ErrorCode.VALIDATION_ERROR);
+  //     }
+
+  //     const isValid = await checkExistingEntries(this.userService, email, username, user.id);
+  //     if (!isValid) {
+  //       throw new AppError("Email ou nome de usuário já em uso", 409, ErrorCode.VALIDATION_ERROR);
+  //     }
+
+  //     await this.userService.updateProfile(email, name, username, user.id);
+  //     return await this.userService.getById(user.id);
+  //   });
+  // };
 }

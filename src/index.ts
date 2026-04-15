@@ -1,4 +1,5 @@
 // import { connection } from "#database/db.js";
+import { MatchSyncService } from "#match/match.sync.service.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
 
 import app from "./app.js";
@@ -11,9 +12,16 @@ const server = app.listen(port, () => {
 
 WebSocketService.getInstance(server);
 
+// Start the match sync service
+const matchSyncService = MatchSyncService.getInstance();
+matchSyncService.start();
+
 // Graceful shutdown handler
 const shutdown = () => {
   console.warn("Shutdown signal received");
+
+  // Stop match sync service
+  matchSyncService.stop();
 
   // Add WebSocket cleanup
   const wsService = WebSocketService.getInstance();

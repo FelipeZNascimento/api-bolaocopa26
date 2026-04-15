@@ -1,15 +1,14 @@
-import type { IExtraBet } from "#bet/bet.types.js";
-import type { ITeam } from "#team/team.types.js";
+import type { IExtraBetRaw, IExtraBetResultRaw } from "#bet/bet.types.js";
+import type { IPlayer, ITeam } from "#team/team.types.js";
 
 import { BetService } from "#bet/bet.service.js";
-import { processExtraBets } from "#bet/bet.utils.js";
+import { groupExtraBetsByType, parseExtraBetResult, parseExtraBets } from "#bet/bet.utils.js";
 import { MatchService } from "#match/match.service.js";
 import { BaseController } from "#shared/base.controller.js";
 import { TeamService } from "#team/team.service.js";
-import { getFromCacheOrFetch } from "#team/team.util.js";
+import { getPlayersFromCacheOrFetch, getTeamsFromCacheOrFetch } from "#team/team.util.js";
 import { UserService } from "#user/user.service.js";
-import { AppError } from "#utils/appError.js";
-import { ErrorCode } from "#utils/errorCodes.js";
+import { checkEdition } from "#utils/checkEdition.js";
 import { NextFunction, Request, Response } from "express";
 
 export class BetController extends BaseController {
@@ -27,29 +26,21 @@ export class BetController extends BaseController {
       if (req.session.user) {
         void this.userService.updateLastOnlineTime(req.session.user.id);
       }
+      const { edition, editionStart } = checkEdition(req.params.season);
 
-      const season = req.params.season || process.env.SEASON;
-      const seasonStart = process.env.SEASON_START;
-      if (!seasonStart) {
-        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      // Check to prevent fetching extras if season hasn't started yet
+      const nowTimestamp = Math.floor(new Date().getTime() / 1000);
+      if (nowTimestamp < editionStart) {
+        return {
+          bets: [],
+        };
       }
 
-      if (!season) {
-        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-      }
+      const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
+      const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, edition, teams);
+      const extraBets: IExtraBetRaw[] = await this.betService.getExtras(edition, editionStart);
 
-      const extraBets: IExtraBet[] = await this.betService.getExtras(parseInt(season), parseInt(seasonStart));
-      const teams: ITeam[] = await getFromCacheOrFetch(this.teamService);
-
-      return extraBets.map((bet) => ({
-        bets: processExtraBets(extraBets.find((b) => b.idUser === bet.idUser)?.json ?? "", teams),
-        user: {
-          color: bet.userColor,
-          icon: bet.userIcon,
-          id: bet.idUser,
-          name: bet.userName,
-        },
-      }));
+      return groupExtraBetsByType(extraBets, parseExtraBets, players, teams, "bets");
     });
   };
 
@@ -59,84 +50,66 @@ export class BetController extends BaseController {
         void this.userService.updateLastOnlineTime(req.session.user.id);
       }
 
-      const season = req.params.season || process.env.SEASON;
-      const seasonStart = process.env.SEASON_START;
+      const { edition, editionStart } = checkEdition(req.params.season);
+      const extraBetsResults: IExtraBetResultRaw[] = await this.betService.getExtrasResults(edition, editionStart);
+      const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
+      const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, edition, teams);
 
-      if (!seasonStart) {
-        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
-      }
-
-      if (!season) {
-        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-      }
-
-      const extraBetsResults: IExtraBet[] | undefined = await this.betService.getExtrasResults(
-        parseInt(season),
-        parseInt(seasonStart),
-      );
-      const teams: ITeam[] = await getFromCacheOrFetch(this.teamService);
-
-      if (!extraBetsResults || extraBetsResults.length === 0) {
-        return {
-          bets: [],
-        };
-      }
-
-      return processExtraBets(extraBetsResults[0].json, teams);
+      return groupExtraBetsByType(extraBetsResults, parseExtraBetResult, players, teams, "results");
     });
   };
 
-  update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    await this.handleRequest(req, res, next, async () => {
-      if (!req.session.user) {
-        throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
-      }
+  //   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  //     await this.handleRequest(req, res, next, async () => {
+  //       if (!req.session.user) {
+  //         throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
+  //       }
 
-      const user = req.session.user;
+  //       const user = req.session.user;
 
-      void this.userService.updateLastOnlineTime(user.id);
+  //       void this.userService.updateLastOnlineTime(user.id);
 
-      const reqBody = req.body as { betValue: number; matchId: number };
-      const { betValue, matchId } = reqBody;
+  //       const reqBody = req.body as { betValue: number; matchId: number };
+  //       const { betValue, matchId } = reqBody;
 
-      const matchResponse = await this.matchService.getTimestampByMatchId(matchId);
-      const nowTimestamp = Math.floor(new Date().getTime() / 1000);
-      if (matchResponse && matchResponse.timestamp < nowTimestamp) {
-        throw new AppError("Não autorizado a fazer apostas nesta partida", 401, ErrorCode.UNAUTHORIZED);
-      }
+  //       const matchResponse = await this.matchService.getTimestampByMatchId(matchId);
+  //       const nowTimestamp = Math.floor(new Date().getTime() / 1000);
+  //       if (matchResponse && matchResponse.timestamp < nowTimestamp) {
+  //         throw new AppError("Não autorizado a fazer apostas nesta partida", 401, ErrorCode.UNAUTHORIZED);
+  //       }
 
-      if (matchResponse) {
-        await this.betService.update(betValue, matchId, user.id);
-        return {}; // to satisfy void response
-      }
-    });
-  };
+  //       if (matchResponse) {
+  //         await this.betService.update(betValue, matchId, user.id);
+  //         return {}; // to satisfy void response
+  //       }
+  //     });
+  //   };
 
-  updateExtra = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    await this.handleRequest(req, res, next, async () => {
-      if (!req.session.user) {
-        throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
-      }
+  //   updateExtra = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  //     await this.handleRequest(req, res, next, async () => {
+  //       if (!req.session.user) {
+  //         throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
+  //       }
 
-      const user = req.session.user;
-      const nowTimestamp = Math.floor(new Date().getTime() / 1000);
-      const seasonStart = process.env.SEASON_START;
-      const season = process.env.SEASON;
+  //       const user = req.session.user;
+  //       const nowTimestamp = Math.floor(new Date().getTime() / 1000);
+  //       const seasonStart = process.env.SEASON_START;
+  //       const season = process.env.SEASON;
 
-      void this.userService.updateLastOnlineTime(user.id);
+  //       void this.userService.updateLastOnlineTime(user.id);
 
-      const reqBody = req.body as Record<string, null | number | number[]>;
-      const newExtraBets = reqBody;
+  //       const reqBody = req.body as Record<string, null | number | number[]>;
+  //       const newExtraBets = reqBody;
 
-      if (!seasonStart || !season) {
-        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
-      }
+  //       if (!seasonStart || !season) {
+  //         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+  //       }
 
-      if (nowTimestamp >= parseInt(seasonStart)) {
-        throw new AppError("Não autorizado! A temporada já começou.", 401, ErrorCode.UNAUTHORIZED);
-      }
+  //       if (nowTimestamp >= parseInt(seasonStart)) {
+  //         throw new AppError("Não autorizado! A temporada já começou.", 401, ErrorCode.UNAUTHORIZED);
+  //       }
 
-      await this.betService.updateExtras(JSON.stringify(newExtraBets), user.id, season);
-    });
-  };
+  //       await this.betService.updateExtras(JSON.stringify(newExtraBets), user.id, season);
+  //     });
+  //   };
 }
