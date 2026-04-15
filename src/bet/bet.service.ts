@@ -10,14 +10,11 @@ export class BetService {
         extra_bets.id_player as playerId, extra_bets.timestamp,
         users.nickname as nickname, users.name as name,
         users_edition.is_active as isActive,
-        players.name as playerName, players.number as playerNumber,
-        players.date_of_birth as playerBirth, players.height as playerHeight, players.weight as playerWeight,
-        positions.id as positionId, positions.description as positionDescription, positions.abbreviation as positionAbbreviation
+        players.id as playerId
         FROM extra_bets
         LEFT JOIN users ON extra_bets.id_user = users.id
         LEFT JOIN users_edition ON extra_bets.id_user = users_edition.id_user
         LEFT JOIN players ON players.id = extra_bets.id_player
-        LEFT JOIN positions ON positions.id = players.id_position
         WHERE extra_bets.id_edition = ? AND users_edition.is_active = 1 AND ? < UNIX_TIMESTAMP()`,
       [edition, editionStart],
     );
@@ -29,12 +26,9 @@ export class BetService {
     const row = await db.query(
       `SELECT extra_bets_results.id_player as playerId, extra_bets_results.id_team as teamId,
         extra_bets_results.id_type as extraType,
-        players.name as playerName, players.number as playerNumber,
-        players.date_of_birth as playerBirth, players.height as playerHeight, players.weight as playerWeight,
-        positions.id as positionId, positions.description as positionDescription, positions.abbreviation as positionAbbreviation
+        players.id as playerId
         FROM extra_bets_results
         LEFT JOIN players ON players.id = extra_bets_results.id_player
-        LEFT JOIN positions ON positions.id = players.id_position
         WHERE extra_bets_results.id_edition = ? AND ? < UNIX_TIMESTAMP()`,
       [season, editionStart],
     );

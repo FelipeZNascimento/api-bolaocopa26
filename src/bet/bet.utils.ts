@@ -1,10 +1,11 @@
-import type { ITeam } from "#team/team.types.js";
+import type { IPlayer, ITeam } from "#team/team.types.js";
 
 import { EXTRA_TYPES } from "./bet.constants";
 import { IBet, IBetRaw, IExtraBetRaw, IExtraBetResultRaw } from "./bet.types";
 
-export const parseExtraBetResult = (extraBetResult: IExtraBetResultRaw, teams: ITeam[]) => {
+export const parseExtraBetResult = (extraBetResult: IExtraBetResultRaw, players: IPlayer[], teams: ITeam[]) => {
   const team = teams.find((t) => t.id === extraBetResult.teamId);
+  const player = players.find((p) => p.id === extraBetResult.playerId);
 
   if (!team) {
     throw new Error(`Team with id ${extraBetResult.teamId.toString()} not found`);
@@ -12,25 +13,14 @@ export const parseExtraBetResult = (extraBetResult: IExtraBetResultRaw, teams: I
 
   return {
     extraType: extraBetResult.extraType,
-    player: {
-      dateOfBirth: extraBetResult.playerBirth,
-      height: extraBetResult.playerHeight,
-      id: extraBetResult.playerId,
-      name: extraBetResult.playerName,
-      number: extraBetResult.playerNumber,
-      position: {
-        abbreviation: extraBetResult.positionAbbreviation,
-        description: extraBetResult.positionDescription,
-        id: extraBetResult.positionId,
-      },
-      weight: extraBetResult.playerWeight,
-    },
+    player: player ?? null,
     team: team,
   };
 };
 
-export const parseExtraBets = (extraBets: IExtraBetRaw, teams: ITeam[]) => {
+export const parseExtraBets = (extraBets: IExtraBetRaw, players: IPlayer[], teams: ITeam[]) => {
   const team = teams.find((t) => t.id === extraBets.teamId);
+  const player = players.find((p) => p.id === extraBets.playerId);
 
   if (!team) {
     throw new Error(`Team with id ${extraBets.teamId.toString()} not found`);
@@ -39,19 +29,7 @@ export const parseExtraBets = (extraBets: IExtraBetRaw, teams: ITeam[]) => {
   return {
     extraType: extraBets.extraType,
     id: extraBets.id,
-    player: {
-      dateOfBirth: extraBets.playerBirth,
-      height: extraBets.playerHeight,
-      id: extraBets.playerId,
-      name: extraBets.playerName,
-      number: extraBets.playerNumber,
-      position: {
-        abbreviation: extraBets.positionAbbreviation,
-        description: extraBets.positionDescription,
-        id: extraBets.positionId,
-      },
-      weight: extraBets.playerWeight,
-    },
+    player: player ?? null,
     team: team,
     timestamp: extraBets.timestamp,
     user: {
@@ -83,14 +61,15 @@ export const parseRawBets = (rawBets: IBetRaw[]) => {
 
 export const groupExtraBetsByType = <TRaw extends { extraType: number }, TFormatted, TKey extends string = "bets">(
   rawBets: TRaw[],
-  parser: (bet: TRaw, teams: ITeam[]) => TFormatted,
+  parser: (bet: TRaw, players: IPlayer[], teams: ITeam[]) => TFormatted,
+  players: IPlayer[],
   teams: ITeam[],
   resultsKey: TKey = "bets" as TKey,
 ): (Record<TKey, TFormatted[]> & { description: string; extraType: number })[] => {
   const groupedByExtraType = new Map<number, TFormatted[]>();
 
   rawBets.forEach((bet) => {
-    const formattedBet = parser(bet, teams);
+    const formattedBet = parser(bet, players, teams);
 
     const existing = groupedByExtraType.get(bet.extraType);
     if (existing) {

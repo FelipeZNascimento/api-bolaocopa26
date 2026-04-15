@@ -1,12 +1,12 @@
 import type { IExtraBetRaw, IExtraBetResultRaw } from "#bet/bet.types.js";
-import type { ITeam } from "#team/team.types.js";
+import type { IPlayer, ITeam } from "#team/team.types.js";
 
 import { BetService } from "#bet/bet.service.js";
 import { groupExtraBetsByType, parseExtraBetResult, parseExtraBets } from "#bet/bet.utils.js";
 import { MatchService } from "#match/match.service.js";
 import { BaseController } from "#shared/base.controller.js";
 import { TeamService } from "#team/team.service.js";
-import { getTeamsFromCacheOrFetch } from "#team/team.util.js";
+import { getPlayersFromCacheOrFetch, getTeamsFromCacheOrFetch } from "#team/team.util.js";
 import { UserService } from "#user/user.service.js";
 import { checkEdition } from "#utils/checkEdition.js";
 import { NextFunction, Request, Response } from "express";
@@ -36,10 +36,11 @@ export class BetController extends BaseController {
         };
       }
 
-      const extraBets: IExtraBetRaw[] = await this.betService.getExtras(edition, editionStart);
       const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
+      const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, edition, teams);
+      const extraBets: IExtraBetRaw[] = await this.betService.getExtras(edition, editionStart);
 
-      return groupExtraBetsByType(extraBets, parseExtraBets, teams, "bets");
+      return groupExtraBetsByType(extraBets, parseExtraBets, players, teams, "bets");
     });
   };
 
@@ -52,8 +53,9 @@ export class BetController extends BaseController {
       const { edition, editionStart } = checkEdition(req.params.season);
       const extraBetsResults: IExtraBetResultRaw[] = await this.betService.getExtrasResults(edition, editionStart);
       const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
+      const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, edition, teams);
 
-      return groupExtraBetsByType(extraBetsResults, parseExtraBetResult, teams, "results");
+      return groupExtraBetsByType(extraBetsResults, parseExtraBetResult, players, teams, "results");
     });
   };
 

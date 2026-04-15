@@ -93,7 +93,7 @@ export const calculateExtraBets = (
   const hasOffenseMatch =
     offenseBet && extraBetsResults.offense.some((result) => result.team.id === offenseBet.team.id);
   const hasStrikerMatch =
-    strikerBet && extraBetsResults.striker.some((result) => result.player.id === strikerBet.player.id);
+    strikerBet && extraBetsResults.striker.some((result) => result.player?.id === strikerBet.player?.id);
 
   return {
     champion: hasChampionMatch ? AWARD_POINTS.extraChampion : 0,
@@ -367,4 +367,11 @@ const addPositioning = (ranking: ICalculatedRankingLine[], isAccumulated = false
   }
 
   return rankingWithPosition;
+};
+
+export const clearRankingCache = () => {
+  const rankingCachePrefix = String(CACHE_KEYS.WEEKLY_RANKING) + "_";
+  const allKeys = cachedInfo.keys();
+  const rankingKeys = allKeys.filter((key) => key.startsWith(rankingCachePrefix));
+  rankingKeys.forEach((key) => cachedInfo.del(key));
 };

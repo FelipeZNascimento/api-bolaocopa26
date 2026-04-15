@@ -1,10 +1,11 @@
 import type { IUser } from "#user/user.types.js";
 
 import { MailerService } from "#mailer/mailer.service.js";
+import { clearRankingCache } from "#ranking/ranking.utils.js";
 import { BaseController } from "#shared/base.controller.js";
 import { UserService } from "#user/user.service.js";
-// import { checkExistingEntries, generateVerificationToken, validateEmail } from "#user/user.utils.js";
-// import { isRejected } from "#utils/apiResponse.js";
+import { checkExistingEntries } from "#user/user.utils.js";
+// import { generateVerificationToken, validateEmail } from "#user/user.utils.js";
 import { AppError } from "#utils/appError.js";
 import { cachedInfo } from "#utils/dataCache.js";
 import { editionMapping } from "#utils/editionMapping.js";
@@ -149,127 +150,140 @@ export class UserController extends BaseController {
     });
   };
 
-  // register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  //   await this.handleRequest(req, res, next, async () => {
-  //     const season = req.params.season || process.env.SEASON;
-
-  //     if (!season) {
-  //       throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-  //     }
-
-  //     const reqBody = req.body as {
-  //       color: string;
-  //       email: string;
-  //       fullName: string;
-  //       icon: string;
-  //       name: string;
-  //       password: string;
-  //     };
-  //     const { color, email, fullName, icon, name, password } = reqBody;
-
-  //     if (!email || !password || !name || !fullName) {
-  //       throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-  //     }
-
-  //     const isValid = await checkExistingEntries(this.userService, email, name);
-  //     if (!isValid) {
-  //       throw new AppError("Email ou nome já registrado", 409, ErrorCode.VALIDATION_ERROR);
-  //     }
-
-  //     const registerResponse = await this.userService.register(email, fullName, name, password);
-  //     if (registerResponse.affectedRows === 0) {
-  //       throw new AppError("Registro falhou", 500, ErrorCode.DB_ERROR);
-  //     }
-
-  //     const { insertId } = registerResponse;
-  //     const [setOnCurrentSeasonResponse, setIconsResponse] = await Promise.allSettled([
-  //       this.userService.setOnCurrentSeason(parseInt(season), insertId),
-  //       this.userService.setIcons(insertId, icon, color),
-  //     ]);
-
-  //     if (isRejected(setOnCurrentSeasonResponse) || isRejected(setIconsResponse)) {
-  //       throw new AppError("Base de dados inacessível", 204, ErrorCode.DB_ERROR);
-  //     }
-
-  //     const loginResponse: IUser[] = await this.userService.login(email, password);
-
-  //     if (loginResponse.length > 0) {
-  //       req.session.user = loginResponse[0];
-  //       void this.userService.updateLastOnlineTime(loginResponse[0].id);
-  //       return loginResponse[0];
-  //     }
-
-  //     return;
-  //   });
-  // };
-
-  // updatePassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  //   await this.handleRequest(req, res, next, async () => {
-  //     if (!req.session.user) {
-  //       throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
-  //     }
-
-  //     const user = req.session.user;
-  //     const reqBody = req.body as { currentPassword: string; newPassword: string };
-  //     const { currentPassword, newPassword } = reqBody;
-
-  //     if (!currentPassword || !newPassword) {
-  //       throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-  //     }
-
-  //     void this.userService.updateLastOnlineTime(user.id);
-
-  //     const updatePasswordResponse = await this.userService.updatePassword(currentPassword, newPassword, user.id);
-  //     if (updatePasswordResponse.affectedRows === 0) {
-  //       throw new AppError("Senha incorreta", 409, ErrorCode.VALIDATION_ERROR);
-  //     }
-
-  //     return;
-  //   });
-  // };
-
-  updatePassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const reqBody = req.body as { email: string; newPassword: string; token: string };
-      const { email, newPassword, token } = reqBody;
+      const edition = req.params.edition || process.env.EDITION;
+      if (!edition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
 
-      if (!email || !token || !newPassword) {
+      const reqBody = req.body as { email: string; name: string; nickname: string; password: string };
+      const { email, name, nickname, password } = reqBody;
+
+      if (!email || !password || !name || !nickname) {
         throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
       }
 
-      const cachedToken = cachedInfo.get(`PASSWORD_RESET_${email}`);
-      console.log("Cached token:", cachedToken, "Provided token:", token); // Debug log
-      if (cachedToken !== token) {
-        throw new AppError("Token inválido ou expirado", 409, ErrorCode.VALIDATION_ERROR);
+      const isValid = await checkExistingEntries(this.userService, email, nickname);
+      if (!isValid) {
+        throw new AppError("Email ou apelido já registrado", 409, ErrorCode.VALIDATION_ERROR);
       }
 
-      const user = await this.userService.getByEmail(email);
-      if (user) {
-        cachedInfo.del(`PASSWORD_RESET_${email}`);
-        void this.userService.updateLastOnlineTime(user.id);
-        return await this.userService.updatePasswordFromToken(newPassword, user.id);
+      const registerResponse = await this.userService.register(email, name, nickname, password);
+      if (registerResponse.affectedRows === 0) {
+        throw new AppError("Registro falhou", 500, ErrorCode.DB_ERROR);
       }
 
-      return null;
+      const { insertId } = registerResponse;
+      const setOnCurrentSeasonResponse = await this.userService.setOnCurrentSeason(parseInt(edition), insertId);
+
+      if (setOnCurrentSeasonResponse.affectedRows === 0) {
+        throw new AppError("Registro falhou (edição)", 204, ErrorCode.DB_ERROR);
+      }
+
+      const loginResponse = await this.userService.login(email, password, parseInt(edition));
+
+      if (loginResponse) {
+        req.session.user = loginResponse;
+        void this.userService.updateLastOnlineTime(loginResponse.id);
+        return loginResponse;
+      }
+
+      return;
     });
   };
 
-  // updatePreferences = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  //   await this.handleRequest(req, res, next, async () => {
-  //     if (!req.session.user) {
-  //       throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
-  //     }
+  updatePassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    await this.handleRequest(req, res, next, async () => {
+      const reqBody = req.body as { currentPassword: string; email: string; newPassword: string; token: string };
+      const { currentPassword, email, newPassword, token } = reqBody;
 
-  //     const user = req.session.user;
+      if (token) {
+        // If token is provided, it's a password reset request
+        if (!email || !newPassword) {
+          throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
 
-  //     void this.userService.updateLastOnlineTime(user.id);
+        const cachedToken = cachedInfo.get(`PASSWORD_RESET_${email}`);
+        if (cachedToken !== token) {
+          throw new AppError("Token inválido ou expirado", 409, ErrorCode.VALIDATION_ERROR);
+        }
 
-  //     const reqBody = req.body as { color: string; icon: string };
-  //     const { color, icon } = reqBody;
-  //     await this.userService.setIcons(user.id, color, icon);
-  //     return await this.userService.getById(user.id);
-  //   });
-  // };
+        const user = await this.userService.getByEmail(email);
+        if (user) {
+          cachedInfo.del(`PASSWORD_RESET_${email}`);
+          void this.userService.updateLastOnlineTime(user.id);
+          return await this.userService.updatePasswordFromToken(newPassword, user.id);
+        }
+
+        return null;
+      } else if (currentPassword) {
+        // If currentPassword is provided, it's a regular password update request
+        if (!req.session.user) {
+          throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
+        }
+        if (!newPassword) {
+          throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+        const user = req.session.user;
+        void this.userService.updateLastOnlineTime(user.id);
+
+        const updatePasswordResponse = await this.userService.updatePassword(currentPassword, newPassword, user.id);
+        if (updatePasswordResponse.affectedRows === 0) {
+          throw new AppError("Senha incorreta", 409, ErrorCode.INVALID_PASSWORD);
+        }
+
+        return;
+      } else {
+        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+      }
+    });
+  };
+
+  updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    await this.handleRequest(req, res, next, async () => {
+      const user = req.session.user;
+      if (!user) {
+        throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
+      }
+
+      const edition = req.params.edition || process.env.EDITION;
+      if (!edition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+
+      const reqBody = req.body as { name: string; nickname: string };
+      const { name, nickname } = reqBody;
+
+      if (!name || !nickname) {
+        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+      }
+
+      const isValid = await checkExistingEntries(this.userService, user.email, nickname, user.id);
+      if (!isValid) {
+        throw new AppError("Email ou apelido já registrado", 409, ErrorCode.VALIDATION_ERROR);
+      }
+
+      void this.userService.updateLastOnlineTime(user.id);
+
+      const updateProfileResponse = await this.userService.updateProfile(user.id, name, nickname);
+      if (updateProfileResponse.affectedRows > 0) {
+        // update session data
+        user.name = name;
+        user.nickname = nickname;
+        req.session.user = user;
+
+        // clear cached rankings to reflect name change
+        clearRankingCache();
+
+        return req.session.user;
+      }
+
+      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
+
+      return await this.userService.getById(user.id, editionId);
+    });
+  };
 
   // updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   //   await this.handleRequest(req, res, next, async () => {

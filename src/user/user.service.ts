@@ -51,17 +51,17 @@ export class UserService {
 
   async isEmailValid(email: string, userId?: number) {
     const [rows]: [{ count: number }] = await db.query(
-      `SELECT SQL_NO_CACHE COUNT(*) as count FROM users WHERE login = ? AND id <> ?`,
-      [email, userId],
+      `SELECT SQL_NO_CACHE COUNT(*) as count FROM users WHERE email = ?${userId ? " AND id != ?" : ""}`,
+      userId ? [email, userId] : [email],
     );
 
     return rows.count === 0;
   }
 
-  async isUsernameValid(name: string, userId?: number) {
+  async isNicknameValid(nickname: string, userId?: number) {
     const [rows]: [{ count: number }] = await db.query(
-      `SELECT SQL_NO_CACHE COUNT(*) as count FROM users WHERE name = ? AND id <> ?`,
-      [name, userId],
+      `SELECT SQL_NO_CACHE COUNT(*) as count FROM users WHERE nickname = ?${userId ? " AND id != ?" : ""}`,
+      userId ? [nickname, userId] : [nickname],
     );
 
     return rows.count === 0;
@@ -82,16 +82,14 @@ export class UserService {
     return row.length > 0 ? row[0] : null;
   }
 
-  // async register(email: string, fullName: string, name: string, password: string) {
-  //   const rows = (await db.query(`INSERT INTO users (login, password, full_name, name) VALUES (?, ?, ?, ?)`, [
-  //     email,
-  //     password,
-  //     fullName,
-  //     name,
-  //   ])) as ResultSetHeader;
+  async register(email: string, name: string, nickname: string, password: string) {
+    const rows: ResultSetHeader = await db.query(
+      `INSERT INTO users (email, password, name, nickname) VALUES (?, ?, ?, ?)`,
+      [email, password, name, nickname],
+    );
 
-  //   return rows;
-  // }
+    return rows;
+  }
 
   // async setIcons(id: number, color: string, icon: string) {
   //   const rows = (await db.query(
@@ -102,14 +100,14 @@ export class UserService {
   //   return rows;
   // }
 
-  // async setOnCurrentSeason(season: number, id: number) {
-  //   const rows = (await db.query(`INSERT INTO users_edition (id_user, id_season) VALUES (?, ?)`, [
-  //     id,
-  //     season,
-  //   ])) as ResultSetHeader;
+  async setOnCurrentSeason(edition: number, id: number) {
+    const rows: ResultSetHeader = await db.query(`INSERT INTO users_edition (id_user, id_edition) VALUES (?, ?)`, [
+      id,
+      edition,
+    ]);
 
-  //   return rows;
-  // }
+    return rows;
+  }
 
   async updateLastOnlineTime(id: number) {
     if (id === 0) {
@@ -121,17 +119,17 @@ export class UserService {
     return rows;
   }
 
-  // async updatePassword(newPassword: string, currentPassword: string, id: number) {
-  //   const rows = (await db.query(
-  //     `UPDATE users
-  //       SET password = ?
-  //       WHERE id = ?
-  //       AND password = ?`,
-  //     [newPassword, id, currentPassword],
-  //   )) as ResultSetHeader;
+  async updatePassword(currentPassword: string, newPassword: string, id: number) {
+    const rows: ResultSetHeader = await db.query(
+      `UPDATE users
+        SET users.password = ?
+        WHERE users.id = ?
+        AND users.password = ?`,
+      [newPassword, id, currentPassword],
+    );
 
-  //   return rows;
-  // }
+    return rows;
+  }
 
   async updatePasswordFromToken(newPassword: string, id: number) {
     const rows: ResultSetHeader = await db.query(
@@ -144,16 +142,15 @@ export class UserService {
     return rows;
   }
 
-  // async updateProfile(email: string, name: string, username: string, id: number) {
-  //   const rows = (await db.query(
-  //     `UPDATE users
-  //       SET name = ?,
-  //       full_name = ?,
-  //       login = ?
-  //       WHERE id = ?`,
-  //     [username, name, email, id],
-  //   )) as ResultSetHeader;
+  async updateProfile(id: number, name: string, nickname: string) {
+    const rows: ResultSetHeader = await db.query(
+      `UPDATE users
+        SET name = ?,
+        nickname = ?
+        WHERE id = ?`,
+      [name, nickname, id],
+    );
 
-  //   return rows;
-  // }
+    return rows;
+  }
 }

@@ -1,4 +1,4 @@
-import type { IConfederation, ITeam } from "#team/team.types.js";
+import type { ITeam } from "#team/team.types.js";
 
 import { BaseController } from "#shared/base.controller.js";
 import { TeamService } from "#team/team.service.js";
@@ -8,7 +8,7 @@ import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { NextFunction, Request, Response } from "express";
 
-import { getConfederationsFromCacheOrFetch, getTeamsFromCacheOrFetch } from "./team.util";
+import { getTeamsFromCacheOrFetch } from "./team.util";
 
 export class TeamController extends BaseController {
   constructor(private teamService: TeamService) {
@@ -31,15 +31,10 @@ export class TeamController extends BaseController {
       }
 
       let formattedTeams: ITeam[] = [];
-      let confederations: IConfederation[] = cachedInfo.get(CACHE_KEYS.CONFEDERATIONS) ?? [];
 
       if (editionId === currentEdition) {
         console.log("Returning teams from cache");
         formattedTeams = cachedInfo.get(CACHE_KEYS.TEAMS) ?? [];
-      }
-
-      if (confederations.length === 0) {
-        confederations = await getConfederationsFromCacheOrFetch(this.teamService);
       }
 
       if (formattedTeams.length === 0) {

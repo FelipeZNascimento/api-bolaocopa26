@@ -23,11 +23,16 @@ export const getTeamsFromCacheOrFetch = async (
   console.log("Returning teams from DB fetch");
   const teamsRaw = await teamService.getAll(requestedEdition);
   const confederations = await getConfederationsFromCacheOrFetch(teamService);
-
-  const formattedTeams = teamsRaw.map((team) => ({
+  let formattedTeams = teamsRaw.map((team) => ({
     ...team,
     colors: team.colorsRaw.split(",").map((color: string) => color.trim()),
     confederation: confederations.find((conf) => conf.id === team.idConfederation) ?? null,
+  }));
+  const players = await getPlayersFromCacheOrFetch(teamService, requestedEdition, formattedTeams);
+
+  formattedTeams = formattedTeams.map((team) => ({
+    ...team,
+    players: players.filter((player) => player.team?.id === team.id),
   }));
 
   setTeamsCache(formattedTeams);

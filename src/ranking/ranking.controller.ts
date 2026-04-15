@@ -8,8 +8,8 @@ import { IMatch, IMatchRaw } from "#match/match.types.js";
 import { parseRawMatch } from "#match/match.utils.js";
 import { BaseController } from "#shared/base.controller.js";
 import { TeamService } from "#team/team.service.js";
-import { ITeam } from "#team/team.types.js";
-import { getTeamsFromCacheOrFetch } from "#team/team.util.js";
+import { IPlayer, ITeam } from "#team/team.types.js";
+import { getPlayersFromCacheOrFetch, getTeamsFromCacheOrFetch } from "#team/team.util.js";
 import { UserService } from "#user/user.service.js";
 import { IUser } from "#user/user.types.js";
 import { isFulfilled, isRejected } from "#utils/apiResponse.js";
@@ -67,6 +67,7 @@ export class RankingController extends BaseController {
       }
 
       const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
+      const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, edition, teams);
       const extraBets = {
         champion: [] as IExtraBet[],
         defense: [] as IExtraBet[],
@@ -74,7 +75,7 @@ export class RankingController extends BaseController {
         striker: [] as IExtraBet[],
       };
       if (isFulfilled(extrasResponse)) {
-        const groupedExtraBets = groupExtraBetsByType(extrasResponse.value, parseExtraBets, teams, "bets");
+        const groupedExtraBets = groupExtraBetsByType(extrasResponse.value, parseExtraBets, players, teams, "bets");
         extraBets.champion = groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_CHAMPION)?.bets ?? [];
         extraBets.striker = groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_STRIKER)?.bets ?? [];
         extraBets.offense = groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_OFFENSE)?.bets ?? [];
@@ -91,6 +92,7 @@ export class RankingController extends BaseController {
         const groupedExtraBetsResults = groupExtraBetsByType(
           extrasResultsResponse.value,
           parseExtraBetResult,
+          players,
           teams,
           "results",
         );
