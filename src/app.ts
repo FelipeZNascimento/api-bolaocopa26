@@ -1,4 +1,3 @@
-// import betRoutes from "#bet/bet.routes.js";
 import betRoutes from "#bet/bet.routes.js";
 import config from "#database/config.js";
 import { connection } from "#database/db.js";
@@ -84,13 +83,6 @@ app.use("/bet", betRoutes);
 app.use("/user", userRoutes);
 app.use("/season", seasonRoutes);
 app.use("/ranking", rankingRoutes);
-
-// app.use("/bolaonflv2/season", seasonRoutes);
-// app.use("/bolaonflv2/bet", betRoutes);
-// app.use("/bolaonflv2/ranking", rankingRoutes);
-// app.use("/bolaonflv2/user", userRoutes);
-// app.use("/bolaonflv2/match", matchRoutes);
-// app.use("/bolaonflv2/team", cache(), teamRoutes);
 
 app.get("/", [middleware]);
 
