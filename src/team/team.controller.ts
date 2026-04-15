@@ -2,8 +2,13 @@ import type { ITeam } from "#team/team.types.js";
 
 import { BaseController } from "#shared/base.controller.js";
 import { TeamService } from "#team/team.service.js";
+import { AppError } from "#utils/appError.js";
 import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
+import { editionMapping } from "#utils/editionMapping.js";
+import { ErrorCode } from "#utils/errorCodes.js";
 import { NextFunction, Request, Response } from "express";
+
+import { getTeamsFromCacheOrFetch } from "./team.util";
 
 export class TeamController extends BaseController {
   constructor(private teamService: TeamService) {
@@ -12,58 +17,51 @@ export class TeamController extends BaseController {
 
   getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      let teams: ITeam[] = cachedInfo.get(CACHE_KEYS.TEAMS) ?? [];
+      const currentEdition = process.env.EDITION ? parseInt(process.env.EDITION) : null;
+      const edition = parseInt(req.params.edition) || currentEdition;
 
-      if (teams.length === 0) {
-        teams = await this.teamService.getAll();
-        cachedInfo.set(CACHE_KEYS.TEAMS, teams);
+      if (!currentEdition || !edition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
 
-      return teams;
+      const editionId = edition && edition < 2000 ? edition : editionMapping(edition);
+
+      if (editionId === 0) {
+        throw new AppError("Parâmetro inválido", 400, ErrorCode.INVALID_INPUT);
+      }
+
+      let formattedTeams: ITeam[] = [];
+
+      if (editionId === currentEdition) {
+        console.log("Returning teams from cache");
+        formattedTeams = cachedInfo.get(CACHE_KEYS.TEAMS) ?? [];
+      }
+
+      if (formattedTeams.length === 0) {
+        formattedTeams = await getTeamsFromCacheOrFetch(this.teamService, editionId);
+      }
+
+      return formattedTeams;
     });
   };
-  getByConferenceAndDivision = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    await this.handleRequest(req, res, next, async () => {
-      let teams: ITeam[] = cachedInfo.get(CACHE_KEYS.TEAMS) ?? [];
 
-      if (teams.length === 0) {
-        teams = await this.teamService.getAll();
-        cachedInfo.set(CACHE_KEYS.TEAMS, teams);
+  getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    console.log("Getting by ID");
+    await this.handleRequest(req, res, next, async () => {
+      const teamId = req.params.teamId;
+      const currentEdition = process.env.EDITION;
+      console.log("Getting by ID", teamId, currentEdition);
+
+      if (!currentEdition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
 
-      const AFC = {
-        East: teams
-          .filter((team) => team.division === "East" && team.conference === "AFC")
-          .sort((a, b) => a.name.localeCompare(b.name)),
-        North: teams
-          .filter((team) => team.division === "North" && team.conference === "AFC")
-          .sort((a, b) => a.name.localeCompare(b.name)),
-        South: teams
-          .filter((team) => team.division === "South" && team.conference === "AFC")
-          .sort((a, b) => a.name.localeCompare(b.name)),
-        West: teams
-          .filter((team) => team.division === "West" && team.conference === "AFC")
-          .sort((a, b) => a.name.localeCompare(b.name)),
-      };
-      const NFC = {
-        East: teams
-          .filter((team) => team.division === "East" && team.conference === "NFC")
-          .sort((a, b) => a.name.localeCompare(b.name)),
-        North: teams
-          .filter((team) => team.division === "North" && team.conference === "NFC")
-          .sort((a, b) => a.name.localeCompare(b.name)),
-        South: teams
-          .filter((team) => team.division === "South" && team.conference === "NFC")
-          .sort((a, b) => a.name.localeCompare(b.name)),
-        West: teams
-          .filter((team) => team.division === "West" && team.conference === "NFC")
-          .sort((a, b) => a.name.localeCompare(b.name)),
-      };
+      if (!teamId) {
+        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+      }
 
-      return {
-        AFC,
-        NFC,
-      };
+      const team: ITeam = await this.teamService.getById(parseInt(teamId), parseInt(currentEdition));
+      return team;
     });
   };
 }

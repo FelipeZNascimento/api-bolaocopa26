@@ -14,7 +14,7 @@ const betService = new BetService();
 
 const rankingController = new RankingController(userService, matchService, teamService, betService);
 
-router.get("/season/", rankingController.getRanking);
-router.get("/season/:season", rankingController.getRanking);
+router.get("/edition/", rankingController.getRanking);
+router.get("/edition/:edition", rankingController.getRanking);
 
 export default router;

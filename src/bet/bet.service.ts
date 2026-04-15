@@ -1,34 +1,39 @@
-import type { IBet, IExtraBet } from "#bet/bet.types.js";
+import type { IBetRaw, IExtraBetRaw, IExtraBetResultRaw } from "#bet/bet.types.js";
 
 import db from "#database/db.js";
-import { ResultSetHeader } from "mysql2/promise";
+// import { ResultSetHeader } from "mysql2/promise";
 
 export class BetService {
-  async getExtras(season: number, seasonStart: number) {
-    const rows = (await db.query(
-      `SELECT SQL_NO_CACHE extra_bets_new.id_user as idUser, extra_bets_new.id_season as idSeason, extra_bets_new.json,
-        users.name as userName, users_icon.icon as userIcon, users_icon.color as userColor
-        FROM extra_bets_new
-        INNER JOIN users 		ON users.id = extra_bets_new.id_user
-        LEFT JOIN users_icon    ON users.id = users_icon.id_user
-        WHERE id_season = ?
-        AND UNIX_TIMESTAMP() >= ?`,
-      [season, seasonStart],
-    )) as IExtraBet[];
+  async getExtras(edition: number, editionStart: number) {
+    const rows = await db.query(
+      `SELECT extra_bets.id, extra_bets.id_user as userId, extra_bets.id_extra_type as extraType, extra_bets.id_team as teamId,
+        extra_bets.id_player as playerId, extra_bets.timestamp,
+        users.nickname as nickname, users.name as name,
+        users_edition.is_active as isActive,
+        players.id as playerId
+        FROM extra_bets
+        LEFT JOIN users ON extra_bets.id_user = users.id
+        LEFT JOIN users_edition ON extra_bets.id_user = users_edition.id_user
+        LEFT JOIN players ON players.id = extra_bets.id_player
+        WHERE extra_bets.id_edition = ? AND users_edition.is_active = 1 AND ? < UNIX_TIMESTAMP()`,
+      [edition, editionStart],
+    );
 
-    return rows;
+    return rows as IExtraBetRaw[];
   }
 
-  async getExtrasResults(season: number, seasonStart: number) {
-    const row = (await db.query(
-      `SELECT SQL_NO_CACHE id_season as idSeason, json
-        FROM extra_bets_results_new
-        WHERE id_season = ?
-        AND UNIX_TIMESTAMP() >= ?`,
-      [season, seasonStart],
-    )) as IExtraBet[] | undefined;
+  async getExtrasResults(season: number, editionStart: number) {
+    const row = await db.query(
+      `SELECT extra_bets_results.id_player as playerId, extra_bets_results.id_team as teamId,
+        extra_bets_results.id_type as extraType,
+        players.id as playerId
+        FROM extra_bets_results
+        LEFT JOIN players ON players.id = extra_bets_results.id_player
+        WHERE extra_bets_results.id_edition = ? AND ? < UNIX_TIMESTAMP()`,
+      [season, editionStart],
+    );
 
-    return row;
+    return row as IExtraBetResultRaw[];
   }
 
   async getStartedMatchesBetsByMatchIds(matchIds: number[]) {
@@ -37,19 +42,18 @@ export class BetService {
     }
 
     const rows = await db.query(
-      `SELECT bets.id, bets.id_bet as betValue, bets.id_user as userId, bets.id_match as matchId,
-        users.name as userName, users_icon.icon as userIcon, users_icon.color as userColor
+      `SELECT bets.id, bets.id_match as matchId, bets.id_user as userId,
+        bets.goals_home as scoreHome, bets.goals_away as scoreAway, bets.timestamp,
+        users.nickname
         FROM bets
-        INNER JOIN matches 		ON matches.id = bets.id_match
-        INNER JOIN users 		ON users.id = bets.id_user
-        LEFT JOIN users_icon    ON users.id = users_icon.id_user
+        LEFT JOIN users ON bets.id_user = users.id
+        LEFT JOIN matches ON bets.id_match = matches.id
         WHERE matches.timestamp <= UNIX_TIMESTAMP()
-        AND bets.id_match IN (?)
-        GROUP BY bets.id_match, bets.id_user`,
+        AND bets.id_match IN (?) AND bets.goals_home IS NOT null AND bets.goals_away IS NOT null`,
       [matchIds],
     );
 
-    return rows as IBet[];
+    return rows as IBetRaw[];
   }
 
   async getUserMatchesBetsByMatchIds(matchIds: number[], userId: number) {
@@ -58,34 +62,34 @@ export class BetService {
     }
 
     const rows = await db.query(
-      `SELECT bets.id, bets.id_bet as betValue, bets.id_user as userId, bets.id_match as matchId,
-        users.name as userName, users_icon.icon as userIcon, users_icon.color as userColor
+      `SELECT bets.id, bets.id_match as matchId, bets.id_user as userId,
+        bets.goals_home as scoreHome, bets.goals_away as scoreAway, bets.timestamp,
+        users.nickname, users.id as userId
         FROM bets
         INNER JOIN matches 		ON matches.id = bets.id_match
         INNER JOIN users 		ON users.id = bets.id_user
-        LEFT JOIN users_icon    ON users.id = users_icon.id_user
         WHERE bets.id_user = ?
         AND bets.id_match IN (?)
         GROUP BY bets.id_match, bets.id_user`,
       [userId, matchIds],
     );
 
-    return rows as IBet[];
+    return rows as IBetRaw[];
   }
 
-  async update(betValue: number, matchId: number, userId: number) {
-    return (await db.query(
-      `INSERT INTO bets (id_match, id_user, id_bet) 
-        VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE id_bet = ?`,
-      [matchId, userId, betValue, betValue],
-    )) as ResultSetHeader;
-  }
+  // async update(betValue: number, matchId: number, userId: number) {
+  //   return (await db.query(
+  //     `INSERT INTO bets (id_match, id_user, id_bet)
+  //       VALUES (?, ?, ?)
+  //       ON DUPLICATE KEY UPDATE id_bet = ?`,
+  //     [matchId, userId, betValue, betValue],
+  //   )) as ResultSetHeader;
+  // }
 
-  async updateExtras(extras: string, userId: number, season: string) {
-    return (await db.query(
-      `INSERT INTO extra_bets_new (id_user, id_season, json) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE json = ?`,
-      [userId, season, extras, extras],
-    )) as ResultSetHeader;
-  }
+  // async updateExtras(extras: string, userId: number, season: string) {
+  //   return (await db.query(
+  //     `INSERT INTO extra_bets_new (id_user, id_season, json) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE json = ?`,
+  //     [userId, season, extras, extras],
+  //   )) as ResultSetHeader;
+  // }
 }
