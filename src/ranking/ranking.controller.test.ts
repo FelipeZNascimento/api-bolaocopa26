@@ -9,7 +9,7 @@ import { ErrorCode } from "#utils/errorCodes.js";
 import { Request, Response } from "express";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AWARD_POINTS } from "./ranking.constants";
+import { AWARD_POINTS } from "./ranking.constants.js";
 import { RankingController } from "./ranking.controller";
 import { ICalculatedRankingLine } from "./ranking.types";
 import { calculateExtraBets, getRoundsRanking, getSeasonRanking } from "./ranking.utils";

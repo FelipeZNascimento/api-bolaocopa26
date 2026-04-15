@@ -1,5 +1,5 @@
-import { AppError } from "./appError";
-import { ErrorCode } from "./errorCodes";
+import { AppError } from "./appError.js";
+import { ErrorCode } from "./errorCodes.js";
 
 export function checkEdition(editionParam: string | undefined) {
   const currentEdition = process.env.EDITION ? parseInt(process.env.EDITION) : null;

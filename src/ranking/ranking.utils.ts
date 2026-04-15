@@ -4,7 +4,7 @@ import { IMatch } from "#match/match.types.js";
 import { IUser } from "#user/user.types.js";
 import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
 
-import { AWARD_POINTS, DEFAULT_ROUND_MULTIPLIER, ROUND_MULTIPLIERS } from "./ranking.constants";
+import { AWARD_POINTS, DEFAULT_ROUND_MULTIPLIER, ROUND_MULTIPLIERS } from "./ranking.constants.js";
 import {
   ICalculatedRankingLine,
   IRankingScore,

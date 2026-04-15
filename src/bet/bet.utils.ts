@@ -1,6 +1,6 @@
 import type { IPlayer, ITeam } from "#team/team.types.js";
 
-import { EXTRA_TYPES } from "./bet.constants";
+import { EXTRA_TYPES } from "./bet.constants.js";
 import { IBet, IBetRaw, IExtraBetRaw, IExtraBetResultRaw } from "./bet.types";
 
 export const parseExtraBetResult = (extraBetResult: IExtraBetResultRaw, players: IPlayer[], teams: ITeam[]) => {

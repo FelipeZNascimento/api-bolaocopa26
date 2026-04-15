@@ -12,7 +12,7 @@ import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { NextFunction, Request, Response } from "express";
 
-import { generateVerificationToken } from "./user.utils";
+import { generateVerificationToken } from "./user.utils.js";
 
 // Extend express-session types to include 'user' property
 declare module "express-session" {

@@ -8,7 +8,7 @@ import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { NextFunction, Request, Response } from "express";
 
-import { getTeamsFromCacheOrFetch } from "./team.util";
+import { getTeamsFromCacheOrFetch } from "./team.util.js";
 
 export class TeamController extends BaseController {
   constructor(private teamService: TeamService) {

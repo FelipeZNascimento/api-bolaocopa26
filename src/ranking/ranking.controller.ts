@@ -18,7 +18,7 @@ import { checkEdition } from "#utils/checkEdition.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { NextFunction, Request, Response } from "express";
 
-import { getRoundsRanking, getSeasonRanking } from "./ranking.utils";
+import { getRoundsRanking, getSeasonRanking } from "./ranking.utils.js";
 export class RankingController extends BaseController {
   constructor(
     private userService: UserService,
