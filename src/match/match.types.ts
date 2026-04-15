@@ -1,6 +1,6 @@
 import { IBet } from "#bet/bet.types.js";
 import { IPlayer, IReferee, IStadium, ITeam } from "#team/team.types.js";
-import { RowDataPacket } from "mysql2/promise";
+// import { RowDataPacket } from "mysql2/promise";
 
 export interface IEvent {
   event: {
@@ -26,7 +26,7 @@ export interface IEventRaw {
   playerTwoId: null | number;
 }
 
-export interface IMatch extends RowDataPacket {
+export interface IMatch {
   awayTeam: ITeam | null;
   bets: IBet[];
   events: IEvent[];
@@ -42,7 +42,7 @@ export interface IMatch extends RowDataPacket {
   timestamp: number;
 }
 
-export interface IMatchRaw extends RowDataPacket {
+export interface IMatchRaw {
   id: number;
   idAway: number;
   idFifa: number;
@@ -65,6 +65,6 @@ export interface IScore {
   homePenalties?: number;
 }
 
-export interface IWeek extends RowDataPacket {
+export interface IWeek {
   week: number;
 }
