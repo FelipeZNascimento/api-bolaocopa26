@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { UserController } from "./user.controller";
 import { UserService } from "./user.service";
 import { IUser } from "./user.types";
-// import { checkExistingEntries, validateEmail } from "./user.utils";
+// import { checkExistingEntries, validateEmail } from "./user.utils.js";
 
 // Mocks
 const mockUserService = {
