@@ -1,3 +1,12 @@
+#!/bin/sh
+
+# Load nvm
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# Use the Node version from .nvmrc
+nvm use
+
 npm run test:run
 npm run type-check
 npx lint-staged
