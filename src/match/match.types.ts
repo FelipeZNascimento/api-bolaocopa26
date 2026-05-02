@@ -60,9 +60,9 @@ export interface IMatchRaw {
 
 export interface IScore {
   away: number;
-  awayPenalties?: number;
+  awayPenalties: number;
   home: number;
-  homePenalties?: number;
+  homePenalties: number;
 }
 
 export interface IWeek {

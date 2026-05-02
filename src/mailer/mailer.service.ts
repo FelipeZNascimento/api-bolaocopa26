@@ -45,7 +45,7 @@ export class MailerService {
     await this.transporter.sendMail({
       from: this.fromAddress,
       html: getPasswordResetEmailTemplate(name, resetUrl),
-      subject: "[BolaoNFL] Redefinir sua senha",
+      subject: "[BolaoCopa2026] Redefinir sua senha",
       to,
     });
 

@@ -7,7 +7,7 @@ import app from "./app.js";
 const port = process.env.PORT ?? "9001";
 
 const server = app.listen(port, () => {
-  console.log(`BolaoNFL API listening on port ${port}`);
+  console.log(`Bolao da Copa 2026 API listening on port ${port}`);
 });
 
 WebSocketService.getInstance(server);
