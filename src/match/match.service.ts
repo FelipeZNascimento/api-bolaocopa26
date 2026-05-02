@@ -110,16 +110,16 @@ export class MatchService {
   //   )) as IMatch[];
   // }
 
-  // async getTimestampByMatchId(matchId: number) {
-  //   const [row] = (await db.query(
-  //     `SELECT SQL_NO_CACHE matches.id, matches.timestamp
-  //       FROM matches
-  //       WHERE matches.id = ?`,
-  //     [matchId],
-  //   )) as { id: number; timestamp: number }[];
+  async getTimestampByMatchId(matchId: number) {
+    const row = await db.query(
+      `SELECT SQL_NO_CACHE matches.id, matches.timestamp
+        FROM matches
+        WHERE matches.id = ?`,
+      [matchId],
+    );
 
-  //   return row as undefined | { id: number; timestamp: number };
-  // }
+    return row as undefined | { id: number; timestamp: number };
+  }
 
   // async getWeekMatchesCount(season: number, week: number) {
   //   const [row] = (await db.query(
@@ -191,8 +191,8 @@ export class MatchService {
         match.round,
         match.score.home,
         match.score.away,
-        match.score.homePenalties ?? null,
-        match.score.awayPenalties ?? null,
+        match.score.homePenalties ?? 0,
+        match.score.awayPenalties ?? 0,
         match.status,
         match.referee?.id ?? null,
         match.stadium?.id ?? null,

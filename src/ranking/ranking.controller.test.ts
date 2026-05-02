@@ -81,7 +81,9 @@ const createMatch = (
     round,
     score: {
       away: scoreAway,
+      awayPenalties: 0,
       home: scoreHome,
+      homePenalties: 0,
     },
     stadium: null,
     status,

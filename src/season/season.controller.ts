@@ -10,7 +10,7 @@ export class SeasonController extends BaseController {
 
   getCurrentSeasonAndWeek = (req: Request, res: Response, next: NextFunction) => {
     const edition = process.env.EDITION;
-    const editionStart = process.env.SEASON_START;
+    const editionStart = process.env.EDITION_START;
 
     const returnObj = {
       currentEdition: edition ? parseInt(edition) : null,

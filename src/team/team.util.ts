@@ -25,7 +25,7 @@ export const getTeamsFromCacheOrFetch = async (
   const confederations = await getConfederationsFromCacheOrFetch(teamService);
   let formattedTeams = teamsRaw.map((team) => ({
     ...team,
-    colors: team.colorsRaw.split(",").map((color: string) => color.trim()),
+    colors: team.colorsRaw ? team.colorsRaw.split(",").map((color: string) => color.trim()) : [],
     confederation: confederations.find((conf) => conf.id === team.idConfederation) ?? null,
   }));
   const players = await getPlayersFromCacheOrFetch(teamService, requestedEdition, formattedTeams);
