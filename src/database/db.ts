@@ -36,7 +36,7 @@ interface MySqlLikeError {
   sqlState?: string;
 }
 
-type QueryParams = readonly unknown[] | Record<string, unknown>;
+type QueryParams = Record<string, unknown> | unknown[];
 
 const isMySqlLikeError = (error: unknown): error is MySqlLikeError => {
   return typeof error === "object" && error !== null && ("code" in error || "sqlMessage" in error);
@@ -90,7 +90,7 @@ const toDbAppError = (error: unknown): AppError => {
 
 async function query<T = unknown>(sql: string, params: QueryParams = []): Promise<T> {
   try {
-    const [results] = await connection.query(sql, params);
+    const [results] = await connection.query(sql, params as unknown[]);
     return results as T;
   } catch (error) {
     throw toDbAppError(error);
