@@ -39,7 +39,6 @@ export class MatchController extends BaseController {
       let user = null;
       if (req.session.user) {
         user = req.session.user;
-        void this.userService.updateLastOnlineTime(req.session.user.id);
       }
 
       const edition = req.params.edition || process.env.EDITION;

@@ -13,6 +13,7 @@ router.post("/login", userController.login);
 router.post("/forgot-password", userController.forgotPassword);
 router.post("/update-password", userController.updatePassword);
 router.post("/update-profile", userController.updateProfile);
+router.post("/update-favorites", userController.updateFavorites);
 router.post("/register", userController.register);
 
 // Get routes

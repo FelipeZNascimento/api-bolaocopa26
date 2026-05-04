@@ -29,7 +29,6 @@ export class BetController extends BaseController {
       const { edition, editionStart } = checkEdition(req.params.season);
       let activeProfileExtraBets: IExtraBetRaw[] = [];
       if (user) {
-        void this.userService.updateLastOnlineTime(user.id);
         activeProfileExtraBets = await this.betService.getExtrasFromUserId(edition, user.id);
       }
       const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
@@ -57,11 +56,6 @@ export class BetController extends BaseController {
 
   getExtrasResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const user = req.session.user;
-      if (user) {
-        void this.userService.updateLastOnlineTime(user.id);
-      }
-
       const { edition, editionStart } = checkEdition(req.params.season);
       const extraBetsResults: IExtraBetResultRaw[] = await this.betService.getExtrasResults(edition, editionStart);
       const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
@@ -77,8 +71,6 @@ export class BetController extends BaseController {
       if (!user) {
         throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
       }
-
-      void this.userService.updateLastOnlineTime(user.id);
 
       const reqBody = req.body as { awayScore: null | number; homeScore: null | number; matchId: number };
       const { awayScore, homeScore, matchId } = reqBody;
@@ -106,8 +98,6 @@ export class BetController extends BaseController {
 
       const nowTimestamp = Math.floor(new Date().getTime() / 1000);
       const { edition, editionStart } = checkEdition(req.params.season);
-
-      void this.userService.updateLastOnlineTime(user.id);
 
       const reqBody = req.body as { extraType: string; playerId: number; teamId: number };
       const { extraType, playerId, teamId } = reqBody;

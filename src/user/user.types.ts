@@ -1,5 +1,6 @@
 export interface IUser {
   email: string;
+  favorites: string;
   id: number;
   isActive: boolean;
   isOnline: boolean;

@@ -11,6 +11,7 @@ import { cachedInfo } from "#utils/dataCache.js";
 import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { NextFunction, Request, Response } from "express";
+import { promisify } from "util";
 
 import { generateVerificationToken } from "./user.utils.js";
 
@@ -58,9 +59,12 @@ export class UserController extends BaseController {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
       const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
-      await this.userService.updateLastOnlineTime(user.id);
       const userResponse = await this.userService.getById(user.id, editionId);
-      return userResponse;
+      if (!userResponse) {
+        return null;
+      }
+      const parsedFavorites = JSON.parse(userResponse.favorites) as number[];
+      return { ...userResponse, favorites: parsedFavorites };
     });
   };
 
@@ -117,36 +121,27 @@ export class UserController extends BaseController {
         throw new AppError("Credenciais inválidas", 401, ErrorCode.UNAUTHORIZED);
       }
 
-      const response = await this.userService.login(email, password, parseInt(edition));
-      if (response) {
-        const user = response;
-        void this.userService.updateLastOnlineTime(user.id);
-
-        user.timestamp = Date.now();
-        req.session.user = response;
-        return user;
-      } else {
+      const userResponse = await this.userService.login(email, password, parseInt(edition));
+      if (!userResponse) {
         throw new AppError("Credenciais inválidas", 401, ErrorCode.UNAUTHORIZED);
       }
+      userResponse.timestamp = Date.now();
+      req.session.user = userResponse;
+      const parsedFavorites = JSON.parse(userResponse.favorites) as number[];
+      return { ...userResponse, favorites: parsedFavorites };
     });
   };
 
   logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      await this.userService.updateLastOnlineTime(req.session.user?.id ?? 0);
-
       req.session.user = null;
-      req.session.save(function (err) {
-        if (err) next(err);
+      const sessionSave = promisify(req.session.save.bind(req.session));
+      await sessionSave();
 
-        // regenerate the session, which is good practice to help
-        // guard against forms of session fixation
-        req.session.regenerate(function (err) {
-          if (err) next(err);
-        });
-      });
-
-      return;
+      // regenerate the session, which is good practice to help
+      // guard against forms of session fixation
+      const sessionRegenerate = promisify(req.session.regenerate.bind(req.session));
+      await sessionRegenerate();
     });
   };
 
@@ -185,11 +180,42 @@ export class UserController extends BaseController {
 
       if (loginResponse) {
         req.session.user = loginResponse;
-        void this.userService.updateLastOnlineTime(loginResponse.id);
         return loginResponse;
       }
 
       return;
+    });
+  };
+
+  updateFavorites = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    await this.handleRequest(req, res, next, async () => {
+      const user = req.session.user;
+      if (!user) {
+        throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
+      }
+
+      const edition = req.params.edition || process.env.EDITION;
+      if (!edition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+
+      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
+      const reqBody = req.body as { favorites: number[] };
+      const { favorites } = reqBody;
+
+      if (!favorites) {
+        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+      }
+
+      const favoritesString = JSON.stringify(favorites);
+      const updateResponse = await this.userService.updateFavorites(user.id, editionId, favoritesString);
+      if (updateResponse.affectedRows > 0) {
+        // update session data
+        user.favorites = favoritesString;
+        req.session.user = user;
+
+        return req.session.user;
+      }
     });
   };
 
@@ -226,7 +252,6 @@ export class UserController extends BaseController {
           throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
         }
         const user = req.session.user;
-        void this.userService.updateLastOnlineTime(user.id);
 
         const updatePasswordResponse = await this.userService.updatePassword(currentPassword, newPassword, user.id);
         if (updatePasswordResponse.affectedRows === 0) {
@@ -239,7 +264,6 @@ export class UserController extends BaseController {
       }
     });
   };
-
   updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
       const user = req.session.user;
@@ -263,8 +287,6 @@ export class UserController extends BaseController {
       if (!isValid) {
         throw new AppError("Email ou apelido já registrado", 409, ErrorCode.VALIDATION_ERROR);
       }
-
-      void this.userService.updateLastOnlineTime(user.id);
 
       const updateProfileResponse = await this.userService.updateProfile(user.id, name, nickname);
       if (updateProfileResponse.affectedRows > 0) {
