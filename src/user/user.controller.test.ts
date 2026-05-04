@@ -67,12 +67,13 @@ vi.mock("#utils/apiResponse.js", () => ({
     error: vi.fn(),
     success: vi.fn(),
   },
-  isFulfilled: vi.fn((result: PromiseSettledResult<any>) => result.status === "fulfilled"),
-  isRejected: vi.fn((result: PromiseSettledResult<any>) => result.status === "rejected"),
+  isFulfilled: vi.fn((result: PromiseSettledResult<unknown>) => result.status === "fulfilled"),
+  isRejected: vi.fn((result: PromiseSettledResult<unknown>) => result.status === "rejected"),
 }));
 
 const mockUser: IUser = {
   email: "test@example.com",
+  favorites: "[1, 2, 3]",
   id: 1,
   isActive: true,
   isOnline: false,
@@ -83,10 +84,10 @@ const mockUser: IUser = {
 
 function getMockReqResSession(user: IUser | null = null) {
   const session = {
-    regenerate: vi.fn((cb?: (err?: any) => void) => {
+    regenerate: vi.fn((cb?: (err?: Error) => void) => {
       if (cb) cb();
     }),
-    save: vi.fn((cb?: (err?: any) => void) => {
+    save: vi.fn((cb?: (err?: Error) => void) => {
       if (cb) cb();
     }),
     user,
@@ -124,7 +125,6 @@ describe("UserController", () => {
       await controller.getActiveProfile(req, res, next);
 
       expect(mockUserService.getById).not.toHaveBeenCalled();
-      expect(mockUserService.updateLastOnlineTime).not.toHaveBeenCalled();
     });
 
     it("should return user profile when user is in session", async () => {
@@ -133,7 +133,6 @@ describe("UserController", () => {
 
       await controller.getActiveProfile(req, res, next);
 
-      expect(mockUserService.updateLastOnlineTime).toHaveBeenCalledWith(1);
       expect(mockUserService.getById).toHaveBeenCalledWith(1, 2024);
     });
 
@@ -270,7 +269,6 @@ describe("UserController", () => {
       await controller.login(req, res, next);
 
       expect(mockUserService.login).toHaveBeenCalledWith("test@example.com", "password123", 2024);
-      expect(mockUserService.updateLastOnlineTime).toHaveBeenCalledWith(1);
       expect(req.session.user).toEqual(expect.objectContaining({ email: "test@example.com", id: 1 }));
     });
 
@@ -286,12 +284,11 @@ describe("UserController", () => {
   });
 
   describe("logout", () => {
-    it("should clear session and update last online time", async () => {
+    it("should clear session", async () => {
       const { next, req, res } = getMockReqResSession(mockUser);
 
       await controller.logout(req, res, next);
 
-      expect(mockUserService.updateLastOnlineTime).toHaveBeenCalledWith(1);
       expect(req.session.user).toBeNull();
       expect(req.session.save).toHaveBeenCalled();
       expect(req.session.regenerate).toHaveBeenCalled();
@@ -302,7 +299,6 @@ describe("UserController", () => {
 
       await controller.logout(req, res, next);
 
-      expect(mockUserService.updateLastOnlineTime).toHaveBeenCalledWith(0);
       expect(req.session.save).toHaveBeenCalled();
     });
   });
@@ -355,7 +351,6 @@ describe("UserController", () => {
       expect(mockUserService.register).toHaveBeenCalledWith("new@example.com", "New User", "newuser", "password123");
       expect(mockUserService.setOnCurrentSeason).toHaveBeenCalledWith(2024, 10);
       expect(mockUserService.login).toHaveBeenCalledWith("new@example.com", "password123", 2024);
-      expect(mockUserService.updateLastOnlineTime).toHaveBeenCalledWith(1);
       expect(req.session.user).toEqual(mockUser);
     });
 
@@ -476,7 +471,6 @@ describe("UserController", () => {
       await controller.updatePassword(req, res, next);
 
       expect(mockUserService.updatePassword).toHaveBeenCalledWith("oldpassword", "newpassword123", 1);
-      expect(mockUserService.updateLastOnlineTime).toHaveBeenCalledWith(1);
     });
 
     it("should throw error if required fields are missing", async () => {
@@ -540,7 +534,6 @@ describe("UserController", () => {
       expect(req.session.user?.name).toBe("Updated Name");
       expect(req.session.user?.nickname).toBe("updatednick");
       expect(mockClearRankingCache).toHaveBeenCalled();
-      expect(mockUserService.updateLastOnlineTime).toHaveBeenCalledWith(1);
     });
 
     it("should fetch user if update returns no affected rows", async () => {

@@ -3,11 +3,12 @@ import config from "#database/config.js";
 import { connection } from "#database/db.js";
 import matchRoutes from "#match/match.routes.js";
 import { errorHandler } from "#middlewares/errorHandler.js";
-import { cache, middleware } from "#middlewares/middlewares.js";
+import { cache, middleware, updateUserActivity } from "#middlewares/middlewares.js";
 import rankingRoutes from "#ranking/ranking.routes.js";
 import seasonRoutes from "#season/season.routes.js";
 import teamRoutes from "#team/team.routes.js";
 import userRoutes from "#user/user.routes.js";
+import { UserService } from "#user/user.service.js";
 import { IUser } from "#user/user.types.js";
 import cors from "cors";
 import express, { ErrorRequestHandler } from "express";
@@ -75,6 +76,10 @@ const corsOptions = {
 };
 app.use(express.json());
 app.use(cors(corsOptions));
+
+// Update user activity on every request with an active session
+const userService = new UserService();
+app.use(updateUserActivity(userService));
 
 app.use("/team", cache(), teamRoutes);
 app.use("/match", matchRoutes);

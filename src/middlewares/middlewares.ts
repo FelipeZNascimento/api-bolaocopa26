@@ -1,3 +1,4 @@
+import { UserService } from "#user/user.service.js";
 import { RequestHandler } from "express";
 import { NextFunction, Request, Response } from "express";
 
@@ -11,6 +12,15 @@ export const cache = (options: CacheOptions = {}) => {
 
   return (req: Request, res: Response, next: NextFunction) => {
     res.set("Cache-Control", `${options.private ? "private" : "public"}, max-age=${duration.toString()}`);
+    next();
+  };
+};
+
+export const updateUserActivity = (userService: UserService) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (req.session.user?.id) {
+      void userService.updateLastOnlineTime(req.session.user.id);
+    }
     next();
   };
 };

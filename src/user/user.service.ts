@@ -38,12 +38,14 @@ export class UserService {
     const row: IUser[] = await db.query(
       `SELECT SQL_NO_CACHE users.id, users.name, users.nickname, users.email,
         users_edition.is_active as isActive,
-        users.timestamp
+        users.timestamp,
+        users_favorites.favorites
         FROM users
         JOIN users_edition ON users.id = users_edition.id_user
+        LEFT JOIN users_favorites ON users.id = users_favorites.user_id AND users_favorites.edition_id = ?
         WHERE users_edition.id_edition = ? AND users.id = ?
         ORDER BY users.nickname ASC`,
-      [editionId, userId],
+      [editionId, editionId, userId],
     );
 
     return row.length > 0 ? row[0] : null;
@@ -70,13 +72,14 @@ export class UserService {
   async login(email: string, password: string, editionId: number) {
     const row: IUser[] = await db.query(
       `SELECT SQL_NO_CACHE users.id, users.email, users.name, users.nickname, users.timestamp,
-        users_edition.is_active as isActive
+        users_edition.is_active as isActive, users_favorites.favorites
         FROM users
-        JOIN users_edition ON users.id = users_edition.id_user
+        INNER JOIN users_edition ON users.id = users_edition.id_user
+        INNER JOIN users_favorites ON users.id = users_favorites.user_id AND users_favorites.edition_id = ?
         WHERE users.email = ?
         AND users.password = ?
         AND users_edition.id_edition = ?`,
-      [email, password, editionId],
+      [editionId, email, password, editionId],
     );
 
     return row.length > 0 ? row[0] : null;
@@ -105,6 +108,17 @@ export class UserService {
       id,
       edition,
     ]);
+
+    return rows;
+  }
+
+  async updateFavorites(id: number, editionId: number, favorites: string) {
+    const rows: ResultSetHeader = await db.query(
+      `INSERT INTO users_favorites (user_id, edition_id, favorites)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE favorites = ?`,
+      [id, editionId, favorites, favorites],
+    );
 
     return rows;
   }

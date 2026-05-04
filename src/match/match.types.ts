@@ -30,6 +30,7 @@ export interface IMatch {
   awayTeam: ITeam | null;
   bets: IBet[];
   events: IEvent[];
+  group: null | string;
   homeTeam: ITeam | null;
   id: number;
   idFifa: number;

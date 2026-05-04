@@ -36,11 +36,15 @@ export const parseRawEvents = (eventsRaw: IEventRaw[], players: IPlayer[]): IEve
 };
 
 export const parseRawMatch = (match: IMatchRaw, teams: ITeam[], stadiums: IStadium[], referees: IReferee[]) => {
+  const awayTeam = teams.find((team) => team.id === match.idAway);
+  const homeTeam = teams.find((team) => team.id === match.idHome);
+
   const parsedMatch: IMatch = {
-    awayTeam: teams.find((team) => team.id === match.idAway) ?? null,
+    awayTeam: awayTeam ?? null,
     bets: [],
     events: [],
-    homeTeam: teams.find((team) => team.id === match.idHome) ?? null,
+    group: match.round <= 3 && homeTeam?.group ? homeTeam.group : null,
+    homeTeam: homeTeam ?? null,
     id: match.id,
     idFifa: match.idFifa,
     loggedUserBets: null,
@@ -106,6 +110,7 @@ export const formatMatches = (
     match.bets = matchBets;
     match.loggedUserBets = loggedUserMatchBets;
     match.events = matchEvents;
+    // match.group = match.round <= 3 && match.homeTeam?.group ? match.homeTeam.group : null;
 
     return match;
   });
