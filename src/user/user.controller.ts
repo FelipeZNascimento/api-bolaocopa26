@@ -63,7 +63,7 @@ export class UserController extends BaseController {
       if (!userResponse) {
         return null;
       }
-      const parsedFavorites = JSON.parse(userResponse.favorites) as number[];
+      const parsedFavorites: number[] = userResponse.favorites ? (JSON.parse(userResponse.favorites) as number[]) : [];
       return { ...userResponse, favorites: parsedFavorites };
     });
   };
@@ -127,7 +127,8 @@ export class UserController extends BaseController {
       }
       userResponse.timestamp = Date.now();
       req.session.user = userResponse;
-      const parsedFavorites = JSON.parse(userResponse.favorites) as number[];
+      const parsedFavorites: number[] = userResponse.favorites ? (JSON.parse(userResponse.favorites) as number[]) : [];
+      console.log("Parsed Favorites:", parsedFavorites);
       return { ...userResponse, favorites: parsedFavorites };
     });
   };
