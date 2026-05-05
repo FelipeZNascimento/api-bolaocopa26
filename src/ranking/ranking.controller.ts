@@ -121,10 +121,17 @@ export class RankingController extends BaseController {
 
       const roundsRanking = getRoundsRanking(edition, users, matches, startedMatches, bets);
       const seasonRanking = getSeasonRanking(roundsRanking, baseComparisonRound, extraBets, extraBetsResults);
+      const seasonRankingWithoutExtras = getSeasonRanking(
+        roundsRanking,
+        baseComparisonRound,
+        { champion: [], defense: [], offense: [], striker: [] },
+        { champion: [], defense: [], offense: [], striker: [] },
+      );
 
       return {
         round: roundsRanking,
         season: seasonRanking,
+        seasonWithoutExtras: seasonRankingWithoutExtras,
       };
     });
   };
