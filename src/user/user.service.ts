@@ -75,7 +75,7 @@ export class UserService {
         users_edition.is_active as isActive, users_favorites.favorites
         FROM users
         INNER JOIN users_edition ON users.id = users_edition.id_user
-        INNER JOIN users_favorites ON users.id = users_favorites.user_id AND users_favorites.edition_id = ?
+        LEFT JOIN users_favorites ON users.id = users_favorites.user_id AND users_favorites.edition_id = ?
         WHERE users.email = ?
         AND users.password = ?
         AND users_edition.id_edition = ?`,
