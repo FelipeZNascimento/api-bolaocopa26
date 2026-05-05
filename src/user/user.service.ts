@@ -51,6 +51,18 @@ export class UserService {
     return row.length > 0 ? row[0] : null;
   }
 
+  async getFavoritesById(userId: number, editionId: number) {
+    const row: { favorites: string }[] = await db.query(
+      `SELECT users_favorites.favorites
+        FROM users_favorites
+        WHERE users_favorites.user_id = ?
+        AND users_favorites.edition_id = ?`,
+      [userId, editionId],
+    );
+
+    return row.length > 0 ? row[0].favorites : "";
+  }
+
   async isEmailValid(email: string, userId?: number) {
     const [rows]: [{ count: number }] = await db.query(
       `SELECT SQL_NO_CACHE COUNT(*) as count FROM users WHERE email = ?${userId ? " AND id != ?" : ""}`,

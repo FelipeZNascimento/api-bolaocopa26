@@ -63,7 +63,8 @@ export class UserController extends BaseController {
       if (!userResponse) {
         return null;
       }
-      const parsedFavorites: number[] = userResponse.favorites ? (JSON.parse(userResponse.favorites) as number[]) : [];
+      const favoritesResponse: string = await this.userService.getFavoritesById(user.id, editionId);
+      const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
       return { ...userResponse, favorites: parsedFavorites };
     });
   };
