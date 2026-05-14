@@ -54,6 +54,7 @@ vi.mock("#utils/checkEdition.js", () => ({
 
 const createUser = (id: number, name: string, nickname?: string): IUser => ({
   admin: false,
+  editionId: 3,
   email: `user${String(id)}@test.com`,
   favorites: "[]",
   id,

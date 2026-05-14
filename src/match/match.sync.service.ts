@@ -1,6 +1,7 @@
 import type { IMatch } from "#match/match.types.js";
 import type { IReferee, IStadium } from "#team/team.types.js";
 
+import { logger } from "#logger/logger.service.js";
 import { MatchExternalAPI } from "#match/match.external-api.js";
 import { MatchService } from "#match/match.service.js";
 import { parseRawMatch, setMatchesCache } from "#match/match.utils.js";
@@ -55,7 +56,6 @@ export class MatchSyncService {
   }
 
   public static getInstance(): MatchSyncService {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!MatchSyncService.instance) {
       MatchSyncService.instance = new MatchSyncService();
     }
@@ -74,23 +74,21 @@ export class MatchSyncService {
    */
   public start(): void {
     if (!SYNC_CONFIG.enabled) {
-      console.log("[Match Sync] Service is disabled via configuration");
+      logger.info("Match sync service is disabled via configuration");
       return;
     }
 
     if (!SYNC_CONFIG.edition) {
-      console.error("[Match Sync] No edition configured, cannot start sync service");
+      logger.error("No edition configured, cannot start match sync service");
       return;
     }
 
     if (this.intervalId) {
-      console.log("[Match Sync] Service is already running");
+      logger.warn("Match sync service is already running");
       return;
     }
 
-    console.log(
-      `[Match Sync] Starting service (interval: ${String(SYNC_CONFIG.interval)}ms, edition: ${String(SYNC_CONFIG.edition)})`,
-    );
+    logger.info({ edition: SYNC_CONFIG.edition, interval: SYNC_CONFIG.interval }, "Starting match sync service");
 
     // Run initial sync
     void this.sync();
@@ -108,7 +106,7 @@ export class MatchSyncService {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
-      console.log("[Match Sync] Service stopped");
+      logger.info("Match sync service stopped");
     }
   }
 
@@ -125,9 +123,9 @@ export class MatchSyncService {
       });
 
       this.websocketService.broadcast(message);
-      console.log(`[Match Sync] Broadcasted ${String(matches.length)} matches to WebSocket clients`);
+      logger.info({ matchCount: matches.length, updatedCount }, "Broadcasted matches to WebSocket clients");
     } catch (error) {
-      console.error("[Match Sync] Error broadcasting to WebSocket:", error);
+      logger.error({ err: error }, "Error broadcasting matches to WebSocket");
     }
   }
 
@@ -191,7 +189,7 @@ export class MatchSyncService {
   private async sync(): Promise<void> {
     // Prevent overlapping syncs
     if (this.isSyncing) {
-      console.log("[Match Sync] Sync already in progress, skipping...");
+      logger.debug("Match sync already in progress, skipping");
       return;
     }
 
@@ -199,7 +197,7 @@ export class MatchSyncService {
     const startTime = Date.now();
 
     try {
-      console.log("[Match Sync] Starting sync...");
+      logger.debug("Starting match sync");
 
       // Fetch matches from external API
       const externalMatches = await this.externalAPI.fetchMatches(SYNC_CONFIG.edition);
@@ -223,7 +221,7 @@ export class MatchSyncService {
       this.stats.updated = changedMatches.length;
 
       if (changedMatches.length > 0) {
-        console.log(`[Match Sync] Detected ${String(changedMatches.length)} changed matches`);
+        logger.info({ changedCount: changedMatches.length }, "Detected changed matches");
 
         // Update database for changed matches
         await this.updateDatabase(changedMatches);
@@ -234,7 +232,7 @@ export class MatchSyncService {
         // Broadcast to all connected clients
         this.broadcastMatches(parsedMatches, changedMatches.length);
       } else {
-        console.log("[Match Sync] No changes detected");
+        logger.debug("No match changes detected");
 
         // Still update cache to refresh TTL
         if (parsedMatches.length > 0) {
@@ -244,10 +242,10 @@ export class MatchSyncService {
 
       this.stats.lastSync = Date.now();
       this.stats.duration = Date.now() - startTime;
-      console.log(`[Match Sync] Completed in ${String(this.stats.duration)}ms`);
+      logger.info({ duration: this.stats.duration, updated: this.stats.updated }, "Match sync completed");
     } catch (error) {
       this.stats.errors++;
-      console.error("[Match Sync] Error during sync:", error);
+      logger.error({ err: error }, "Error during match sync");
 
       // Don't throw - we want the service to continue running
     } finally {
@@ -262,9 +260,9 @@ export class MatchSyncService {
     const updatePromises = matches.map(async (match) => {
       try {
         await this.matchService.updateMatch(match);
-        console.log(`[Match Sync] Updated match ${String(match.id)} in database`);
+        logger.debug({ matchId: match.id }, "Updated match in database");
       } catch (error) {
-        console.error(`[Match Sync] Failed to update match ${String(match.id)}:`, error);
+        logger.error({ err: error, matchId: match.id }, "Failed to update match");
         // Don't throw - we want to continue updating other matches
       }
     });

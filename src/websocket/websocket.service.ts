@@ -1,3 +1,4 @@
+import { logger } from "#logger/logger.service.js";
 import { singleton } from "#utils/singleton.js";
 import { Server } from "http";
 import { WebSocket, WebSocketServer } from "ws";
@@ -13,7 +14,6 @@ export class WebSocketService {
   private wss!: WebSocketServer;
 
   public static getInstance(server?: Server): WebSocketService {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!WebSocketService.instance) {
       WebSocketService.instance = new WebSocketService();
     }
@@ -31,25 +31,25 @@ export class WebSocketService {
   }
 
   private initialize(server: Server): void {
-    console.log("Initializing wss with server!");
+    logger.info("WebSocket server initialized");
     this.wss = new WebSocketServer({ server });
 
     this.wss.on("connection", (ws: WebSocket) => {
-      console.log("Stablishing websocket connection");
+      logger.info("WebSocket connection established");
       // this.metricsService.recordWebsocketConnection(true);
 
       ws.on("close", () => {
-        console.info("Closing websocket connection");
+        logger.info("WebSocket connection closed");
         // this.metricsService.recordWebsocketConnection(false);
       });
 
       ws.on("message", (message: string) => {
-        console.info("Websocket sending a message: ", message);
+        logger.debug({ message }, "WebSocket message received");
         // this.metricsService.recordWebsocketMessage("message", "in");
       });
 
       ws.on("broadcast", (message: string) => {
-        console.info("Websocket broadcasting: ", message);
+        logger.debug({ message }, "WebSocket broadcasting message");
         // this.metricsService.recordWebsocketMessage("message", "in");
       });
     });

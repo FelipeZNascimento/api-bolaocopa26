@@ -1,5 +1,6 @@
 import type { IMatchRaw } from "#match/match.types.js";
 
+import { logger } from "#logger/logger.service.js";
 import { AppError } from "#utils/appError.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 
@@ -42,7 +43,7 @@ export class MatchExternalAPI {
     }, API_CONFIG.timeout);
 
     try {
-      console.log(`[External API] Fetching matches for edition ${String(editionId)}...`);
+      logger.debug({ editionId }, "Fetching matches from external API");
 
       const url = `${API_CONFIG.baseUrl}/matches?edition=${String(editionId)}`;
       const response = await fetch(url, {
@@ -65,7 +66,7 @@ export class MatchExternalAPI {
         throw new AppError("Invalid response format from external API", 500, ErrorCode.EXTERNAL_SERVICE_ERROR);
       }
 
-      console.log(`[External API] Successfully fetched ${String(data.data.length)} matches`);
+      logger.info({ editionId, matchCount: data.data.length }, "Successfully fetched matches from external API");
       return data.data;
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
@@ -76,7 +77,7 @@ export class MatchExternalAPI {
         throw error;
       }
 
-      console.error("[External API] Error fetching matches:", error);
+      logger.error({ err: error }, "Error fetching matches from external API");
       throw new AppError("Failed to fetch matches from external API", 500, ErrorCode.EXTERNAL_SERVICE_ERROR);
     } finally {
       clearTimeout(timeoutId);

@@ -1,5 +1,6 @@
 import type { IClub, IClubRaw, IConfederation, IPlayer, IPlayerRaw, ITeam } from "#team/team.types.js";
 
+import { logger } from "#logger/logger.service.js";
 import { TeamService } from "#team/team.service.js";
 import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
 /**
@@ -16,11 +17,11 @@ export const getTeamsFromCacheOrFetch = async (
   const cachedTeams: ITeam[] | undefined = cachedInfo.get(CACHE_KEYS.TEAMS);
 
   if (cachedTeams) {
-    console.log("Returning teams from cache");
+    logger.debug("Returning teams from cache");
     return cachedTeams;
   }
 
-  console.log("Returning teams from DB fetch");
+  logger.debug("Fetching teams from database");
   const teamsRaw = await teamService.getAll(requestedEdition);
   const confederations = await getConfederationsFromCacheOrFetch(teamService);
   let formattedTeams = teamsRaw.map((team) => ({
@@ -43,7 +44,7 @@ export const getClubsFromCacheOrFetch = async (teamService: TeamService, clubIds
   const cachedClubs: IClub[] | undefined = cachedInfo.get(CACHE_KEYS.CLUBS);
 
   if (cachedClubs) {
-    console.log("Returning clubs from cache");
+    logger.debug("Returning clubs from cache");
     return cachedClubs;
   }
 
@@ -62,7 +63,7 @@ export const getPlayersFromCacheOrFetch = async (
   const cachedPlayers: IPlayer[] | undefined = cachedInfo.get(CACHE_KEYS.PLAYERS);
 
   if (cachedPlayers) {
-    console.log("Returning players from cache");
+    logger.debug("Returning players from cache");
     return cachedPlayers;
   }
 
@@ -78,7 +79,7 @@ export const getConfederationsFromCacheOrFetch = async (teamService: TeamService
   const cachedConfederations: IConfederation[] | undefined = cachedInfo.get(CACHE_KEYS.CONFEDERATIONS);
 
   if (cachedConfederations) {
-    console.log("Returning confederations from cache");
+    logger.debug("Returning confederations from cache");
     return cachedConfederations;
   }
 

@@ -1,5 +1,6 @@
 import type { ITeam } from "#team/team.types.js";
 
+import { logger } from "#logger/logger.service.js";
 import { BaseController } from "#shared/base.controller.js";
 import { TeamService } from "#team/team.service.js";
 import { AppError } from "#utils/appError.js";
@@ -33,7 +34,7 @@ export class TeamController extends BaseController {
       let formattedTeams: ITeam[] = [];
 
       if (editionId === currentEdition) {
-        console.log("Returning teams from cache");
+        logger.debug("Returning teams from cache");
         formattedTeams = cachedInfo.get(CACHE_KEYS.TEAMS) ?? [];
       }
 
@@ -46,11 +47,9 @@ export class TeamController extends BaseController {
   };
 
   getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    console.log("Getting by ID");
     await this.handleRequest(req, res, next, async () => {
       const teamId = req.params.teamId;
       const currentEdition = process.env.EDITION;
-      console.log("Getting by ID", teamId, currentEdition);
 
       if (!currentEdition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);

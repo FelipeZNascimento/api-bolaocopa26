@@ -1,4 +1,5 @@
 // import { connection } from "#database/db.js";
+import { logger } from "#logger/logger.service.js";
 import { MatchSyncService } from "#match/match.sync.service.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
 
@@ -7,7 +8,7 @@ import app from "./app.js";
 const port = process.env.PORT ?? "9001";
 
 const server = app.listen(port, () => {
-  console.log(`Bolao da Copa 2026 API listening on port ${port}`);
+  logger.info({ port }, `Bolao da Copa 2026 API listening on port ${port}`);
 });
 
 WebSocketService.getInstance(server);
