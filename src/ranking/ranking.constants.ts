@@ -8,6 +8,17 @@ export const AWARD_POINTS = {
   winnerOnly: 2,
 };
 
+export const AWARD_POINTS_2026 = {
+  exactScore: 10,
+  extraBestPlayer: 15,
+  extraChampion: 50,
+  extraDefense: 10,
+  extraOffense: 10,
+  extraStriker: 15,
+  oneScore: 6,
+  winnerOnly: 4,
+};
+
 export const ROUND_MULTIPLIERS: Record<number, number> = {
   1: 1,
   2: 1,
@@ -15,6 +26,16 @@ export const ROUND_MULTIPLIERS: Record<number, number> = {
   4: 2,
   5: 3,
   6: 4,
+  7: 5,
+};
+
+export const ROUND_MULTIPLIERS_2026: Record<number, number> = {
+  1: 1,
+  2: 1.5,
+  3: 2,
+  4: 3,
+  5: 4,
+  6: 2,
   7: 5,
 };
 

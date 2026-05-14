@@ -3,6 +3,8 @@ import { getPasswordResetEmailTemplate } from "#mailer/reset.template.js";
 import { ENV } from "#utils/envParser.js";
 import { createTransport, Transporter, TransportOptions } from "nodemailer";
 
+import { getSignupEmailTemplate } from "./signup.template";
+
 export class MailerService {
   private readonly fromAddress: string;
   private transporter!: Transporter;
@@ -35,7 +37,7 @@ export class MailerService {
     void this.testConnection();
   }
 
-  async sendPasswordResetEmail(to: string, name: string, resetToken: string) {
+  async sendPasswordResetEmail(to: string, resetToken: string) {
     if (!process.env.BASE_URL) {
       throw new Error("BASE_URL is not defined in environment variables");
     }
@@ -44,15 +46,23 @@ export class MailerService {
 
     await this.transporter.sendMail({
       from: this.fromAddress,
-      html: getPasswordResetEmailTemplate(name, resetUrl),
+      html: getPasswordResetEmailTemplate(resetUrl),
       subject: "[BolaoCopa2026] Redefinir sua senha",
       to,
     });
+  }
 
-    //   logger.info("Password reset email sent", {
-    //     context: "EmailService.sendPasswordResetEmail",
-    //     to,
-    //   });
+  async sendSignupEmail(to: string, nickname: string) {
+    if (!process.env.BASE_URL) {
+      throw new Error("BASE_URL is not defined in environment variables");
+    }
+
+    await this.transporter.sendMail({
+      from: this.fromAddress,
+      html: getSignupEmailTemplate(nickname),
+      subject: "[BolaoCopa2026] Bem-vindo ao Bolão da Copa 2026",
+      to,
+    });
   }
 
   //   async sendVerificationEmail(to: string, name: string, verificationToken: string): Promise<void> {
@@ -84,7 +94,7 @@ export class MailerService {
   private precompileTemplates() {
     try {
       // getVerificationEmailTemplate("test", "test"); // Pre-compile by running once
-      getPasswordResetEmailTemplate("test", "test"); // Pre-compile by running once
+      getPasswordResetEmailTemplate("test"); // Pre-compile by running once
       console.info("Email templates precompiled successfully");
     } catch (error) {
       console.error("Failed to precompile email templates", { error });
