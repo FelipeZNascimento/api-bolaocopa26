@@ -570,7 +570,7 @@ describe("UserController", () => {
 
       expect(mockGenerateVerificationToken).toHaveBeenCalled();
       expect(mockCachedInfo.set).toHaveBeenCalledWith("PASSWORD_RESET_test@example.com", "token123", 3600);
-      expect(mockMailerService.sendPasswordResetEmail).toHaveBeenCalledWith("test@example.com", "", "token123");
+      expect(mockMailerService.sendPasswordResetEmail).toHaveBeenCalledWith("test@example.com", "token123");
     });
   });
 });

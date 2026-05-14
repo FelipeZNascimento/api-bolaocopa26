@@ -42,7 +42,7 @@ export class UserController extends BaseController {
       const resetToken = generateVerificationToken();
       cachedInfo.set(`PASSWORD_RESET_${email}`, resetToken, 60 * 60); // 60 minutes expiration
 
-      await this.mailerService.sendPasswordResetEmail(email, "", resetToken);
+      await this.mailerService.sendPasswordResetEmail(email, resetToken);
     });
   };
 
@@ -107,10 +107,10 @@ export class UserController extends BaseController {
   login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
       const edition = req.params.edition || process.env.EDITION;
-
       if (!edition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
+      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
 
       if (req.session.user) {
         return req.session.user;
@@ -128,8 +128,9 @@ export class UserController extends BaseController {
       }
       userResponse.timestamp = Date.now();
       req.session.user = userResponse;
-      const parsedFavorites: number[] = userResponse.favorites ? (JSON.parse(userResponse.favorites) as number[]) : [];
-      console.log("Parsed Favorites:", parsedFavorites);
+
+      const favoritesResponse: string = await this.userService.getFavoritesById(userResponse.id, editionId);
+      const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
       return { ...userResponse, favorites: parsedFavorites };
     });
   };
@@ -153,6 +154,7 @@ export class UserController extends BaseController {
       if (!edition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
+      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
 
       const reqBody = req.body as { email: string; name: string; nickname: string; password: string };
       const { email, name, nickname, password } = reqBody;
@@ -178,14 +180,18 @@ export class UserController extends BaseController {
         throw new AppError("Registro falhou (edição)", 204, ErrorCode.DB_ERROR);
       }
 
-      const loginResponse = await this.userService.login(email, password, parseInt(edition));
-
-      if (loginResponse) {
-        req.session.user = loginResponse;
-        return loginResponse;
+      const userResponse = await this.userService.login(email, password, parseInt(edition));
+      if (!userResponse) {
+        throw new AppError("Credenciais inválidas", 401, ErrorCode.UNAUTHORIZED);
       }
+      userResponse.timestamp = Date.now();
+      req.session.user = userResponse;
 
-      return;
+      const favoritesResponse: string = await this.userService.getFavoritesById(userResponse.id, editionId);
+      const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
+
+      await this.mailerService.sendSignupEmail(email, nickname);
+      return { ...userResponse, favorites: parsedFavorites };
     });
   };
 
@@ -308,34 +314,4 @@ export class UserController extends BaseController {
       return await this.userService.getById(user.id, editionId);
     });
   };
-
-  // updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  //   await this.handleRequest(req, res, next, async () => {
-  //     if (!req.session.user) {
-  //       throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
-  //     }
-
-  //     const user = req.session.user;
-  //     void this.userService.updateLastOnlineTime(user.id);
-
-  //     const reqBody = req.body as { email: string; name: string; username: string };
-  //     const { email, name, username } = reqBody;
-
-  //     if (!email || !name || !username) {
-  //       throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-  //     }
-
-  //     if (!validateEmail(email)) {
-  //       throw new AppError("Email inválido", 409, ErrorCode.VALIDATION_ERROR);
-  //     }
-
-  //     const isValid = await checkExistingEntries(this.userService, email, username, user.id);
-  //     if (!isValid) {
-  //       throw new AppError("Email ou nome de usuário já em uso", 409, ErrorCode.VALIDATION_ERROR);
-  //     }
-
-  //     await this.userService.updateProfile(email, name, username, user.id);
-  //     return await this.userService.getById(user.id);
-  //   });
-  // };
 }
