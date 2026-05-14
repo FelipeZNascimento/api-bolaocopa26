@@ -5,12 +5,38 @@ import db from "#database/db.js";
 import { ResultSetHeader } from "mysql2/promise";
 
 export class UserService {
+  async deleteFromEdition(userId: number, editionId: number) {
+    const rows: ResultSetHeader = await db.query(`DELETE FROM users_edition WHERE id_user = ? AND id_edition = ?`, [
+      userId,
+      editionId,
+    ]);
+
+    return rows;
+  }
+
+  // Get all users for an edition, including inactive ones (for admin view)
+  async getAllByEdition(edition: number) {
+    const rows: IUser[] = await db.query(
+      `SELECT SQL_NO_CACHE users.id, users.name, users.nickname,
+        users_edition.is_active as isActive,
+        users.timestamp, users.admin,
+        (users.timestamp IS NOT NULL AND (UNIX_TIMESTAMP(NOW()) - users.timestamp) < 600) AS isOnline
+        FROM users
+        JOIN users_edition ON users.id = users_edition.id_user
+        WHERE users_edition.id_edition = ?
+        ORDER BY users.nickname ASC`,
+      [edition],
+    );
+
+    return rows;
+  }
+
   async getByEdition(edition: number) {
     const rows: IUser[] = await db.query(
       `SELECT SQL_NO_CACHE users.id, users.name, users.nickname,
         users_edition.is_active as isActive,
         users.timestamp, users.admin,
-        (UNIX_TIMESTAMP(NOW()) - users.timestamp) < 600 AS isOnline
+        (users.timestamp IS NOT NULL AND (UNIX_TIMESTAMP(NOW()) - users.timestamp) < 600) AS isOnline
         FROM users
         JOIN users_edition ON users.id = users_edition.id_user
         WHERE users_edition.id_edition = ? AND users_edition.is_active = 1
@@ -81,20 +107,19 @@ export class UserService {
     return rows.count === 0;
   }
 
-  async login(email: string, password: string, editionId: number) {
-    const row: IUser[] = await db.query(
+  async login(email: string, password: string) {
+    const rows: IUser[] = await db.query(
       `SELECT SQL_NO_CACHE users.id, users.email, users.name, users.nickname, users.timestamp, users.admin,
-        users_edition.is_active as isActive, users_favorites.favorites
+        users_edition.is_active as isActive, users_favorites.favorites, users_edition.id_edition AS editionId
         FROM users
-        INNER JOIN users_edition ON users.id = users_edition.id_user
-        LEFT JOIN users_favorites ON users.id = users_favorites.user_id AND users_favorites.edition_id = ?
+        LEFT JOIN users_edition ON users.id = users_edition.id_user
+        LEFT JOIN users_favorites ON users.id = users_favorites.user_id
         WHERE users.email = ?
-        AND users.password = ?
-        AND users_edition.id_edition = ?`,
-      [editionId, email, password, editionId],
+        AND users.password = ?`,
+      [email, password],
     );
 
-    return row.length > 0 ? row[0] : null;
+    return rows;
   }
 
   async register(email: string, name: string, nickname: string, password: string) {
@@ -106,20 +131,22 @@ export class UserService {
     return rows;
   }
 
-  // async setIcons(id: number, color: string, icon: string) {
-  //   const rows = (await db.query(
-  //     `INSERT INTO users_icon (id_user, icon, color) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE icon = ?, color = ?`,
-  //     [id, icon, color, icon, color],
-  //   )) as ResultSetHeader;
-
-  //   return rows;
-  // }
-
   async setOnCurrentSeason(edition: number, id: number) {
     const rows: ResultSetHeader = await db.query(`INSERT INTO users_edition (id_user, id_edition) VALUES (?, ?)`, [
       id,
       edition,
     ]);
+
+    return rows;
+  }
+
+  async updateActiveStatus(userId: number, editionId: number, newStatus: boolean) {
+    const rows: ResultSetHeader = await db.query(
+      `UPDATE users_edition
+        SET is_active = ?
+        WHERE id_user = ? AND id_edition = ?`,
+      [newStatus, userId, editionId],
+    );
 
     return rows;
   }

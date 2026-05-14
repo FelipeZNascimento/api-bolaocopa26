@@ -15,6 +15,8 @@ router.post("/update-password", userController.updatePassword);
 router.post("/update-profile", userController.updateProfile);
 router.post("/update-favorites", userController.updateFavorites);
 router.post("/register", userController.register);
+router.post("/activate", userController.updateActiveStatus);
+router.post("/delete-from-edition", userController.deleteFromEdition);
 
 // Get routes
 router.get("/logout", userController.logout);

@@ -2,6 +2,7 @@ import type { IEvent, IEventRaw, IMatch, IMatchRaw } from "#match/match.types.js
 import type { IPlayer, IReferee, IStadium, ITeam } from "#team/team.types.js";
 
 import { IBet } from "#bet/bet.types.js";
+import { logger } from "#logger/logger.service.js";
 import { MATCH_STATUS, MatchStatus } from "#match/match.constants.js";
 import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
 
@@ -124,7 +125,7 @@ export const getEventsFromCacheOrFetch = async (
   const cachedEvents: IEvent[] | undefined = cachedInfo.get(CACHE_KEYS.EVENTS);
 
   if (cachedEvents) {
-    console.log("Returning events from cache");
+    logger.debug("Returning events from cache");
     return cachedEvents;
   }
 
@@ -142,7 +143,7 @@ export const getStadiumsFromCacheOrFetch = async (
   const cachedStadiums: IStadium[] | undefined = cachedInfo.get(CACHE_KEYS.STADIUMS);
 
   if (cachedStadiums && requestedEdition === currentEdition) {
-    console.log("Returning stadiums from cache");
+    logger.debug("Returning stadiums from cache");
     return cachedStadiums;
   }
 
@@ -165,7 +166,7 @@ export const getMatchesFromCacheOrFetch = async (
   const cachedMatches: IMatch[] | undefined = cachedInfo.get(CACHE_KEYS.MATCHES);
 
   if (cachedMatches && requestedEdition === currentEdition) {
-    console.log("Returning matches from cache");
+    logger.debug("Returning matches from cache");
     return cachedMatches;
   }
 
@@ -186,7 +187,7 @@ export const getRefereesFromCacheOrFetch = async (
   const cachedReferees: IReferee[] | undefined = cachedInfo.get(CACHE_KEYS.REFEREES);
 
   if (cachedReferees && requestedEdition === currentEdition) {
-    console.log("Returning referees from cache");
+    logger.debug("Returning referees from cache");
     return cachedReferees;
   }
 

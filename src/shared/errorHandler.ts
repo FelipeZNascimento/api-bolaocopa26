@@ -26,6 +26,5 @@ export class ErrorHandler extends Error {
 }
 
 export const isAppError = (error: any): error is ErrorHandler => {
-  console.log("isAppError: ", error);
   return error instanceof ErrorHandler;
 };

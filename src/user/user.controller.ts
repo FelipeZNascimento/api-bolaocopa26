@@ -30,6 +30,32 @@ export class UserController extends BaseController {
     super();
   }
 
+  deleteFromEdition = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    await this.handleRequest(req, res, next, async () => {
+      const edition = req.params.edition || process.env.EDITION;
+      if (!edition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
+      const user = req.session.user;
+
+      if (!user || !user.admin) {
+        return [];
+      }
+
+      const reqBody = req.body as { userId: number };
+      const { userId } = reqBody;
+
+      if (!userId) {
+        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+      }
+
+      await this.userService.deleteFromEdition(userId, editionId);
+      const response: IUser[] = await this.userService.getAllByEdition(editionId);
+      return response;
+    });
+  };
+
   forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
       const reqBody = req.body as { email: string };
@@ -71,12 +97,19 @@ export class UserController extends BaseController {
 
   getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
+      const user = req.session.user;
+
+      if (!user || !user.admin) {
+        return [];
+      }
+
       const edition = req.params.edition || process.env.EDITION;
       if (!edition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
 
-      const response: IUser[] = await this.userService.getByEdition(parseInt(edition));
+      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
+      const response: IUser[] = await this.userService.getAllByEdition(editionId);
       return response;
     });
   };
@@ -122,16 +155,24 @@ export class UserController extends BaseController {
         throw new AppError("Credenciais inválidas", 401, ErrorCode.UNAUTHORIZED);
       }
 
-      const userResponse = await this.userService.login(email, password, parseInt(edition));
-      if (!userResponse) {
+      const userResponse = await this.userService.login(email, password);
+      if (userResponse.length === 0) {
         throw new AppError("Credenciais inválidas", 401, ErrorCode.UNAUTHORIZED);
       }
-      userResponse.timestamp = Date.now();
-      req.session.user = userResponse;
 
-      const favoritesResponse: string = await this.userService.getFavoritesById(userResponse.id, editionId);
+      let user = userResponse.find((u) => u.editionId === editionId);
+      // If the user exists but is not associated with the current edition, create the association
+      if (user === undefined) {
+        await this.userService.setOnCurrentSeason(editionId, userResponse[0].id);
+      }
+      user = userResponse[0];
+
+      user.timestamp = Date.now();
+      req.session.user = user;
+
+      const favoritesResponse: string = await this.userService.getFavoritesById(user.id, editionId);
       const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
-      return { ...userResponse, favorites: parsedFavorites };
+      return { ...user, favorites: parsedFavorites };
     });
   };
 
@@ -180,18 +221,45 @@ export class UserController extends BaseController {
         throw new AppError("Registro falhou (edição)", 204, ErrorCode.DB_ERROR);
       }
 
-      const userResponse = await this.userService.login(email, password, parseInt(edition));
-      if (!userResponse) {
+      const userResponse = await this.userService.login(email, password);
+      if (userResponse.length === 0) {
         throw new AppError("Credenciais inválidas", 401, ErrorCode.UNAUTHORIZED);
       }
-      userResponse.timestamp = Date.now();
-      req.session.user = userResponse;
+      const user = userResponse[0];
+      user.timestamp = Date.now();
+      req.session.user = user;
 
-      const favoritesResponse: string = await this.userService.getFavoritesById(userResponse.id, editionId);
+      const favoritesResponse: string = await this.userService.getFavoritesById(user.id, editionId);
       const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
 
       await this.mailerService.sendSignupEmail(email, nickname);
-      return { ...userResponse, favorites: parsedFavorites };
+      return { ...user, favorites: parsedFavorites };
+    });
+  };
+
+  updateActiveStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    await this.handleRequest(req, res, next, async () => {
+      const edition = req.params.edition || process.env.EDITION;
+      if (!edition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
+      const user = req.session.user;
+
+      if (!user || !user.admin) {
+        return [];
+      }
+
+      const reqBody = req.body as { newStatus: boolean; userId: number };
+      const { newStatus, userId } = reqBody;
+
+      if (newStatus === undefined || !userId) {
+        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+      }
+
+      await this.userService.updateActiveStatus(userId, editionId, newStatus);
+      const response: IUser[] = await this.userService.getAllByEdition(editionId);
+      return response;
     });
   };
 
@@ -272,6 +340,7 @@ export class UserController extends BaseController {
       }
     });
   };
+
   updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
       const user = req.session.user;

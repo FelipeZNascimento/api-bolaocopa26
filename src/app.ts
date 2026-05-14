@@ -1,6 +1,8 @@
 import betRoutes from "#bet/bet.routes.js";
 import config from "#database/config.js";
 import { connection } from "#database/db.js";
+import { httpLogger } from "#logger/logger.middleware.js";
+import { logger } from "#logger/logger.service.js";
 import matchRoutes from "#match/match.routes.js";
 import { errorHandler } from "#middlewares/errorHandler.js";
 import { cache, middleware, updateUserActivity } from "#middlewares/middlewares.js";
@@ -51,11 +53,11 @@ sessionStore
   .onReady()
   .then(() => {
     // MySQL session store ready for use.
-    console.log("MySQLStore ready");
+    logger.info("MySQLStore ready");
   })
   .catch((error: unknown) => {
     // Something went wrong.
-    console.error("Error: ", error);
+    logger.error({ err: error }, "MySQLStore initialization error");
   });
 
 const allowedOrigins = [
@@ -77,6 +79,9 @@ const corsOptions = {
 app.use(express.json());
 app.use(cors(corsOptions));
 
+// HTTP request/response logging
+app.use(httpLogger);
+
 // Update user activity on every request with an active session
 const userService = new UserService();
 app.use(updateUserActivity(userService));
@@ -92,7 +97,6 @@ app.get("/", [middleware]);
 
 // Error Handler should be last
 const errorMiddleware: ErrorRequestHandler = (err, req, res, next) => {
-  console.log("Error middleware:", err);
   errorHandler(err as Error, req, res, next);
 };
 app.use(errorMiddleware);

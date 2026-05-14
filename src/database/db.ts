@@ -1,6 +1,7 @@
 import type { PoolOptions } from "mysql2/promise";
 
 import config from "#database/config.js";
+import { logger } from "#logger/logger.service.js";
 import { AppError } from "#utils/appError.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import mysql from "mysql2/promise";
@@ -8,24 +9,26 @@ import mysql from "mysql2/promise";
 const poolOptions = config.db as unknown as PoolOptions;
 export const connection = mysql.createPool(poolOptions);
 
+// Log new connections at debug level
 connection.on("connection", function (connection) {
-  // handy for testing
-  console.log("Pool id %d connected", connection.threadId);
+  logger.debug({ threadId: connection.threadId }, "Database connection established");
 });
 
+// Warn when connection pool is exhausted
 connection.on("enqueue", function () {
-  // handy for testing
-  console.log("Waiting for available connection slot");
+  logger.warn(
+    { connectionLimit: poolOptions.connectionLimit },
+    "Connection pool exhausted - request queued. Consider increasing SQL_CONNECTION_LIMIT.",
+  );
 });
 
+// Log acquire/release at trace level (very verbose, usually disabled)
 connection.on("acquire", function (connection) {
-  // handy for testing
-  console.log("Connection %d acquired", connection.threadId);
+  logger.trace({ threadId: connection.threadId }, "Connection acquired from pool");
 });
 
 connection.on("release", function (connection) {
-  // handy for testing
-  console.log("Connection %d released", connection.threadId);
+  logger.trace({ threadId: connection.threadId }, "Connection released to pool");
 });
 
 interface MySqlLikeError {

@@ -17,3 +17,5 @@
 
 # Logs & Debug
 /apiCalls
+/logs
+*.log

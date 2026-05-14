@@ -1,6 +1,7 @@
 import type { IBetRaw, IExtraBetRaw, IExtraBetResultRaw } from "#bet/bet.types.js";
 
 import db from "#database/db.js";
+import { logger } from "#logger/logger.service.js";
 import { ResultSetHeader } from "mysql2/promise";
 
 export class BetService {
@@ -104,7 +105,7 @@ export class BetService {
   }
 
   async updateExtras(extraType: string, playerId: number, teamId: number, userId: number, editionId: number) {
-    console.log("Updating extras with", { editionId, extraType, playerId, teamId, userId });
+    logger.debug({ editionId, extraType, playerId, teamId, userId }, "Updating extra bets");
     const rows: ResultSetHeader = await db.query(
       `INSERT INTO extra_bets (id_user, id_edition, id_extra_type, id_team, id_player) VALUES (?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE id_extra_type = ?, id_team = ?, id_player = ?`,

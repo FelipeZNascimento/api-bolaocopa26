@@ -10,9 +10,11 @@ import { IUser } from "./user.types";
 
 // Mocks
 const mockUserService = {
+  getAllByEdition: vi.fn(),
   getByEdition: vi.fn(),
   getByEmail: vi.fn(),
   getById: vi.fn(),
+  getFavoritesById: vi.fn(),
   isEmailValid: vi.fn(),
   isNicknameValid: vi.fn(),
   login: vi.fn(),
@@ -73,6 +75,7 @@ vi.mock("#utils/apiResponse.js", () => ({
 
 const mockUser: IUser = {
   admin: false,
+  editionId: 2024,
   email: "test@example.com",
   favorites: "[1, 2, 3]",
   id: 1,
@@ -161,19 +164,30 @@ describe("UserController", () => {
   });
 
   describe("getAll", () => {
-    it("should return all users by edition", async () => {
+    it("should return all users by edition when user is admin", async () => {
+      const adminUser = { ...mockUser, admin: true };
       const users = [mockUser, { ...mockUser, id: 2, nickname: "user2" }];
-      mockUserService.getByEdition.mockResolvedValue(users);
-      const { next, req, res } = getMockReqResSession();
+      mockUserService.getAllByEdition.mockResolvedValue(users);
+      const { next, req, res } = getMockReqResSession(adminUser);
 
       await controller.getAll(req, res, next);
 
-      expect(mockUserService.getByEdition).toHaveBeenCalledWith(2024);
+      expect(mockUserService.getAllByEdition).toHaveBeenCalledWith(2024);
     });
 
-    it("should throw error if edition is missing", async () => {
+    it("should return empty array if user is not admin", async () => {
+      const nonAdminUser = { ...mockUser, admin: false };
+      const { next, req, res } = getMockReqResSession(nonAdminUser);
+
+      await controller.getAll(req, res, next);
+
+      expect(mockUserService.getAllByEdition).not.toHaveBeenCalled();
+    });
+
+    it("should throw error if edition is missing for admin user", async () => {
+      const adminUser = { ...mockUser, admin: true };
       delete process.env.EDITION;
-      const { next, req, res } = getMockReqResSession();
+      const { next, req, res } = getMockReqResSession(adminUser);
 
       await controller.getAll(req, res, next);
 
@@ -251,7 +265,7 @@ describe("UserController", () => {
     });
 
     it("should throw error if login fails", async () => {
-      mockUserService.login.mockResolvedValue(null);
+      mockUserService.login.mockResolvedValue([]);
       const { next, req, res } = getMockReqResSession();
       req.body = { email: "test@example.com", password: "wrongpassword" };
 
@@ -263,13 +277,15 @@ describe("UserController", () => {
     });
 
     it("should login successfully and set session user", async () => {
-      mockUserService.login.mockResolvedValue(mockUser);
+      mockUserService.login.mockResolvedValue([mockUser]);
+      mockUserService.getFavoritesById.mockResolvedValue("[1,2,3]");
       const { next, req, res } = getMockReqResSession();
       req.body = { email: "test@example.com", password: "password123" };
 
       await controller.login(req, res, next);
 
-      expect(mockUserService.login).toHaveBeenCalledWith("test@example.com", "password123", 2024);
+      expect(mockUserService.login).toHaveBeenCalledWith("test@example.com", "password123");
+      expect(mockUserService.getFavoritesById).toHaveBeenCalledWith(1, 2024);
       expect(req.session.user).toEqual(expect.objectContaining({ email: "test@example.com", id: 1 }));
     });
 
@@ -338,7 +354,8 @@ describe("UserController", () => {
       mockCheckExistingEntries.mockResolvedValue(true);
       mockUserService.register.mockResolvedValue({ affectedRows: 1, insertId: 10 });
       mockUserService.setOnCurrentSeason.mockResolvedValue({ affectedRows: 1 });
-      mockUserService.login.mockResolvedValue(mockUser);
+      mockUserService.login.mockResolvedValue([mockUser]);
+      mockUserService.getFavoritesById.mockResolvedValue("[1,2,3]");
       const { next, req, res } = getMockReqResSession();
       req.body = {
         email: "new@example.com",
@@ -351,7 +368,8 @@ describe("UserController", () => {
 
       expect(mockUserService.register).toHaveBeenCalledWith("new@example.com", "New User", "newuser", "password123");
       expect(mockUserService.setOnCurrentSeason).toHaveBeenCalledWith(2024, 10);
-      expect(mockUserService.login).toHaveBeenCalledWith("new@example.com", "password123", 2024);
+      expect(mockUserService.login).toHaveBeenCalledWith("new@example.com", "password123");
+      expect(mockUserService.getFavoritesById).toHaveBeenCalledWith(1, 2024);
       expect(req.session.user).toEqual(mockUser);
     });
 
