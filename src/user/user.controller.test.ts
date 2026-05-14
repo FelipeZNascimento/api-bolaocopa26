@@ -72,6 +72,7 @@ vi.mock("#utils/apiResponse.js", () => ({
 }));
 
 const mockUser: IUser = {
+  admin: false,
   email: "test@example.com",
   favorites: "[1, 2, 3]",
   id: 1,
