@@ -1,4 +1,5 @@
 export interface IUser {
+  admin: boolean;
   email: string;
   favorites: null | string;
   id: number;
