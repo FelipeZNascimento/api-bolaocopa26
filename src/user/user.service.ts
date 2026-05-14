@@ -9,7 +9,7 @@ export class UserService {
     const rows: IUser[] = await db.query(
       `SELECT SQL_NO_CACHE users.id, users.name, users.nickname,
         users_edition.is_active as isActive,
-        users.timestamp,
+        users.timestamp, users.admin,
         (UNIX_TIMESTAMP(NOW()) - users.timestamp) < 600 AS isOnline
         FROM users
         JOIN users_edition ON users.id = users_edition.id_user
@@ -23,7 +23,7 @@ export class UserService {
 
   async getByEmail(email: string) {
     const row: IUser[] = await db.query(
-      `SELECT SQL_NO_CACHE users.id, users.email, users.name, users.nickname,
+      `SELECT SQL_NO_CACHE users.id, users.email, users.name, users.nickname, users.admin,
         users_edition.id AS seasonId, users_edition.is_active as isActive
         FROM users
         INNER JOIN users_edition ON users.id = users_edition.id_user
@@ -36,7 +36,7 @@ export class UserService {
 
   async getById(userId: number, editionId: number) {
     const row: IUser[] = await db.query(
-      `SELECT SQL_NO_CACHE users.id, users.name, users.nickname, users.email,
+      `SELECT SQL_NO_CACHE users.id, users.name, users.nickname, users.email, users.admin,
         users_edition.is_active as isActive,
         users.timestamp,
         users_favorites.favorites
@@ -83,7 +83,7 @@ export class UserService {
 
   async login(email: string, password: string, editionId: number) {
     const row: IUser[] = await db.query(
-      `SELECT SQL_NO_CACHE users.id, users.email, users.name, users.nickname, users.timestamp,
+      `SELECT SQL_NO_CACHE users.id, users.email, users.name, users.nickname, users.timestamp, users.admin,
         users_edition.is_active as isActive, users_favorites.favorites
         FROM users
         INNER JOIN users_edition ON users.id = users_edition.id_user

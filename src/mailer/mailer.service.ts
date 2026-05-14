@@ -1,9 +1,8 @@
 // import { logger } from "@/config/logger";
 import { getPasswordResetEmailTemplate } from "#mailer/reset.template.js";
+import { getSignupEmailTemplate } from "#mailer/signup.template.js";
 import { ENV } from "#utils/envParser.js";
 import { createTransport, Transporter, TransportOptions } from "nodemailer";
-
-import { getSignupEmailTemplate } from "./signup.template";
 
 export class MailerService {
   private readonly fromAddress: string;
