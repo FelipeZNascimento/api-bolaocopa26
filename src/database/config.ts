@@ -1,6 +1,7 @@
 const config = {
   db: {
-    connectionLimit: process.env.SQL_CONNECTION_LIMIT ? Number(process.env.SQL_CONNECTION_LIMIT) : 10,
+    acquireTimeout: process.env.SQL_ACQUIRE_TIMEOUT ? Number(process.env.SQL_ACQUIRE_TIMEOUT) : 30000,
+    connectionLimit: process.env.SQL_CONNECTION_LIMIT ? Number(process.env.SQL_CONNECTION_LIMIT) : 20,
     connectTimeout: process.env.SQL_CONNECT_TIMEOUT ? Number(process.env.SQL_CONNECT_TIMEOUT) : 10000,
     database: process.env.SQL_DB,
     host: process.env.SQL_HOST,
