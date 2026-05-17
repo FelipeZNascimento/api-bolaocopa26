@@ -1,4 +1,4 @@
-// import { logger } from "@/config/logger";
+import { getActivationTemplate } from "#mailer/activation.template.js";
 import { getPasswordResetEmailTemplate } from "#mailer/reset.template.js";
 import { getSignupEmailTemplate } from "#mailer/signup.template.js";
 import { ENV } from "#utils/envParser.js";
@@ -24,16 +24,24 @@ export class MailerService {
     } as TransportOptions);
     this.fromAddress = process.env.SMTP_FROM ?? "bolao@omegafox.me";
 
-    // logger.info("Using SMTP configuration", {
-    //   context: "EmailService.constructor",
-    //   host: ENV.SMTP_HOST,
-    // });
-
     // Add email template precompilation
     this.precompileTemplates();
 
     // Add connection testing
     void this.testConnection();
+  }
+
+  async sendActivationEmail(to: string, nickname: string) {
+    if (!process.env.BASE_URL) {
+      throw new Error("BASE_URL is not defined in environment variables");
+    }
+
+    await this.transporter.sendMail({
+      from: this.fromAddress,
+      html: getActivationTemplate(nickname),
+      subject: "[BolaoCopa2026] Sua conta foi ativada!",
+      to,
+    });
   }
 
   async sendPasswordResetEmail(to: string, resetToken: string) {
@@ -63,32 +71,6 @@ export class MailerService {
       to,
     });
   }
-
-  //   async sendVerificationEmail(to: string, name: string, verificationToken: string): Promise<void> {
-  //     const verificationUrl = `${ENV.SERVER_URL}/api/auth/verify-email/${verificationToken}`; // TODO: Change this to frontend URL
-
-  //     try {
-  //       const info = await this.transporter.sendMail({
-  //         from: this.fromAddress,
-  //         html: getVerificationEmailTemplate(name, verificationUrl),
-  //         subject: "Verify your email address",
-  //         to,
-  //       });
-
-  //       //   logger.info("Verification email sent", {
-  //       //     context: "EmailService.sendVerificationEmail",
-  //       //     messageId: info.messageId,
-  //       //     to,
-  //       //   });
-  //     } catch (error) {
-  //       //   logger.error("Failed to send verification email", {
-  //       //     context: "EmailService.sendVerificationEmail",
-  //       //     error: error instanceof Error ? error.message : "Unknown error",
-  //       //     to,
-  //       //   });
-  //       throw error;
-  //     }
-  //   }
 
   private precompileTemplates() {
     try {
