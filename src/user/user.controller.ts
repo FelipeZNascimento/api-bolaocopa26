@@ -258,6 +258,9 @@ export class UserController extends BaseController {
       }
 
       await this.userService.updateActiveStatus(userId, editionId, newStatus);
+      if (newStatus === true) {
+        await this.mailerService.sendActivationEmail(user.email, user.nickname);
+      }
       const response: IUser[] = await this.userService.getAllByEdition(editionId);
       return response;
     });
@@ -352,6 +355,7 @@ export class UserController extends BaseController {
       if (!edition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
+      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
 
       const reqBody = req.body as { name: string; nickname: string };
       const { name, nickname } = reqBody;
@@ -374,13 +378,19 @@ export class UserController extends BaseController {
 
         // clear cached rankings to reflect name change
         clearRankingCache();
+        const favoritesResponse: string = await this.userService.getFavoritesById(user.id, editionId);
+        const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
 
-        return req.session.user;
+        return { ...user, favorites: parsedFavorites };
       }
 
-      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
-
-      return await this.userService.getById(user.id, editionId);
+      const favoritesResponse: string = await this.userService.getFavoritesById(user.id, editionId);
+      const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
+      const userResponse = await this.userService.getById(user.id, editionId);
+      if (!userResponse) {
+        return null;
+      }
+      return { ...userResponse, favorites: parsedFavorites };
     });
   };
 }

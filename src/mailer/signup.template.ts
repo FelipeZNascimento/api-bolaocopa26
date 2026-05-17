@@ -102,7 +102,7 @@ export const getSignupEmailTemplate = (user: string) => `
               <div
                 style="background-color:#F5F5F5;font-weight:bold;padding:16px 24px 0px 24px"
               >
-                PIX Copia &amp; Cola
+                🇧🇷 PIX Copia &amp; Cola
               </div>
               <div
                 style="background-color:#F5F5F5;font-size:10px;font-weight:normal;text-align:left;padding:16px 12px 16px 12px"
@@ -114,7 +114,7 @@ export const getSignupEmailTemplate = (user: string) => `
               <div
                 style="background-color:#E5E5E5;font-weight:bold;padding:16px 24px 0px 24px"
               >
-                PIX
+                🇧🇷 PIX
               </div>
               <div
                 style="background-color:#E5E5E5;font-weight:normal;padding:0px 24px 0px 24px"
@@ -134,7 +134,7 @@ export const getSignupEmailTemplate = (user: string) => `
               <div
                 style="background-color:#F5F5F5;font-weight:bold;padding:16px 24px 0px 24px"
               >
-                PIX QR Code
+                🇧🇷 PIX QR Code
               </div>
               <div
                 style="padding:16px 24px 16px 24px;background-color:#F5F5F5;text-align:center"
@@ -145,6 +145,41 @@ export const getSignupEmailTemplate = (user: string) => `
                   width="200"
                   style="width:200px;outline:none;border:none;text-decoration:none;vertical-align:middle;display:inline-block;max-width:100%"
                 />
+              </div>
+              <div
+                style="background-color:#E5E5E5;font-weight:bold;padding:16px 24px 0px 24px"
+              >
+                🇵🇹 MB Way
+              </div>
+              <div
+                style="background-color:#E5E5E5;font-weight:normal;padding:0px 24px 0px 24px"
+              >
+                916 166 514
+              </div>
+              <div
+                style="background-color:#E5E5E5;font-weight:normal;padding:0px 24px 0px 24px"
+              >
+                Valor: €20.00
+              </div>
+              <div
+                style="background-color:#E5E5E5;font-weight:normal;padding:0px 24px 0px 24px"
+              >
+                Felipe Zanon do Nascimento
+              </div>
+              <div
+                style="background-color:#F5F5F5;font-weight:bold;padding:16px 24px 0px 24px"
+              >
+                🌏 PayPal
+              </div>
+              <div
+                style="background-color:#F5F5F5;font-weight:normal;padding:0px 24px 0px 24px"
+              >
+                felipe@omegafox.me
+              </div>
+              <div
+                style="background-color:#F5F5F5;font-weight:normal;padding:0px 24px 0px 24px"
+              >
+                Valor: $25.00
               </div>
               <div style="font-weight:normal;padding:16px 24px 0px 24px">
                 Após pagamento, responda a esse email com o comprovante.
@@ -351,6 +386,13 @@ JSON TEMPLATE
         "block-1778751981500-188",
         "block-1778754247196-513",
         "block-1778754263819",
+        "block-1779055198622-854",
+        "block-1779055215033-370",
+        "block-1779055226636-546",
+        "block-1779055253162-388",
+        "block-1779055262801-797",
+        "block-1779055278258-560",
+        "block-1779055309513-428",
         "block-1778749975246",
         "block-1778750106248",
         "block-1709571302968",
@@ -994,7 +1036,7 @@ JSON TEMPLATE
         }
       },
       "props": {
-        "text": "PIX"
+        "text": "🇧🇷 PIX"
       }
     }
   },
@@ -1032,7 +1074,7 @@ JSON TEMPLATE
         }
       },
       "props": {
-        "text": "PIX Copia & Cola"
+        "text": "🇧🇷 PIX Copia & Cola"
       }
     }
   },
@@ -1050,7 +1092,7 @@ JSON TEMPLATE
         }
       },
       "props": {
-        "text": "PIX QR Code"
+        "text": "🇧🇷 PIX QR Code"
       }
     }
   },
@@ -1073,6 +1115,132 @@ JSON TEMPLATE
         "alt": "PIX QR Code",
         "linkHref": null,
         "contentAlignment": "middle"
+      }
+    }
+  },
+  "block-1779055198622-854": {
+    "type": "Text",
+    "data": {
+      "style": {
+        "backgroundColor": "#E5E5E5",
+        "fontWeight": "bold",
+        "padding": {
+          "top": 16,
+          "bottom": 0,
+          "right": 24,
+          "left": 24
+        }
+      },
+      "props": {
+        "text": "🇵🇹 MB Way"
+      }
+    }
+  },
+  "block-1779055215033-370": {
+    "type": "Text",
+    "data": {
+      "style": {
+        "backgroundColor": "#E5E5E5",
+        "fontWeight": "normal",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 24,
+          "left": 24
+        }
+      },
+      "props": {
+        "text": "916 166 514"
+      }
+    }
+  },
+  "block-1779055226636-546": {
+    "type": "Text",
+    "data": {
+      "style": {
+        "backgroundColor": "#E5E5E5",
+        "fontWeight": "normal",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 24,
+          "left": 24
+        }
+      },
+      "props": {
+        "text": "Valor: €20.00"
+      }
+    }
+  },
+  "block-1779055253162-388": {
+    "type": "Text",
+    "data": {
+      "style": {
+        "backgroundColor": "#E5E5E5",
+        "fontWeight": "normal",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 24,
+          "left": 24
+        }
+      },
+      "props": {
+        "text": "Felipe Zanon do Nascimento"
+      }
+    }
+  },
+  "block-1779055262801-797": {
+    "type": "Text",
+    "data": {
+      "style": {
+        "backgroundColor": "#F5F5F5",
+        "fontWeight": "bold",
+        "padding": {
+          "top": 16,
+          "bottom": 0,
+          "right": 24,
+          "left": 24
+        }
+      },
+      "props": {
+        "text": "🌏 PayPal"
+      }
+    }
+  },
+  "block-1779055278258-560": {
+    "type": "Text",
+    "data": {
+      "style": {
+        "backgroundColor": "#F5F5F5",
+        "fontWeight": "normal",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 24,
+          "left": 24
+        }
+      },
+      "props": {
+        "text": "felipe@omegafox.me"
+      }
+    }
+  },
+  "block-1779055309513-428": {
+    "type": "Text",
+    "data": {
+      "style": {
+        "backgroundColor": "#F5F5F5",
+        "fontWeight": "normal",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 24,
+          "left": 24
+        }
+      },
+      "props": {
+        "text": "Valor: $25.00"
       }
     }
   }
