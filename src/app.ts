@@ -1,5 +1,4 @@
 import betRoutes from "#bet/bet.routes.js";
-import config from "#database/config.js";
 import { connection } from "#database/db.js";
 import { httpLogger } from "#logger/logger.middleware.js";
 import { logger } from "#logger/logger.service.js";
@@ -40,7 +39,21 @@ const sessionSettings: ISessionSettings = {
 };
 
 const MySQLStore = mySqlSession(expressSession as never);
-const sessionStore = new MySQLStore(config.db, connection as never);
+// Use existing connection pool instead of creating a new one
+const sessionStore = new MySQLStore(
+  {
+    // Disable automatic cleanup to prevent timeout crashes
+    // Clean up manually via cron job or scheduled task instead
+    clearExpired: false,
+    expiration: sevenDays,
+  },
+  connection as never,
+);
+
+// Handle session store errors to prevent app crashes
+sessionStore.on("error", (error: Error) => {
+  logger.error({ err: error }, "Session store error");
+});
 
 app.use(
   expressSession({
