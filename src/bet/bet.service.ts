@@ -1,8 +1,9 @@
 import type { IBetRaw, IExtraBetRaw, IExtraBetResultRaw } from "#bet/bet.types.js";
 
+import { ResultSetHeader } from "mysql2/promise";
+
 import db from "#database/db.js";
 import { logger } from "#logger/logger.service.js";
-import { ResultSetHeader } from "mysql2/promise";
 
 export class BetService {
   async getExtras(edition: number, editionStart: number) {

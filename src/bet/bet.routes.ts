@@ -1,9 +1,10 @@
+import express from "express";
+
 import { BetController } from "#bet/bet.controller.js";
 import { BetService } from "#bet/bet.service.js";
 import { MatchService } from "#match/match.service.js";
 import { TeamService } from "#team/team.service.js";
 import { UserService } from "#user/user.service.js";
-import express from "express";
 
 const router = express.Router();
 const matchService = new MatchService();

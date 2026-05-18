@@ -1,7 +1,8 @@
-import { logger } from "#logger/logger.service.js";
-import { singleton } from "#utils/singleton.js";
 import { Server } from "http";
 import { WebSocket, WebSocketServer } from "ws";
+
+import { logger } from "#logger/logger.service.js";
+import { singleton } from "#utils/singleton.js";
 
 export interface WebSocketMessage {
   data: unknown;

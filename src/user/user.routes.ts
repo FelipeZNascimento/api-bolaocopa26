@@ -1,7 +1,8 @@
+import express from "express";
+
 import { MailerService } from "#mailer/mailer.service.js";
 import { UserController } from "#user/user.controller.js";
 import { UserService } from "#user/user.service.js";
-import express from "express";
 
 const router = express.Router();
 const userService = new UserService();

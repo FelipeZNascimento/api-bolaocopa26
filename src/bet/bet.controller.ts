@@ -1,5 +1,6 @@
 import type { IExtraBetRaw, IExtraBetResultRaw } from "#bet/bet.types.js";
 import type { IPlayer, ITeam } from "#team/team.types.js";
+import { NextFunction, Request, Response } from "express";
 
 import { BetService } from "#bet/bet.service.js";
 import { groupExtraBetsByType, parseExtraBetResult, parseExtraBets } from "#bet/bet.utils.js";
@@ -11,7 +12,6 @@ import { UserService } from "#user/user.service.js";
 import { AppError } from "#utils/appError.js";
 import { checkEdition } from "#utils/checkEdition.js";
 import { ErrorCode } from "#utils/errorCodes.js";
-import { NextFunction, Request, Response } from "express";
 
 export class BetController extends BaseController {
   constructor(

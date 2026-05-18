@@ -1,7 +1,8 @@
+import { NextFunction, Request, Response } from "express";
+
 import { logger } from "#logger/logger.service.js";
 import { ApiResponse } from "#utils/apiResponse.js";
 import { AppError } from "#utils/appError.js";
-import { NextFunction, Request, Response } from "express";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const errorHandler = (error: Error, req: Request, res: Response, _next: NextFunction): void => {

@@ -9,8 +9,9 @@
  * - Cron: 0 2 * * * cd /path/to/app && node --env-file .env dist/database/cleanup-sessions.js
  */
 
-import { logger } from "#logger/logger.service.js";
 import { fileURLToPath } from "url";
+
+import { logger } from "#logger/logger.service.js";
 
 import { connection } from "./db.js";
 
@@ -18,7 +19,7 @@ export async function cleanupExpiredSessions(): Promise<void> {
   try {
     logger.info("Starting session cleanup...");
 
-    const [result] = await connection.query("DELETE FROM sessions WHERE expires < ?", [Date.now()]);
+    const [result] = await connection.query("DELETE FROM sessions WHERE expires < ?", [Math.floor(Date.now() / 1000)]);
 
     const affectedRows = (result as { affectedRows: number }).affectedRows;
 

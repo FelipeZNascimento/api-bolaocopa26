@@ -1,8 +1,9 @@
+import { Request, Response } from "express";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import { MailerService } from "#mailer/mailer.service.js";
 import { AppError } from "#utils/appError.js";
 import { ErrorCode } from "#utils/errorCodes.js";
-import { Request, Response } from "express";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { UserController } from "./user.controller";
 import { UserService } from "./user.service";

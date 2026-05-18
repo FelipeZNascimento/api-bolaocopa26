@@ -1,4 +1,7 @@
 import type { IUser } from "#user/user.types.js";
+import { promisify } from "util";
+
+import { NextFunction, Request, Response } from "express";
 
 import { MailerService } from "#mailer/mailer.service.js";
 import { clearRankingCache } from "#ranking/ranking.utils.js";
@@ -10,8 +13,6 @@ import { AppError } from "#utils/appError.js";
 import { cachedInfo } from "#utils/dataCache.js";
 import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
-import { NextFunction, Request, Response } from "express";
-import { promisify } from "util";
 
 import { generateVerificationToken } from "./user.utils.js";
 
@@ -259,7 +260,11 @@ export class UserController extends BaseController {
 
       await this.userService.updateActiveStatus(userId, editionId, newStatus);
       if (newStatus === true) {
-        await this.mailerService.sendActivationEmail(user.email, user.nickname);
+        const activatedUser = await this.userService.getById(userId, editionId);
+        if (!activatedUser) {
+          throw new AppError("Usuário não encontrado", 404, ErrorCode.NOT_FOUND);
+        }
+        await this.mailerService.sendActivationEmail(activatedUser.email, activatedUser.nickname);
       }
       const response: IUser[] = await this.userService.getAllByEdition(editionId);
       return response;

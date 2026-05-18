@@ -36,6 +36,36 @@ export default [
   },
   perfectionist.configs["recommended-natural"],
   {
+    rules: {
+      "perfectionist/sort-imports": [
+        "error",
+        {
+          groups: [
+            "type",
+            "type-import",
+            "type-internal",
+            "type-parent",
+            "type-sibling",
+            "type-index",
+            "value-builtin",
+            "value-external",
+            "value-internal",
+            "value-parent",
+            "value-sibling",
+            "value-index",
+            "side-effect",
+            "side-effect-style",
+            "style",
+            "unknown",
+          ],
+          newlinesBetween: "ignore",
+          order: "asc",
+          type: "natural",
+        },
+      ],
+    },
+  },
+  {
     files: ["**/*.test.ts", "**/*.spec.ts"],
     plugins: {
       vitest,

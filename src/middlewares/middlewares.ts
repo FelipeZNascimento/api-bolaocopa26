@@ -1,6 +1,7 @@
-import { UserService } from "#user/user.service.js";
 import { RequestHandler } from "express";
 import { NextFunction, Request, Response } from "express";
+
+import { UserService } from "#user/user.service.js";
 
 interface CacheOptions {
   duration?: number;

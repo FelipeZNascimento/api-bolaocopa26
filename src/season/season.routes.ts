@@ -1,6 +1,7 @@
+import express from "express";
+
 import { MatchService } from "#match/match.service.js";
 import { SeasonController } from "#season/season.controller.js";
-import express from "express";
 
 const router = express.Router();
 

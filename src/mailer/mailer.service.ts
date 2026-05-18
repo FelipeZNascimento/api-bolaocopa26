@@ -1,8 +1,9 @@
+import { createTransport, Transporter, TransportOptions } from "nodemailer";
+
 import { getActivationTemplate } from "#mailer/activation.template.js";
 import { getPasswordResetEmailTemplate } from "#mailer/reset.template.js";
 import { getSignupEmailTemplate } from "#mailer/signup.template.js";
 import { ENV } from "#utils/envParser.js";
-import { createTransport, Transporter, TransportOptions } from "nodemailer";
 
 export class MailerService {
   private readonly fromAddress: string;
