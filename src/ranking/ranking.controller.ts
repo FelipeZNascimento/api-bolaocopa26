@@ -1,3 +1,5 @@
+import { NextFunction, Request, Response } from "express";
+
 import { EXTRA_TYPE_CHAMPION, EXTRA_TYPE_DEFENSE, EXTRA_TYPE_OFFENSE, EXTRA_TYPE_STRIKER } from "#bet/bet.constants.js";
 import { BetService } from "#bet/bet.service.js";
 import { IExtraBet, IExtraBetRaw, IExtraBetResult, IExtraBetResultRaw } from "#bet/bet.types.js";
@@ -16,7 +18,6 @@ import { isFulfilled, isRejected } from "#utils/apiResponse.js";
 import { AppError } from "#utils/appError.js";
 import { checkEdition } from "#utils/checkEdition.js";
 import { ErrorCode } from "#utils/errorCodes.js";
-import { NextFunction, Request, Response } from "express";
 
 import { getRoundsRanking, getSeasonRanking } from "./ranking.utils.js";
 export class RankingController extends BaseController {

@@ -1,6 +1,7 @@
 import type { IBet } from "#bet/bet.types.js";
 import type { IEvent, IMatch } from "#match/match.types.js";
 import type { IPlayer, IReferee, IStadium, ITeam } from "#team/team.types.js";
+import { NextFunction, Request, Response } from "express";
 
 import { BetService } from "#bet/bet.service.js";
 import { parseRawBets } from "#bet/bet.utils.js";
@@ -21,7 +22,6 @@ import { AppError } from "#utils/appError.js";
 import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
-import { NextFunction, Request, Response } from "express";
 
 export class MatchController extends BaseController {
   constructor(

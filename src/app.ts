@@ -1,3 +1,8 @@
+import cors from "cors";
+import express, { ErrorRequestHandler } from "express";
+import mySqlSession from "express-mysql-session";
+import expressSession from "express-session";
+
 import betRoutes from "#bet/bet.routes.js";
 import { connection } from "#database/db.js";
 import { httpLogger } from "#logger/logger.middleware.js";
@@ -11,10 +16,6 @@ import teamRoutes from "#team/team.routes.js";
 import userRoutes from "#user/user.routes.js";
 import { UserService } from "#user/user.service.js";
 import { IUser } from "#user/user.types.js";
-import cors from "cors";
-import express, { ErrorRequestHandler } from "express";
-import mySqlSession from "express-mysql-session";
-import expressSession from "express-session";
 
 const app = express();
 const environment = process.env.NODE_ENV ?? "development";

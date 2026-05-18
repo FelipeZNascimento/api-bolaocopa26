@@ -1,8 +1,9 @@
 import type { IUser } from "#user/user.types.js";
 
-import db from "#database/db.js";
 // import { ICount } from "#shared/shared.types.js";
 import { ResultSetHeader } from "mysql2/promise";
+
+import db from "#database/db.js";
 
 export class UserService {
   async deleteFromEdition(userId: number, editionId: number) {

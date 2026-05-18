@@ -2,10 +2,11 @@ import type { IEventRaw, IMatch, IMatchRaw } from "#match/match.types.js";
 // import type { IMatch, IMatchRaw, IWeek } from "#match/match.types.js";
 // import type { ICount } from "#shared/shared.types.js";
 
+import { ResultSetHeader } from "mysql2/promise";
+
 import db from "#database/db.js";
 // import { MatchStatus } from "#match/match.constants.js";
 import { IReferee, IStadium } from "#team/team.types.js";
-import { ResultSetHeader } from "mysql2/promise";
 
 export class MatchService {
   async getByEdition(editionId: number) {

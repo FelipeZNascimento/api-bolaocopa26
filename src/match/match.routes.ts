@@ -1,10 +1,11 @@
+import express from "express";
+
 import { BetService } from "#bet/bet.service.js";
 import { MatchController } from "#match/match.controller.js";
 import { MatchService } from "#match/match.service.js";
 import { TeamService } from "#team/team.service.js";
 import { UserService } from "#user/user.service.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
-import express from "express";
 
 const router = express.Router();
 

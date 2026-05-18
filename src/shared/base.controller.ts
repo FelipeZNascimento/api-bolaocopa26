@@ -1,5 +1,6 @@
-import { ApiResponse } from "#utils/apiResponse.js";
 import { NextFunction, Request, Response } from "express";
+
+import { ApiResponse } from "#utils/apiResponse.js";
 
 export abstract class BaseController {
   protected async handleRequest<T>(

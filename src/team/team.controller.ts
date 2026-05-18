@@ -1,5 +1,7 @@
 import type { ITeam } from "#team/team.types.js";
 
+import { NextFunction, Request, Response } from "express";
+
 import { logger } from "#logger/logger.service.js";
 import { BaseController } from "#shared/base.controller.js";
 import { TeamService } from "#team/team.service.js";
@@ -7,7 +9,6 @@ import { AppError } from "#utils/appError.js";
 import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
 import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
-import { NextFunction, Request, Response } from "express";
 
 import { getTeamsFromCacheOrFetch } from "./team.util.js";
 

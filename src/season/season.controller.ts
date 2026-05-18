@@ -1,7 +1,8 @@
-import { MatchService } from "#match/match.service.js";
-import { BaseController } from "#shared/base.controller.js";
 // import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
 import { NextFunction, Request, Response } from "express";
+
+import { MatchService } from "#match/match.service.js";
+import { BaseController } from "#shared/base.controller.js";
 
 export class SeasonController extends BaseController {
   constructor(private matchService: MatchService) {

@@ -1,10 +1,11 @@
 import type { PoolOptions } from "mysql2/promise";
 
+import mysql from "mysql2/promise";
+
 import config from "#database/config.js";
 import { logger } from "#logger/logger.service.js";
 import { AppError } from "#utils/appError.js";
 import { ErrorCode } from "#utils/errorCodes.js";
-import mysql from "mysql2/promise";
 
 const poolOptions = config.db as unknown as PoolOptions;
 export const connection = mysql.createPool(poolOptions);
