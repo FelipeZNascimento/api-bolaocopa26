@@ -18,6 +18,7 @@ const teamService = new TeamService();
 const matchController = new MatchController(matchService, userService, betService, teamService, websocketInstance);
 
 router.get("/", matchController.getByEdition);
+router.get("/next-matches", matchController.getNextMatches);
 router.get("/:edition{/:round}", matchController.getByEdition);
 
 export default router;

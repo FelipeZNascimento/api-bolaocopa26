@@ -63,7 +63,7 @@ const toDbAppError = (error: unknown): AppError => {
         503,
         ErrorCode.DB_CONNECTION_ERROR,
         true,
-        process.env.NODE_ENV === "development"
+        process.env.NODE_ENV !== "production"
           ? {
               message: error.message,
               mysqlCode: code,
@@ -77,7 +77,7 @@ const toDbAppError = (error: unknown): AppError => {
       500,
       ErrorCode.DB_QUERY_ERROR,
       true,
-      process.env.NODE_ENV === "development"
+      process.env.NODE_ENV !== "production"
         ? {
             errno: error.errno,
             message: error.message,

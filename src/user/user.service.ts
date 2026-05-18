@@ -18,9 +18,9 @@ export class UserService {
   // Get all users for an edition, including inactive ones (for admin view)
   async getAllByEdition(edition: number) {
     const rows: IUser[] = await db.query(
-      `SELECT SQL_NO_CACHE users.id, users.name, users.nickname,
+      `SELECT SQL_NO_CACHE users.id, users.email, users.name, users.nickname,
         users_edition.is_active as isActive,
-        users.timestamp, users.admin,
+        users.timestamp, users.admin, 
         (users.timestamp IS NOT NULL AND (UNIX_TIMESTAMP(NOW()) - users.timestamp) < 600) AS isOnline
         FROM users
         JOIN users_edition ON users.id = users_edition.id_user
