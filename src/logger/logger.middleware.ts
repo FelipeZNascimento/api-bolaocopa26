@@ -4,7 +4,7 @@ import pinoHttp from "pino-http";
 import { logger } from "./logger.service.js";
 
 const environment = process.env.NODE_ENV ?? "development";
-const isDevelopment = environment === "development";
+const isDevelopment = environment === "development" || environment === "pprod";
 
 /**
  * HTTP request/response logging middleware using pino-http

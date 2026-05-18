@@ -1,7 +1,7 @@
 import pino from "pino";
 
 const environment = process.env.NODE_ENV ?? "development";
-const isDevelopment = environment === "development";
+const isDevelopment = environment === "development" || environment === "pprod";
 
 // Create the base logger configuration
 const logger = pino({
