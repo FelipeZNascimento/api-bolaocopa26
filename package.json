@@ -13,7 +13,7 @@
     "start:prod": "pm2 start \"node --env-file=.env index.js\" --name api-bolaocopa26 --watch && pm2 start npm --name session-cleanup --cron \"0 2 * * *\" -- run cleanup:sessions",
     "build": "tsc -p tsconfig.build.json && tsc-alias",
     "postbuild": "cp package.json dist/",
-    "cleanup:sessions": "node --env-file .env dist/database/cleanup-sessions.js",
+    "cleanup:sessions": "node --env-file .env database/cleanup-sessions.js",
     "test": "vitest",
     "test:run": "vitest --run",
     "test:ui": "vitest --ui",
