@@ -22,6 +22,9 @@ const environment = process.env.NODE_ENV ?? "development";
 const sevenDays = 7 * 24 * 60 * 60 * 1000;
 const sessionSecret = process.env.SESSION_SECRET ?? "this is not secure";
 
+// Environments that serve over HTTPS and accept cross-origin requests
+const isCrossOriginEnv = ["pprod", "production"].includes(environment);
+
 export interface ISessionSettings extends expressSession.SessionOptions {
   user: IUser | undefined;
 }
@@ -29,8 +32,8 @@ export interface ISessionSettings extends expressSession.SessionOptions {
 const sessionSettings: ISessionSettings = {
   cookie: {
     maxAge: sevenDays,
-    sameSite: environment === "production" ? "none" : "strict",
-    secure: environment === "production",
+    sameSite: isCrossOriginEnv ? "none" : "strict",
+    secure: isCrossOriginEnv,
   },
   resave: true,
   rolling: true,
