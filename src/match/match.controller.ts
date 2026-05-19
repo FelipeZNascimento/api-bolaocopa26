@@ -5,7 +5,7 @@ import { NextFunction, Request, Response } from "express";
 
 import { BetService } from "#bet/bet.service.js";
 import { parseRawBets } from "#bet/bet.utils.js";
-import { FOOTBALL_MATCH_STATUS } from "#match/match.constants.js";
+import { FOOTBALL_MATCH_STATUS, STOPPED_GAME } from "#match/match.constants.js";
 import { MatchService } from "#match/match.service.js";
 import {
   formatMatches,
@@ -46,6 +46,22 @@ export class MatchController extends BaseController {
       }
 
       return this._getFormattedMatches(edition, round, req.session.user ?? null);
+    });
+  };
+
+  getLiveMatches = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    await this.handleRequest(req, res, next, async () => {
+      const currentEdition = process.env.EDITION;
+      if (!currentEdition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+
+      const allMatches = await this._getFormattedMatches(currentEdition, 0, req.session.user ?? null);
+
+      return allMatches
+        .filter((match) => !STOPPED_GAME.includes(match.status))
+        .sort((a, b) => a.timestamp - b.timestamp)
+        .slice(0, 3);
     });
   };
 
