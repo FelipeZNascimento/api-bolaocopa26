@@ -28,6 +28,9 @@ jobs:
       - name: 🔨 Build Project
         run: npm run build
 
+      - name: 📦 Prepare dist for deployment
+        run: cp package.json package-lock.json dist/
+
       - name: 📂 Sync files to prod folder (NEW)
         uses: Dylan700/sftp-upload-action@latest
         with:

@@ -72,6 +72,10 @@ export class BetController extends BaseController {
         throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
       }
 
+      if (user.isActive === false) {
+        throw new AppError("Usuário inativo", 403, ErrorCode.FORBIDDEN);
+      }
+
       const reqBody = req.body as { awayScore: null | number; homeScore: null | number; matchId: number };
       const { awayScore, homeScore, matchId } = reqBody;
 
@@ -94,6 +98,10 @@ export class BetController extends BaseController {
 
       if (!user) {
         throw new AppError("Sem sessão ativa", 401, ErrorCode.UNAUTHORIZED);
+      }
+
+      if (user.isActive === false) {
+        throw new AppError("Usuário inativo", 403, ErrorCode.FORBIDDEN);
       }
 
       const nowTimestamp = Math.floor(new Date().getTime() / 1000);

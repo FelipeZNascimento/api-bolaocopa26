@@ -9,7 +9,7 @@ import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
 import { MatchService } from "./match.service";
 
 export const isMatchEnded = (status: MatchStatus) => {
-  return status === MATCH_STATUS.FINAL || status === MATCH_STATUS.FINAL_OVERTIME || status === MATCH_STATUS.CANCELLED;
+  return status === MATCH_STATUS.FINAL || status === MATCH_STATUS.FINAL_EXTRA_TIME || status === MATCH_STATUS.CANCELLED;
 };
 
 export const parseRawEvents = (eventsRaw: IEventRaw[], players: IPlayer[]): IEvent[] => {

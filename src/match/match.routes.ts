@@ -19,6 +19,7 @@ const matchController = new MatchController(matchService, userService, betServic
 
 router.get("/", matchController.getByEdition);
 router.get("/next-matches", matchController.getNextMatches);
+router.get("/live-matches", matchController.getLiveMatches);
 router.get("/:edition{/:round}", matchController.getByEdition);
 
 export default router;
