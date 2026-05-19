@@ -428,19 +428,25 @@ grep '"method":"POST"' logs/app.log
 ```
 
 **Using `jq` (JSON processor):**
+cd .pm2
 
 ```bash
+# All files are under .pm2/logs folder
 # Pretty print all logs
-cat logs/app.log | jq
+cat api-bolaocopa26-out.log | jq -R 'fromjson?'
 
 # Filter error logs only
-cat logs/app.log | jq 'select(.level >= 50)'
+cat api-bolaocopa26-out.log | jq -R 'fromjson? | select(type == "object") | select(.level >= 50)'
 
-# Get all requests to /api/users
-cat logs/app.log | jq 'select(.req.url | startswith("/api/users"))'
+# Example: filter all requests to update-profile
+cat api-bolaocopa26-out.log | jq -R 'fromjson? | select(type == "object") | select(.req.url != null and (.req.url | startswith("/user/update-profile")))'
 
 # Count errors by message
-cat logs/app.log | jq -r 'select(.level >= 50) | .msg' | sort | uniq -c
+cat api-bolaocopa26-out.log | jq -Rr 'fromjson? | select(type == "object") | select(.level >= 50) | .msg' | sort | uniq -c
+
+# Filter by a specific date
+cat api-bolaocopa26-out.log | jq -R 'fromjson? | select(type == "object") | select(.time != null and (.time | startswith("2026-05-19")))'
+
 ```
 
 **Using `tail` (real-time monitoring):**
