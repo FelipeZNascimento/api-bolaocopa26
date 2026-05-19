@@ -25,6 +25,13 @@ const sessionSecret = process.env.SESSION_SECRET ?? "this is not secure";
 // Environments that serve over HTTPS and accept cross-origin requests
 const isCrossOriginEnv = ["pprod", "production"].includes(environment);
 
+// Required when running behind a reverse proxy (nginx): makes req.secure reflect
+// the original client connection (HTTPS) via the X-Forwarded-Proto header,
+// so express-session sets the Secure cookie flag correctly.
+if (isCrossOriginEnv) {
+  app.set("trust proxy", 1);
+}
+
 export interface ISessionSettings extends expressSession.SessionOptions {
   user: IUser | undefined;
 }
@@ -41,6 +48,27 @@ const sessionSettings: ISessionSettings = {
   secret: sessionSecret,
   user: undefined,
 };
+
+const allowedOrigins = [
+  "https://localhost",
+  "http://localhost",
+  "http://127.0.0.1:3000",
+  "https://localhost:3000",
+  "http://localhost:3000",
+  /\.omegafox\.me$/,
+  /\.sharpion\.cloud$/,
+];
+
+const corsOptions = {
+  credentials: true,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  optionsSuccessStatus: 204,
+  origin: allowedOrigins,
+};
+
+// CORS must be registered before session middleware so preflight OPTIONS
+// requests are resolved before any other middleware runs.
+app.use(cors(corsOptions));
 
 const MySQLStore = mySqlSession(expressSession as never);
 // Use existing connection pool instead of creating a new one
@@ -77,24 +105,7 @@ sessionStore
     logger.error({ err: error }, "MySQLStore initialization error");
   });
 
-const allowedOrigins = [
-  "https://localhost",
-  "http://localhost",
-  "http://127.0.0.1:3000",
-  "https://localhost:3000",
-  "http://localhost:3000",
-  /\.omegafox\.me$/,
-  /\.sharpion\.cloud$/,
-];
-
-const corsOptions = {
-  credentials: true, // Allow cookies, if your application uses them
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  optionsSuccessStatus: 204,
-  origin: allowedOrigins,
-};
 app.use(express.json());
-app.use(cors(corsOptions));
 
 // HTTP request/response logging
 app.use(httpLogger);
