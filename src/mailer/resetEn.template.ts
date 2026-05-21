@@ -1,4 +1,4 @@
-export const getPasswordResetEmailTemplate = (resetUrl: string) => `
+export const getPasswordResetEmailTemplateEn = (resetUrl: string) => `
 <!doctype html>
 <html>
   <body>
@@ -36,7 +36,7 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
                             style="text-decoration:none"
                             target="_blank"
                             ><img
-                              alt="Link Bolão da Copa"
+                              alt="Bolão World Cup 2026"
                               src="https://assets.omegafox.me/copa/misc/taca.png"
                               height="60"
                               style="height:60px;outline:none;border:none;text-decoration:none;vertical-align:middle;display:inline-block;max-width:100%"
@@ -49,7 +49,7 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
                         <div
                           style="color:#f4b303;font-size:24px;font-weight:bold;text-align:left;padding:0px 0px 0px 0px"
                         >
-                          Bolão da Copa 2026
+                          Bolão World Cup 2026
                         </div>
                       </td>
                     </tr>
@@ -65,11 +65,10 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
               <h3
                 style="color:#284ea0;font-weight:bold;margin:0;font-size:20px;padding:16px 24px 16px 24px"
               >
-                Olá,
+                Hello,
               </h3>
               <div style="font-weight:normal;padding:0px 24px 16px 24px">
-                Se você solicitou a redefinição da sua senha, clique no botão
-                abaixo:
+                If you requested a password reset, click the button below:
               </div>
               <div style="padding:16px 24px 16px 24px">
                 <a
@@ -84,7 +83,7 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
                         >&nbsp;</i
                       ><!
                     [endif]--></span
-                  ><span>Redefinir Senha</span
+                  ><span>Reset Password</span
                   ><span
                     ><!--[if mso
                       ]><i
@@ -97,13 +96,14 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
                 >
               </div>
               <div style="font-weight:normal;padding:16px 24px 0px 24px">
-                Ou, se preferir, copie e cole o link abaixo no seu navegador:
+                Or, if you prefer, copy and paste the link below into your
+                browser:
               </div>
               <div style="font-weight:normal;padding:0px 24px 0px 24px">
                 ${resetUrl}
               </div>
               <div style="font-weight:normal;padding:16px 24px 16px 24px">
-                Esse link expira em 1 hora.
+                This link expires in 1 hour.
               </div>
               <div style="padding:16px 0px 16px 0px">
                 <hr
@@ -111,11 +111,11 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
                 />
               </div>
               <div style="font-weight:normal;padding:16px 24px 0px 24px">
-                Se você não solicitou a redefinição da sua senha, por favor
-                ignore este e-mail.
+                If you did not request a password reset, please ignore this
+                email.
               </div>
               <div style="font-weight:normal;padding:0px 24px 16px 24px">
-                Sua senha permanecerá inalterada.
+                Your password will remain unchanged.
               </div>
               <div style="padding:0px 0px 0px 0px">
                 <a
@@ -177,7 +177,7 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
         }
       },
       "props": {
-        "text": "Se você solicitou a redefinição da sua senha, clique no botão abaixo:\n\n"
+        "text": "If you requested a password reset, click the button below:\n\n"
       }
     }
   },
@@ -194,7 +194,7 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
         }
       },
       "props": {
-        "text": "Esse link expira em 1 hora."
+        "text": "This link expires in 1 hour."
       }
     }
   },
@@ -270,7 +270,7 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
       "props": {
         "height": 60,
         "url": "https://assets.omegafox.me/copa/misc/taca.png",
-        "alt": "Link Bolão da Copa",
+        "alt": "Bolão World Cup 2026",
         "linkHref": "https://bolaocopa.omegafox.me/",
         "contentAlignment": "middle"
       }
@@ -292,7 +292,7 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
         }
       },
       "props": {
-        "text": "Bolão da Copa 2026"
+        "text": "Bolão World Cup 2026"
       }
     }
   },
@@ -339,7 +339,7 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
     "type": "Heading",
     "data": {
       "props": {
-        "text": "Olá,",
+        "text": "Hello,",
         "level": "h3"
       },
       "style": {
@@ -366,7 +366,7 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
         }
       },
       "props": {
-        "text": "Se você não solicitou a redefinição da sua senha, por favor ignore este e-mail."
+        "text": "If you did not request a password reset, please ignore this email."
       }
     }
   },
@@ -385,7 +385,7 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
       "props": {
         "buttonBackgroundColor": "#284ea0",
         "size": "small",
-        "text": "Apostar",
+        "text": "Bet",
         "url": "https://bolaocopa.omegafox.me/jogos"
       }
     }
@@ -425,7 +425,7 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
       "props": {
         "buttonBackgroundColor": "#284ea0",
         "size": "small",
-        "text": "Regras",
+        "text": "Rules",
         "url": "https://bolaocopa.omegafox.me/regras"
       }
     }
@@ -443,8 +443,8 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
       },
       "props": {
         "buttonBackgroundColor": "#284ea0",
-        "text": "Redefinir Senha",
-        "url": "<<insira aqui URL>>"
+        "text": "Reset Password",
+        "url": "<<insert URL here>>"
       }
     }
   },
@@ -461,7 +461,7 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
         }
       },
       "props": {
-        "text": "Ou, se preferir, copie e cole o link abaixo no seu navegador:\n\n"
+        "text": "Or, if you prefer, copy and paste the link below into your browser:\n\n"
       }
     }
   },
@@ -478,7 +478,7 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
         }
       },
       "props": {
-        "text": "<<insira aqui URL>>"
+        "text": "<<insert URL here>>"
       }
     }
   },
@@ -495,7 +495,7 @@ export const getPasswordResetEmailTemplate = (resetUrl: string) => `
         }
       },
       "props": {
-        "text": "Sua senha permanecerá inalterada.\n\n"
+        "text": "Your password will remain unchanged.\n\n"
       }
     }
   },

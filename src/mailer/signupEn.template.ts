@@ -1,4 +1,4 @@
-export const getSignupEmailTemplate = (user: string) => `
+export const getSignupEmailTemplateEn = (user: string) => `
 <!doctype html>
 <html>
   <body>
@@ -36,7 +36,7 @@ export const getSignupEmailTemplate = (user: string) => `
                             style="text-decoration:none"
                             target="_blank"
                             ><img
-                              alt="Link Bolão da Copa"
+                              alt="Copa Pool Link"
                               src="https://assets.omegafox.me/copa/misc/taca.png"
                               height="60"
                               style="height:60px;outline:none;border:none;text-decoration:none;vertical-align:middle;display:inline-block;max-width:100%"
@@ -49,7 +49,7 @@ export const getSignupEmailTemplate = (user: string) => `
                         <div
                           style="color:#f4b303;font-size:24px;font-weight:bold;text-align:left;padding:0px 0px 0px 0px"
                         >
-                          Bolão da Copa 2026
+                          Bolão World Cup 2026
                         </div>
                       </td>
                     </tr>
@@ -70,20 +70,20 @@ export const getSignupEmailTemplate = (user: string) => `
               <h3
                 style="color:#284ea0;font-weight:bold;margin:0;font-size:20px;padding:16px 24px 16px 24px"
               >
-                Olá ${user} 👋,
+                Hello ${user} 👋,
               </h3>
               <div style="font-weight:normal;padding:0px 24px 16px 24px">
-                Bem-vindo ao Bolão da Copa 2026! Aqui, você vai poder apostar em
-                todos os jogos (fase de grupos e eliminatórias) para acumular
-                pontos ao longo da competição e, com um pouquinho de sorte,
-                terminar entre os premiados!
+                Welcome to Bolão World Cup 2026! Here, you&#x27;ll be able to
+                bet on all the games (group stage and knockout rounds) to
+                accumulate points throughout the competition and, with a little
+                luck, finish among the winners!
               </div>
               <div style="font-weight:normal;padding:0px 24px 16px 24px">
-                Além de apostar nos jogos, também temos apostas extras onde você
-                poderá exercer a futurologia nas seguintes categorias: seleção
-                campeã, seleção com a melhor defesa (fase de grupos), seleção
-                com o melhor ataque (fase de grupos), artilheiro da competição,
-                e melhor jogador da Copa!
+                In addition to betting on games, we also have extra bets where
+                you can make your predictions in the following categories:
+                champion team, team with the best defense (group stage), team
+                with the best offense (group stage), top scorer and best player
+                of the competition!
               </div>
               <div style="padding:16px 0px 16px 0px">
                 <hr
@@ -93,19 +93,54 @@ export const getSignupEmailTemplate = (user: string) => `
               <h3
                 style="color:#284ea0;font-weight:bold;margin:0;font-size:20px;padding:16px 24px 16px 24px"
               >
-                Importante!
+                Important!
               </h3>
               <div style="font-weight:normal;padding:0px 24px 16px 24px">
-                Seu cadastro já foi feito mas, para iniciar suas apostas, é
-                necessário efetuar o pagamento da inscrição.
+                Your registration has been completed, but to start placing your
+                bets, payment of the registration fee is required.
               </div>
               <div
                 style="background-color:#F5F5F5;font-weight:bold;padding:16px 24px 0px 24px"
               >
-                🇧🇷 PIX Copia &amp; Cola
+                🌏 PayPal
               </div>
               <div
-                style="background-color:#F5F5F5;font-size:10px;font-weight:normal;text-align:left;padding:16px 12px 16px 12px"
+                style="background-color:#F5F5F5;font-weight:normal;padding:0px 24px 0px 24px"
+              >
+                felipe@omegafox.me
+              </div>
+              <div
+                style="background-color:#F5F5F5;font-weight:normal;padding:0px 24px 16px 24px"
+              >
+                Amount: $25.00
+              </div>
+              <div
+                style="background-color:#E5E5E5;font-weight:bold;padding:16px 24px 0px 24px"
+              >
+                🇵🇹 MB Way
+              </div>
+              <div
+                style="background-color:#E5E5E5;font-weight:normal;padding:0px 24px 0px 24px"
+              >
+                916 166 514
+              </div>
+              <div
+                style="background-color:#E5E5E5;font-weight:normal;padding:0px 24px 0px 24px"
+              >
+                Amount: €20.00
+              </div>
+              <div
+                style="background-color:#E5E5E5;font-weight:normal;padding:0px 24px 16px 24px"
+              >
+                Felipe Zanon do Nascimento
+              </div>
+              <div
+                style="background-color:#F5F5F5;font-weight:bold;padding:16px 24px 0px 24px"
+              >
+                🇧🇷 PIX Copy &amp; Paste
+              </div>
+              <div
+                style="background-color:#F5F5F5;font-size:10px;font-weight:normal;text-align:left;padding:16px 12px 16px 24px"
               >
                 00020126550014BR.GOV.BCB.PIX0111395825028940218Bolão da Copa
                 20265204000053039865406100.005802BR5923NELSON GIMENEZ DA
@@ -124,7 +159,7 @@ export const getSignupEmailTemplate = (user: string) => `
               <div
                 style="background-color:#E5E5E5;font-weight:normal;padding:0px 24px 0px 24px"
               >
-                Valor: R$100,00
+                Amount: R$100.00
               </div>
               <div
                 style="background-color:#E5E5E5;font-weight:normal;padding:0px 24px 16px 24px"
@@ -146,46 +181,11 @@ export const getSignupEmailTemplate = (user: string) => `
                   style="width:200px;outline:none;border:none;text-decoration:none;vertical-align:middle;display:inline-block;max-width:100%"
                 />
               </div>
-              <div
-                style="background-color:#E5E5E5;font-weight:bold;padding:16px 24px 0px 24px"
-              >
-                🇵🇹 MB Way
-              </div>
-              <div
-                style="background-color:#E5E5E5;font-weight:normal;padding:0px 24px 0px 24px"
-              >
-                916 166 514
-              </div>
-              <div
-                style="background-color:#E5E5E5;font-weight:normal;padding:0px 24px 0px 24px"
-              >
-                Valor: €20.00
-              </div>
-              <div
-                style="background-color:#E5E5E5;font-weight:normal;padding:0px 24px 0px 24px"
-              >
-                Felipe Zanon do Nascimento
-              </div>
-              <div
-                style="background-color:#F5F5F5;font-weight:bold;padding:16px 24px 0px 24px"
-              >
-                🌏 PayPal
-              </div>
-              <div
-                style="background-color:#F5F5F5;font-weight:normal;padding:0px 24px 0px 24px"
-              >
-                felipe@omegafox.me
-              </div>
-              <div
-                style="background-color:#F5F5F5;font-weight:normal;padding:0px 24px 0px 24px"
-              >
-                Valor: $25.00
-              </div>
               <div style="font-weight:normal;padding:16px 24px 0px 24px">
-                Após pagamento, responda a esse email com o comprovante.
+                After payment, reply to this email with your receipt.
               </div>
               <div style="font-weight:normal;padding:0px 24px 0px 24px">
-                Clique no botão abaixo para maiores informações:
+                Click the button below for more information:
               </div>
               <div style="padding:16px 24px 24px 24px">
                 <a
@@ -200,7 +200,7 @@ export const getSignupEmailTemplate = (user: string) => `
                         >&nbsp;</i
                       ><!
                     [endif]--></span
-                  ><span>Regras - Inscrição</span
+                  ><span>Rules - Registration</span
                   ><span
                     ><!--[if mso
                       ]><i
@@ -213,8 +213,10 @@ export const getSignupEmailTemplate = (user: string) => `
                 >
               </div>
               <div style="font-weight:normal;padding:0px 24px 16px 24px">
-                Se você já efetuou o pagamento, aguarde só mais um pouquinho que
-                um dos administradores vai liberar a sua conta para apostas.
+                If you have already made the payment, just wait a little longer
+                and one of the administrators will activate your account for
+                betting. You&#x27;ll receive a follow up email when that is
+                done.
               </div>
               <div style="padding:16px 0px 16px 0px">
                 <hr
@@ -224,11 +226,11 @@ export const getSignupEmailTemplate = (user: string) => `
               <h3
                 style="color:#284ea0;font-weight:bold;margin:0;font-size:20px;padding:16px 24px 16px 24px"
               >
-                Tudo pronto?
+                All set?
               </h3>
               <div style="font-weight:normal;padding:16px 24px 16px 24px">
-                Se sua conta já foi liberada para fazer suas apostas, agora é
-                fazer figa e correr pro abraço!
+                If your account has already been activated for placing bets,
+                it&#x27;s time to cross your fingers and go for it!
               </div>
               <div style="padding:16px 24px 16px 24px">
                 <table
@@ -258,7 +260,7 @@ export const getSignupEmailTemplate = (user: string) => `
                                   >&nbsp;</i
                                 ><!
                               [endif]--></span
-                            ><span>Apostar</span
+                            ><span>Bet</span
                             ><span
                               ><!--[if mso
                                 ]><i
@@ -320,7 +322,7 @@ export const getSignupEmailTemplate = (user: string) => `
                                   >&nbsp;</i
                                 ><!
                               [endif]--></span
-                            ><span>Regras</span
+                            ><span>Rules</span
                             ><span
                               ><!--[if mso
                                 ]><i
@@ -378,6 +380,13 @@ export const getSignupEmailTemplate = (user: string) => `
         "block-1778749712842",
         "block-1778749717987",
         "block-1778748982177-841",
+        "block-1779055262801-797",
+        "block-1779055278258-560",
+        "block-1779055309513-428",
+        "block-1779055198622-854",
+        "block-1779055215033-370",
+        "block-1779055226636-546",
+        "block-1779055253162-388",
         "block-1778754162425-72",
         "block-1778754054230",
         "block-1778754030843",
@@ -386,13 +395,6 @@ export const getSignupEmailTemplate = (user: string) => `
         "block-1778751981500-188",
         "block-1778754247196-513",
         "block-1778754263819",
-        "block-1779055198622-854",
-        "block-1779055215033-370",
-        "block-1779055226636-546",
-        "block-1779055253162-388",
-        "block-1779055262801-797",
-        "block-1779055278258-560",
-        "block-1779055309513-428",
         "block-1778749975246",
         "block-1778750106248",
         "block-1709571302968",
@@ -418,7 +420,7 @@ export const getSignupEmailTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "Bem-vindo ao Bolão da Copa 2026! \n\nAqui, você vai poder apostar em todos os jogos (fase de grupos e eliminatórias) para acumular pontos ao longo da competição e, com um pouquinho de sorte, terminar entre os premiados! "
+        "text": "Welcome to Bolão World Cup 2026! \n\nHere, you'll be able to bet on all the games (group stage and knockout rounds) to accumulate points throughout the competition and, with a little luck, finish among the winners! "
       }
     }
   },
@@ -435,7 +437,7 @@ export const getSignupEmailTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "Além de apostar nos jogos, também temos apostas extras onde você poderá exercer a futurologia nas seguintes categorias: seleção campeã, seleção com a melhor defesa (fase de grupos), seleção com o melhor ataque (fase de grupos), artilheiro da competição, e melhor jogador da Copa!"
+        "text": "In addition to betting on games, we also have extra bets where you can make your predictions in the following categories: champion team, team with the best defense (group stage), team with the best offense (group stage), top scorer and best player of the competition!"
       }
     }
   },
@@ -473,7 +475,7 @@ export const getSignupEmailTemplate = (user: string) => `
       "props": {
         "buttonBackgroundColor": "#284ea0",
         "buttonStyle": "rounded",
-        "text": "Regras - Inscrição",
+        "text": "Rules - Registration",
         "url": "https://bolaocopa.omegafox.me/regras?section=inscricoes"
       }
     }
@@ -492,7 +494,7 @@ export const getSignupEmailTemplate = (user: string) => `
       },
       "props": {
         "markdown": false,
-        "text": "Seu cadastro já foi feito mas, para iniciar suas apostas, é necessário efetuar o pagamento da inscrição."
+        "text": "Your registration has been completed, but to start placing your bets, payment of the registration fee is required."
       }
     }
   },
@@ -549,7 +551,7 @@ export const getSignupEmailTemplate = (user: string) => `
       "props": {
         "height": 60,
         "url": "https://assets.omegafox.me/copa/misc/taca.png",
-        "alt": "Link Bolão da Copa",
+        "alt": "Copa Pool Link",
         "linkHref": "https://bolaocopa.omegafox.me/",
         "contentAlignment": "middle"
       }
@@ -571,7 +573,7 @@ export const getSignupEmailTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "Bolão da Copa 2026"
+        "text": "Bolão World Cup 2026"
       }
     }
   },
@@ -614,7 +616,7 @@ export const getSignupEmailTemplate = (user: string) => `
     "type": "Heading",
     "data": {
       "props": {
-        "text": "Importante!",
+        "text": "Important!",
         "level": "h3"
       },
       "style": {
@@ -632,7 +634,7 @@ export const getSignupEmailTemplate = (user: string) => `
     "type": "Heading",
     "data": {
       "props": {
-        "text": "Olá ${user} 👋,",
+        "text": "Hello ${user} 👋,",
         "level": "h3"
       },
       "style": {
@@ -659,7 +661,7 @@ export const getSignupEmailTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "Após pagamento, responda a esse email com o comprovante."
+        "text": "After payment, reply to this email with your receipt."
       }
     }
   },
@@ -676,7 +678,7 @@ export const getSignupEmailTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "Clique no botão abaixo para maiores informações:"
+        "text": "Click the button below for more information:"
       }
     }
   },
@@ -700,7 +702,7 @@ export const getSignupEmailTemplate = (user: string) => `
     "type": "Heading",
     "data": {
       "props": {
-        "text": "Tudo pronto?",
+        "text": "All set?",
         "level": "h3"
       },
       "style": {
@@ -761,7 +763,7 @@ export const getSignupEmailTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "Se sua conta já foi liberada para fazer suas apostas, agora é fazer figa e correr pro abraço!"
+        "text": "If your account has already been activated for placing bets, it's time to cross your fingers and go for it!"
       }
     }
   },
@@ -778,7 +780,7 @@ export const getSignupEmailTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "Se você já efetuou o pagamento, aguarde só mais um pouquinho que um dos administradores vai liberar a sua conta para apostas."
+        "text": "If you have already made the payment, just wait a little longer and one of the administrators will activate your account for betting. You'll receive a follow up email when that is done."
       }
     }
   },
@@ -797,7 +799,7 @@ export const getSignupEmailTemplate = (user: string) => `
       "props": {
         "buttonBackgroundColor": "#284ea0",
         "size": "small",
-        "text": "Apostar",
+        "text": "Bet",
         "url": "https://bolaocopa.omegafox.me/jogos"
       }
     }
@@ -837,7 +839,7 @@ export const getSignupEmailTemplate = (user: string) => `
       "props": {
         "buttonBackgroundColor": "#284ea0",
         "size": "small",
-        "text": "Regras",
+        "text": "Rules",
         "url": "https://bolaocopa.omegafox.me/regras"
       }
     }
@@ -856,7 +858,7 @@ export const getSignupEmailTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "Valor: R$100,00"
+        "text": "Amount: R$100.00"
       }
     }
   },
@@ -1018,7 +1020,7 @@ export const getSignupEmailTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "Copia & Cola"
+        "text": "Copy & Paste"
       }
     }
   },
@@ -1052,7 +1054,7 @@ export const getSignupEmailTemplate = (user: string) => `
           "top": 16,
           "bottom": 16,
           "right": 12,
-          "left": 12
+          "left": 24
         }
       },
       "props": {
@@ -1074,7 +1076,7 @@ export const getSignupEmailTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "🇧🇷 PIX Copia & Cola"
+        "text": "🇧🇷 PIX Copy & Paste"
       }
     }
   },
@@ -1168,7 +1170,7 @@ export const getSignupEmailTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "Valor: €20.00"
+        "text": "Amount: €20.00"
       }
     }
   },
@@ -1180,7 +1182,7 @@ export const getSignupEmailTemplate = (user: string) => `
         "fontWeight": "normal",
         "padding": {
           "top": 0,
-          "bottom": 0,
+          "bottom": 16,
           "right": 24,
           "left": 24
         }
@@ -1234,13 +1236,13 @@ export const getSignupEmailTemplate = (user: string) => `
         "fontWeight": "normal",
         "padding": {
           "top": 0,
-          "bottom": 0,
+          "bottom": 16,
           "right": 24,
           "left": 24
         }
       },
       "props": {
-        "text": "Valor: $25.00"
+        "text": "Amount: $25.00"
       }
     }
   }
