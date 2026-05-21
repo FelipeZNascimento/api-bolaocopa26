@@ -110,7 +110,7 @@ export const getActivationTemplate = (user: string) => `
                                   >&nbsp;</i
                                 ><!
                               [endif]--></span
-                            ><span>Bolão</span
+                            ><span>Home</span
                             ><span
                               ><!--[if mso
                                 ]><i
@@ -294,6 +294,241 @@ export const getActivationTemplate = (user: string) => `
                   style="width:100%;border:none;border-top:1px solid #CCCCCC;margin:0"
                 />
               </div>
+              <div style="background-color:#e8edf5;padding:10px 24px;text-align:center;font-size:13px;color:#284ea0;font-weight:bold">
+                🇬🇧 English version below ↓
+              </div>
+              <div style="padding:16px 0px 0px 0px">
+                <hr
+                  style="width:100%;border:none;border-top:3px solid #19235a;margin:0"
+                />
+              </div>
+              <h3
+                style="color:#284ea0;font-weight:bold;margin:0;font-size:20px;padding:16px 24px 16px 24px"
+              >
+                Hello ${user},
+              </h3>
+              <div style="font-weight:normal;padding:16px 24px 16px 24px">
+                Your account has been activated for placing bets. Now it's up
+                to you: bet on matches before they start, and don't forget the
+                Extra Bets before the competition begins!
+              </div>
+              <div style="font-weight:normal;padding:16px 24px 16px 24px">
+                Make good use of the Rules section, and if you have any
+                questions, reach out through our contact channels or our
+                Telegram and WhatsApp groups.
+              </div>
+              <div style="padding:0px 24px 0px 24px">
+                <table
+                  align="center"
+                  width="100%"
+                  cellpadding="0"
+                  border="0"
+                  style="table-layout:fixed;border-collapse:collapse"
+                >
+                  <tbody style="width:100%">
+                    <tr style="width:100%">
+                      <td
+                        style="box-sizing:content-box;vertical-align:middle;padding-left:0;padding-right:8px"
+                      >
+                        <div
+                          style="text-align:center;padding:16px 0px 16px 0px"
+                        >
+                          <a
+                            href="https://bolaocopa.omegafox.me/"
+                            style="color:#FFFFFF;font-size:16px;font-weight:bold;background-color:#284ea0;border-radius:4px;display:block;padding:12px 20px;text-decoration:none"
+                            target="_blank"
+                            ><span
+                              ><!--[if mso
+                                ]><i
+                                  style="letter-spacing: 20px;mso-font-width:-100%;mso-text-raise:30"
+                                  hidden
+                                  >&nbsp;</i
+                                ><!
+                              [endif]--></span
+                            ><span>Home</span
+                            ><span
+                              ><!--[if mso
+                                ]><i
+                                  style="letter-spacing: 20px;mso-font-width:-100%"
+                                  hidden
+                                  >&nbsp;</i
+                                ><!
+                              [endif]--></span
+                            ></a
+                          >
+                        </div>
+                      </td>
+                      <td
+                        style="box-sizing:content-box;vertical-align:middle;padding-left:8px;padding-right:0"
+                      >
+                        <div
+                          style="text-align:center;padding:16px 0px 16px 0px"
+                        >
+                          <a
+                            href="https://bolaocopa.omegafox.me/regras"
+                            style="color:#FFFFFF;font-size:16px;font-weight:bold;background-color:#284ea0;border-radius:4px;display:block;padding:12px 20px;text-decoration:none"
+                            target="_blank"
+                            ><span
+                              ><!--[if mso
+                                ]><i
+                                  style="letter-spacing: 20px;mso-font-width:-100%;mso-text-raise:30"
+                                  hidden
+                                  >&nbsp;</i
+                                ><!
+                              [endif]--></span
+                            ><span>Rules</span
+                            ><span
+                              ><!--[if mso
+                                ]><i
+                                  style="letter-spacing: 20px;mso-font-width:-100%"
+                                  hidden
+                                  >&nbsp;</i
+                                ><!
+                              [endif]--></span
+                            ></a
+                          >
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="padding:0px 24px 0px 24px">
+                <table
+                  align="center"
+                  width="100%"
+                  cellpadding="0"
+                  border="0"
+                  style="table-layout:fixed;border-collapse:collapse"
+                >
+                  <tbody style="width:100%">
+                    <tr style="width:100%">
+                      <td
+                        style="box-sizing:content-box;vertical-align:middle;padding-left:0;padding-right:8px"
+                      >
+                        <div
+                          style="text-align:center;padding:16px 0px 16px 0px"
+                        >
+                          <a
+                            href="https://bolaocopa.omegafox.me/jogos"
+                            style="color:#FFFFFF;font-size:16px;font-weight:bold;background-color:#284ea0;border-radius:4px;display:block;padding:12px 20px;text-decoration:none"
+                            target="_blank"
+                            ><span
+                              ><!--[if mso
+                                ]><i
+                                  style="letter-spacing: 20px;mso-font-width:-100%;mso-text-raise:30"
+                                  hidden
+                                  >&nbsp;</i
+                                ><!
+                              [endif]--></span
+                            ><span>Bet</span
+                            ><span
+                              ><!--[if mso
+                                ]><i
+                                  style="letter-spacing: 20px;mso-font-width:-100%"
+                                  hidden
+                                  >&nbsp;</i
+                                ><!
+                              [endif]--></span
+                            ></a
+                          >
+                        </div>
+                      </td>
+                      <td
+                        style="box-sizing:content-box;vertical-align:middle;padding-left:8px;padding-right:0"
+                      >
+                        <div
+                          style="text-align:center;padding:16px 0px 16px 0px"
+                        >
+                          <a
+                            href="https://bolaocopa.omegafox.me/extras"
+                            style="color:#FFFFFF;font-size:16px;font-weight:bold;background-color:#284ea0;border-radius:4px;display:block;padding:12px 20px;text-decoration:none"
+                            target="_blank"
+                            ><span
+                              ><!--[if mso
+                                ]><i
+                                  style="letter-spacing: 20px;mso-font-width:-100%;mso-text-raise:30"
+                                  hidden
+                                  >&nbsp;</i
+                                ><!
+                              [endif]--></span
+                            ><span>Extras</span
+                            ><span
+                              ><!--[if mso
+                                ]><i
+                                  style="letter-spacing: 20px;mso-font-width:-100%"
+                                  hidden
+                                  >&nbsp;</i
+                                ><!
+                              [endif]--></span
+                            ></a
+                          >
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="padding:16px 0px 16px 0px">
+                <hr
+                  style="width:100%;border:none;border-top:1px solid #CCCCCC;margin:0"
+                />
+              </div>
+              <div style="padding:0px 24px 0px 24px">
+                <table
+                  align="center"
+                  width="100%"
+                  cellpadding="0"
+                  border="0"
+                  style="table-layout:fixed;border-collapse:collapse"
+                >
+                  <tbody style="width:100%">
+                    <tr style="width:100%">
+                      <td
+                        style="box-sizing:content-box;vertical-align:middle;padding-left:0;padding-right:8px"
+                      >
+                        <div
+                          style="padding:16px 24px 16px 24px;text-align:center"
+                        >
+                          <a
+                            href="https://chat.whatsapp.com/EsOlEuAXMeIB6rf8Rq2oBc"
+                            style="text-decoration:none"
+                            target="_blank"
+                            ><img
+                              alt="WhatsApp"
+                              src="https://assets.omegafox.me/img/social_icons/whatsapp.png"
+                              width="50"
+                              style="width:50px;outline:none;border:none;text-decoration:none;vertical-align:middle;display:inline-block;max-width:100%"
+                          /></a>
+                        </div>
+                      </td>
+                      <td
+                        style="box-sizing:content-box;vertical-align:middle;padding-left:8px;padding-right:0"
+                      >
+                        <div
+                          style="padding:16px 24px 16px 24px;text-align:center"
+                        >
+                          <a
+                            href="https://t.me/+rVP220dgf2o0ZDJh"
+                            style="text-decoration:none"
+                            target="_blank"
+                            ><img
+                              alt="Telegram"
+                              src="https://assets.omegafox.me/img/social_icons/telegram.png"
+                              width="50"
+                              style="width:50px;outline:none;border:none;text-decoration:none;vertical-align:middle;display:inline-block;max-width:100%"
+                          /></a>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="padding:16px 0px 16px 0px">
+                <hr
+                  style="width:100%;border:none;border-top:1px solid #CCCCCC;margin:0"
+                />
+              </div>
               <div style="padding:0px 0px 0px 0px">
                 <a
                   href="https://bolaocopa.omegafox.me/"
@@ -313,8 +548,8 @@ export const getActivationTemplate = (user: string) => `
   </body>
 </html>
 `;
+// JSON TEMPLATE - Built with https://usewaypoint.github.io/email-builder-js/
 /*
-JSON TEMPLATE
 {
   "root": {
     "type": "EmailLayout",
@@ -337,6 +572,16 @@ JSON TEMPLATE
         "block-1779054178282",
         "block-1779054511867",
         "block-1779054515509",
+        "block-en-notice",
+        "block-en-separator",
+        "block-en-heading",
+        "block-en-para1",
+        "block-en-para2",
+        "block-en-buttons-row1",
+        "block-en-buttons-row2",
+        "block-en-divider1",
+        "block-en-social",
+        "block-en-divider2",
         "block-1709571282795"
       ]
     }
@@ -757,7 +1002,7 @@ JSON TEMPLATE
         "buttonBackgroundColor": "#284ea0",
         "fullWidth": true,
         "size": "medium",
-        "text": "Bolão",
+        "text": "Home",
         "url": "https://bolaocopa.omegafox.me/"
       }
     }
@@ -862,7 +1107,7 @@ JSON TEMPLATE
       },
       "props": {
         "width": 50,
-        "url": "https://images.seeklogo.com/logo-png/30/2/whatsapp-icon-logo-png_seeklogo-305567.png",
+        "url": "https://assets.omegafox.me/img/social_icons/whatsapp.png",
         "alt": "WhatsApp",
         "linkHref": "https://chat.whatsapp.com/EsOlEuAXMeIB6rf8Rq2oBc",
         "contentAlignment": "middle"
@@ -883,10 +1128,354 @@ JSON TEMPLATE
       },
       "props": {
         "width": 50,
-        "url": "https://www.freeiconspng.com/thumbs/telegram-icon/telegram-icon-7.png",
+        "url": "https://assets.omegafox.me/img/social_icons/telegram.png",
         "alt": "Telegram",
         "linkHref": "https://t.me/+rVP220dgf2o0ZDJh",
         "contentAlignment": "middle"
+      }
+    }
+  },
+  "block-en-notice": {
+    "type": "Text",
+    "data": {
+      "style": {
+        "backgroundColor": "#e8edf5",
+        "fontWeight": "bold",
+        "fontSize": 13,
+        "textAlign": "center",
+        "padding": {
+          "top": 10,
+          "bottom": 10,
+          "right": 24,
+          "left": 24
+        },
+        "color": "#284ea0"
+      },
+      "props": {
+        "text": "🇬🇧 English version below ↓"
+      }
+    }
+  },
+  "block-en-separator": {
+    "type": "Divider",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 0,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "lineColor": "#19235a",
+        "lineHeight": 3
+      }
+    }
+  },
+  "block-en-heading": {
+    "type": "Heading",
+    "data": {
+      "props": {
+        "text": "Hello ${user},",
+        "level": "h3"
+      },
+      "style": {
+        "color": "#284ea0",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        }
+      }
+    }
+  },
+  "block-en-para1": {
+    "type": "Text",
+    "data": {
+      "style": {
+        "fontWeight": "normal",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        }
+      },
+      "props": {
+        "text": "Your account has been activated for placing bets. Now it's up to you: bet on matches before they start, and don't forget the Extra Bets before the competition begins!"
+      }
+    }
+  },
+  "block-en-para2": {
+    "type": "Text",
+    "data": {
+      "style": {
+        "fontWeight": "normal",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        }
+      },
+      "props": {
+        "text": "Make good use of the Rules section, and if you have any questions, reach out through our contact channels or our Telegram and WhatsApp groups."
+      }
+    }
+  },
+  "block-en-buttons-row1": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 24,
+          "left": 24
+        }
+      },
+      "props": {
+        "columnsCount": 2,
+        "columnsGap": 16,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-en-btn-pool"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-en-btn-rules"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "block-en-btn-pool": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "textAlign": "center",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "buttonBackgroundColor": "#284ea0",
+        "fullWidth": true,
+        "size": "medium",
+        "text": "Home",
+        "url": "https://bolaocopa.omegafox.me/"
+      }
+    }
+  },
+  "block-en-btn-rules": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "textAlign": "center",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "buttonBackgroundColor": "#284ea0",
+        "fullWidth": true,
+        "size": "medium",
+        "text": "Rules",
+        "url": "https://bolaocopa.omegafox.me/regras"
+      }
+    }
+  },
+  "block-en-buttons-row2": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 24,
+          "left": 24
+        }
+      },
+      "props": {
+        "columnsCount": 2,
+        "columnsGap": 16,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-en-btn-bet"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-en-btn-extras"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "block-en-btn-bet": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "textAlign": "center",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "buttonBackgroundColor": "#284ea0",
+        "fullWidth": true,
+        "size": "medium",
+        "text": "Bet",
+        "url": "https://bolaocopa.omegafox.me/jogos"
+      }
+    }
+  },
+  "block-en-btn-extras": {
+    "type": "Button",
+    "data": {
+      "style": {
+        "textAlign": "center",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "buttonBackgroundColor": "#284ea0",
+        "fullWidth": true,
+        "size": "medium",
+        "text": "Extras",
+        "url": "https://bolaocopa.omegafox.me/extras"
+      }
+    }
+  },
+  "block-en-divider1": {
+    "type": "Divider",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "lineColor": "#CCCCCC"
+      }
+    }
+  },
+  "block-en-social": {
+    "type": "ColumnsContainer",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "right": 24,
+          "left": 24
+        }
+      },
+      "props": {
+        "columnsCount": 2,
+        "columnsGap": 16,
+        "columns": [
+          {
+            "childrenIds": [
+              "block-en-whatsapp"
+            ]
+          },
+          {
+            "childrenIds": [
+              "block-en-telegram"
+            ]
+          },
+          {
+            "childrenIds": []
+          }
+        ]
+      }
+    }
+  },
+  "block-en-whatsapp": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        },
+        "textAlign": "center"
+      },
+      "props": {
+        "width": 50,
+        "url": "https://assets.omegafox.me/img/social_icons/whatsapp.png",
+        "alt": "WhatsApp",
+        "linkHref": "https://chat.whatsapp.com/EsOlEuAXMeIB6rf8Rq2oBc",
+        "contentAlignment": "middle"
+      }
+    }
+  },
+  "block-en-telegram": {
+    "type": "Image",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        },
+        "textAlign": "center"
+      },
+      "props": {
+        "width": 50,
+        "url": "https://assets.omegafox.me/img/social_icons/telegram.png",
+        "alt": "Telegram",
+        "linkHref": "https://t.me/+rVP220dgf2o0ZDJh",
+        "contentAlignment": "middle"
+      }
+    }
+  },
+  "block-en-divider2": {
+    "type": "Divider",
+    "data": {
+      "style": {
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 0,
+          "left": 0
+        }
+      },
+      "props": {
+        "lineColor": "#CCCCCC"
       }
     }
   }

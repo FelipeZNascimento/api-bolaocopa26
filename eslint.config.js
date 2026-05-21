@@ -31,6 +31,7 @@ export default [
       ...tsPlugin.configs["recommended-type-checked"].rules,
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unsafe-assignment": "warn",
+      "max-len": ["warn", { code: 120, ignoreUrls: true }],
       "no-undef": "off", // TypeScript handles this check
     },
   },

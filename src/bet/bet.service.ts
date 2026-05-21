@@ -8,8 +8,9 @@ import { logger } from "#logger/logger.service.js";
 export class BetService {
   async getExtras(edition: number, editionStart: number) {
     const rows = await db.query(
-      `SELECT extra_bets.id, extra_bets.id_user as userId, extra_bets.id_extra_type as extraType, extra_bets.id_team as teamId,
-        extra_bets.id_player as playerId, extra_bets.timestamp,
+      `SELECT extra_bets.id, extra_bets.id_user as userId, extra_bets.id_extra_type as extraType,
+        extra_bets.id_team as teamId,
+        extra_bets.id_player as playerId, extra_bets.timestamp, extra_bets.id_stage as stageId,
         users.nickname as nickname, users.name as name,
         users_edition.is_active as isActive
         FROM extra_bets
@@ -25,8 +26,9 @@ export class BetService {
 
   async getExtrasFromUserId(edition: number, userId: number) {
     const rows = await db.query(
-      `SELECT extra_bets.id, extra_bets.id_user as userId, extra_bets.id_extra_type as extraType, extra_bets.id_team as teamId,
-        extra_bets.id_player as playerId, extra_bets.timestamp,
+      `SELECT extra_bets.id, extra_bets.id_user as userId, extra_bets.id_extra_type as extraType,
+        extra_bets.id_team as teamId,
+        extra_bets.id_player as playerId, extra_bets.timestamp, extra_bets.id_stage as stageId,
         users.nickname as nickname, users.name as name,
         users_edition.is_active as isActive
         FROM extra_bets
@@ -105,12 +107,21 @@ export class BetService {
     return rows;
   }
 
-  async updateExtras(extraType: string, playerId: number, teamId: number, userId: number, editionId: number) {
-    logger.debug({ editionId, extraType, playerId, teamId, userId }, "Updating extra bets");
+  async updateExtras(
+    extraType: string,
+    playerId: number,
+    teamId: number,
+    userId: number,
+    editionId: number,
+    stageId: number,
+  ) {
+    logger.debug({ editionId, extraType, playerId, stageId, teamId, userId }, "Updating extra bets");
     const rows: ResultSetHeader = await db.query(
-      `INSERT INTO extra_bets (id_user, id_edition, id_extra_type, id_team, id_player) VALUES (?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE id_extra_type = ?, id_team = ?, id_player = ?`,
-      [userId, editionId, extraType, teamId, playerId, extraType, teamId, playerId],
+      `INSERT
+      INTO extra_bets (id_user, id_edition, id_extra_type, id_team, id_player, id_stage)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE id_extra_type = ?, id_team = ?, id_player = ?, id_stage = ?`,
+      [userId, editionId, extraType, teamId, playerId, stageId, extraType, teamId, playerId, stageId],
     );
 
     return rows;

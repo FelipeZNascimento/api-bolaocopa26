@@ -9,3 +9,9 @@ export const EXTRA_TYPES: Record<number, string> = {
   [EXTRA_TYPE_OFFENSE]: "Offense",
   [EXTRA_TYPE_STRIKER]: "Striker",
 };
+
+export enum STAGE_ID {
+  BEFORE_START = 1,
+  PLAYOFFS = 2,
+  QUARTERFINALS = 3,
+}

@@ -4,7 +4,7 @@ import { IMatch } from "#match/match.types.js";
 import { IUser } from "#user/user.types.js";
 import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
 
-import { AWARD_POINTS, DEFAULT_ROUND_MULTIPLIER, ROUND_MULTIPLIERS } from "./ranking.constants.js";
+import { AWARD_POINTS_2026, DEFAULT_ROUND_MULTIPLIER, EXTRAS_FACTORS, ROUND_MULTIPLIERS } from "./ranking.constants.js";
 import {
   ICalculatedRankingLine,
   IRankingScore,
@@ -66,6 +66,12 @@ export const getSeasonRanking = (
   return seasonRanking;
 };
 
+// This function is necessary because there may be multiple extra bets on the same category,
+// and we want to consider only the latest one for each user.
+const getLatestExtraBet = (bets: IExtraBet[], userId: number): IExtraBet | undefined => {
+  return bets.filter((bet) => bet.user.id === userId).sort((a, b) => b.stageId - a.stageId)[0];
+};
+
 export const calculateExtraBets = (
   userId: number,
   extraBets: {
@@ -81,26 +87,29 @@ export const calculateExtraBets = (
     striker: IExtraBetResult[];
   },
 ): IRankingScoreExtras => {
-  const championBet = extraBets.champion.find((bet) => bet.user.id === userId);
-  const defenseBet = extraBets.defense.find((bet) => bet.user.id === userId);
-  const offenseBet = extraBets.offense.find((bet) => bet.user.id === userId);
-  const strikerBet = extraBets.striker.find((bet) => bet.user.id === userId);
+  const championBet = getLatestExtraBet(extraBets.champion, userId);
+  const defenseBet = getLatestExtraBet(extraBets.defense, userId);
+  const offenseBet = getLatestExtraBet(extraBets.offense, userId);
+  const strikerBet = getLatestExtraBet(extraBets.striker, userId);
 
   const hasChampionMatch =
-    championBet && extraBetsResults.champion.some((result) => result.team.id === championBet.team.id);
+    championBet &&
+    extraBetsResults.champion.some((result) => championBet.team && result.team.id === championBet.team.id);
   const hasDefenseMatch =
-    defenseBet && extraBetsResults.defense.some((result) => result.team.id === defenseBet.team.id);
+    defenseBet && extraBetsResults.defense.some((result) => defenseBet.team && result.team.id === defenseBet.team.id);
   const hasOffenseMatch =
-    offenseBet && extraBetsResults.offense.some((result) => result.team.id === offenseBet.team.id);
+    offenseBet && extraBetsResults.offense.some((result) => offenseBet.team && result.team.id === offenseBet.team.id);
   const hasStrikerMatch =
     strikerBet && extraBetsResults.striker.some((result) => result.player?.id === strikerBet.player?.id);
 
+  const championPoints = hasChampionMatch ? AWARD_POINTS_2026.extraChampion * EXTRAS_FACTORS[championBet.stageId] : 0;
+
   return {
-    champion: hasChampionMatch ? AWARD_POINTS.extraChampion : 0,
-    defense: hasDefenseMatch ? AWARD_POINTS.extraDefense : 0,
-    offense: hasOffenseMatch ? AWARD_POINTS.extraOffense : 0,
+    champion: championPoints,
+    defense: hasDefenseMatch ? AWARD_POINTS_2026.extraDefense : 0,
+    offense: hasOffenseMatch ? AWARD_POINTS_2026.extraOffense : 0,
     points: 0,
-    striker: hasStrikerMatch ? AWARD_POINTS.extraStriker : 0,
+    striker: hasStrikerMatch ? AWARD_POINTS_2026.extraStriker : 0,
   };
 };
 
@@ -159,7 +168,7 @@ const calculateRound = (
 
   const gameCount = filteredMatches.length;
   const matchById = new Map(filteredMatches.map((match) => [match.id, match]));
-  const maxPoints = AWARD_POINTS.exactScore * getRoundMultiplier(round);
+  const maxPoints = AWARD_POINTS_2026.exactScore * getRoundMultiplier(round);
 
   const ranking: ICalculatedRankingLine[] = users.map((user) => {
     const previousUserLine = previousRoundRanking?.find((line) => line.user.id === user.id);
@@ -212,13 +221,13 @@ const calculateRound = (
       const roundMultiplier = getRoundMultiplier(match.round);
 
       if (isHomeScoreCorrect && isAwayScoreCorrect) {
-        score.points += AWARD_POINTS.exactScore * roundMultiplier;
+        score.points += AWARD_POINTS_2026.exactScore * roundMultiplier;
         score.exacts += 1;
       } else if (isHomeScoreCorrect || isAwayScoreCorrect) {
-        score.points += AWARD_POINTS.oneScore * roundMultiplier;
+        score.points += AWARD_POINTS_2026.oneScore * roundMultiplier;
         score.oneScores += 1;
       } else {
-        score.points += AWARD_POINTS.winnerOnly * roundMultiplier;
+        score.points += AWARD_POINTS_2026.winnerOnly * roundMultiplier;
         score.winnersOnly += 1;
       }
     });
@@ -255,7 +264,8 @@ const calculateRound = (
     };
   });
 
-  // Sort by accumulated score first to ensure the correct position variation calculation, then by score for the final ranking.
+  // Sort by accumulated score first to ensure the correct position variation calculation,
+  // then by score for the final ranking.
   let rankingByAccumulated = sortRanking(ranking, true);
   rankingByAccumulated = addPositioning(rankingByAccumulated, true);
 
@@ -307,7 +317,7 @@ const sortRanking = (ranking: ICalculatedRankingLine[], isAccumulated = false): 
         return b.accumulatedScore.oneScores - a.accumulatedScore.oneScores;
       }
 
-      return a.user.name.localeCompare(b.user.name);
+      return a.user.nickname.localeCompare(b.user.nickname);
     });
   } else {
     return [...ranking].sort((a, b) => {
@@ -323,7 +333,7 @@ const sortRanking = (ranking: ICalculatedRankingLine[], isAccumulated = false): 
         return b.score.oneScores - a.score.oneScores;
       }
 
-      return a.user.name.localeCompare(b.user.name);
+      return a.user.nickname.localeCompare(b.user.nickname);
     });
   }
 };

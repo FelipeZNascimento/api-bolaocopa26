@@ -11,16 +11,16 @@ import { IUser } from "./user.types";
 
 // Mocks
 const mockUserService = {
-  getAllByEdition: vi.fn(),
   getByEdition: vi.fn(),
   getByEmail: vi.fn(),
   getById: vi.fn(),
   getFavoritesById: vi.fn(),
-  isEmailValid: vi.fn(),
-  isNicknameValid: vi.fn(),
+  isEmailRegistered: vi.fn(),
+  isNicknameRegistered: vi.fn(),
   login: vi.fn(),
   register: vi.fn(),
   setOnCurrentSeason: vi.fn(),
+  updateFavorites: vi.fn(),
   updateLastOnlineTime: vi.fn(),
   updatePassword: vi.fn(),
   updatePasswordFromToken: vi.fn(),
@@ -89,6 +89,9 @@ const mockUser: IUser = {
 
 function getMockReqResSession(user: IUser | null = null) {
   const session = {
+    destroy: vi.fn((cb?: (err?: Error) => void) => {
+      if (cb) cb();
+    }),
     regenerate: vi.fn((cb?: (err?: Error) => void) => {
       if (cb) cb();
     }),
@@ -101,6 +104,7 @@ function getMockReqResSession(user: IUser | null = null) {
     next: vi.fn(),
     req: { body: {}, params: {}, session } as unknown as Request,
     res: {
+      clearCookie: vi.fn(),
       json: vi.fn(),
       status: vi.fn().mockReturnThis(),
     } as unknown as Response,
@@ -161,85 +165,6 @@ describe("UserController", () => {
       await controller.getActiveProfile(req, res, next);
 
       expect(mockUserService.getById).toHaveBeenCalledWith(1, 3); // 2026 maps to 3
-    });
-  });
-
-  describe("getAll", () => {
-    it("should return all users by edition when user is admin", async () => {
-      const adminUser = { ...mockUser, admin: true };
-      const users = [mockUser, { ...mockUser, id: 2, nickname: "user2" }];
-      mockUserService.getAllByEdition.mockResolvedValue(users);
-      const { next, req, res } = getMockReqResSession(adminUser);
-
-      await controller.getAll(req, res, next);
-
-      expect(mockUserService.getAllByEdition).toHaveBeenCalledWith(2024);
-    });
-
-    it("should return empty array if user is not admin", async () => {
-      const nonAdminUser = { ...mockUser, admin: false };
-      const { next, req, res } = getMockReqResSession(nonAdminUser);
-
-      await controller.getAll(req, res, next);
-
-      expect(mockUserService.getAllByEdition).not.toHaveBeenCalled();
-    });
-
-    it("should throw error if edition is missing for admin user", async () => {
-      const adminUser = { ...mockUser, admin: true };
-      delete process.env.EDITION;
-      const { next, req, res } = getMockReqResSession(adminUser);
-
-      await controller.getAll(req, res, next);
-
-      expect(next).toHaveBeenCalledWith(expect.any(AppError));
-      const error = next.mock.calls[0][0] as AppError;
-      expect(error.statusCode).toBe(404);
-    });
-  });
-
-  describe("getById", () => {
-    it("should return user by id and edition", async () => {
-      mockUserService.getById.mockResolvedValue(mockUser);
-      const { next, req, res } = getMockReqResSession();
-      req.params = { userId: "1" };
-
-      await controller.getById(req, res, next);
-
-      expect(mockUserService.getById).toHaveBeenCalledWith(1, 2024);
-    });
-
-    it("should throw error if edition is missing", async () => {
-      delete process.env.EDITION;
-      const { next, req, res } = getMockReqResSession();
-      req.params = { userId: "1" };
-
-      await controller.getById(req, res, next);
-
-      expect(next).toHaveBeenCalledWith(expect.any(AppError));
-    });
-
-    it("should throw error if userId is missing", async () => {
-      const { next, req, res } = getMockReqResSession();
-      req.params = { edition: "1" }; // Use edition < 2000 to avoid editionMapping call
-
-      await controller.getById(req, res, next);
-
-      expect(next).toHaveBeenCalledWith(expect.any(AppError));
-      const error = next.mock.calls[0][0] as AppError;
-      expect(error.code).toBe(ErrorCode.MISSING_REQUIRED_FIELD);
-    });
-
-    it("should throw error for invalid edition mapping", async () => {
-      const { next, req, res } = getMockReqResSession();
-      req.params = { userId: "1" };
-      mockEditionMapping.mockReturnValueOnce(0); // Return 0 for invalid edition
-
-      await controller.getById(req, res, next);
-
-      expect(next).toHaveBeenCalledWith(expect.any(AppError));
-      const error = next.mock.calls[0][0] as AppError;
-      expect(error.code).toBe(ErrorCode.INVALID_INPUT);
     });
   });
 
@@ -307,9 +232,8 @@ describe("UserController", () => {
 
       await controller.logout(req, res, next);
 
-      expect(req.session.user).toBeNull();
-      expect(req.session.save).toHaveBeenCalled();
-      expect(req.session.regenerate).toHaveBeenCalled();
+      expect(req.session.destroy).toHaveBeenCalled();
+      expect(res.clearCookie).toHaveBeenCalledWith("connect.sid");
     });
 
     it("should handle logout when no user in session", async () => {
@@ -317,7 +241,7 @@ describe("UserController", () => {
 
       await controller.logout(req, res, next);
 
-      expect(req.session.save).toHaveBeenCalled();
+      expect(req.session.destroy).toHaveBeenCalled();
     });
   });
 
@@ -449,21 +373,6 @@ describe("UserController", () => {
       expect(error.code).toBe(ErrorCode.VALIDATION_ERROR);
     });
 
-    it("should throw error if no session for regular password update", async () => {
-      const { next, req, res } = getMockReqResSession();
-      req.body = {
-        currentPassword: "oldpassword",
-        newPassword: "newpassword123",
-      };
-
-      await controller.updatePassword(req, res, next);
-
-      expect(next).toHaveBeenCalledWith(expect.any(AppError));
-      const error = next.mock.calls[0][0] as AppError;
-      expect(error.statusCode).toBe(401);
-      expect(error.code).toBe(ErrorCode.UNAUTHORIZED);
-    });
-
     it("should throw error if current password is incorrect", async () => {
       mockUserService.updatePassword.mockResolvedValue({ affectedRows: 0 });
       const { next, req, res } = getMockReqResSession(mockUser);
@@ -506,18 +415,6 @@ describe("UserController", () => {
   });
 
   describe("updateProfile", () => {
-    it("should throw error if no user in session", async () => {
-      const { next, req, res } = getMockReqResSession();
-      req.body = { name: "Updated Name", nickname: "updatednick" };
-
-      await controller.updateProfile(req, res, next);
-
-      expect(next).toHaveBeenCalledWith(expect.any(AppError));
-      const error = next.mock.calls[0][0] as AppError;
-      expect(error.statusCode).toBe(401);
-      expect(error.code).toBe(ErrorCode.UNAUTHORIZED);
-    });
-
     it("should throw error if required fields are missing", async () => {
       const { next, req, res } = getMockReqResSession(mockUser);
       req.body = { name: "Updated Name" };
@@ -582,15 +479,17 @@ describe("UserController", () => {
     });
 
     it("should send password reset email and cache token", async () => {
+      mockUserService.isEmailRegistered.mockResolvedValue(true);
       mockMailerService.sendPasswordResetEmail.mockResolvedValue(undefined);
       const { next, req, res } = getMockReqResSession();
       req.body = { email: "test@example.com" };
+      req.get = vi.fn().mockReturnValue("en-US");
 
       await controller.forgotPassword(req, res, next);
 
       expect(mockGenerateVerificationToken).toHaveBeenCalled();
       expect(mockCachedInfo.set).toHaveBeenCalledWith("PASSWORD_RESET_test@example.com", "token123", 3600);
-      expect(mockMailerService.sendPasswordResetEmail).toHaveBeenCalledWith("test@example.com", "token123");
+      expect(mockMailerService.sendPasswordResetEmail).toHaveBeenCalledWith("test@example.com", "token123", "en-US");
     });
   });
 });

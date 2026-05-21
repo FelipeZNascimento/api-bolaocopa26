@@ -40,13 +40,13 @@ export const httpLogger = pinoHttp({
 
   // Add custom properties to each log
   customProps: (req) => {
-    // Cast to Express Request to access session
+    // Cast to Express Request to access session and route
     const expressReq = req as unknown as Request;
     return {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      route: (expressReq.route?.path as string | undefined) ?? expressReq.path ?? undefined,
       userEmail: expressReq.session?.user?.email,
       userId: expressReq.session?.user?.id,
-      // Add request ID if you have one
-      // requestId: req.id,
     };
   },
 
@@ -59,6 +59,7 @@ export const httpLogger = pinoHttp({
 
   // Serialize request and response
   // These serializers work with pino-http's internal types which are loosely typed
+  // eslint-disable-next-line max-len
   /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */
   serializers: {
     req: (req: any) => ({
@@ -82,6 +83,7 @@ export const httpLogger = pinoHttp({
       statusCode: res.statusCode,
     }),
   },
+  // eslint-disable-next-line max-len
   /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */
 });
 

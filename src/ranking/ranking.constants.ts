@@ -1,3 +1,6 @@
+import { STAGE_ID } from "#bet/bet.constants.js";
+import { TStageId } from "#bet/bet.types.js";
+
 export const AWARD_POINTS = {
   exactScore: 5,
   extraChampion: 40,
@@ -17,6 +20,12 @@ export const AWARD_POINTS_2026 = {
   extraStriker: 15,
   oneScore: 6,
   winnerOnly: 4,
+};
+
+export const EXTRAS_FACTORS: Record<TStageId, number> = {
+  [STAGE_ID.BEFORE_START]: 1,
+  [STAGE_ID.PLAYOFFS]: 0.6,
+  [STAGE_ID.QUARTERFINALS]: 0.3,
 };
 
 export const ROUND_MULTIPLIERS: Record<number, number> = {

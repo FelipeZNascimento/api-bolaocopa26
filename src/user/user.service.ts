@@ -20,8 +20,9 @@ export class UserService {
     const rows: IUser[] = await db.query(
       `SELECT SQL_NO_CACHE users.id, users.email, users.name, users.nickname,
         users_edition.is_active as isActive,
-        users.timestamp, users.admin, 
-        (users.timestamp IS NOT NULL AND (UNIX_TIMESTAMP(NOW()) - users.timestamp) < 600) AS isOnline
+        users.timestamp, users.admin,
+        (users.timestamp IS NOT NULL AND (UNIX_TIMESTAMP(NOW()) - users.timestamp) < 600) AS isOnline,
+        (SELECT COUNT(*) FROM extra_bets WHERE id_edition = users_edition.id_edition AND id_user = users.id) AS extrasCount
         FROM users
         JOIN users_edition ON users.id = users_edition.id_user
         WHERE users_edition.id_edition = ?
@@ -78,6 +79,15 @@ export class UserService {
     return row.length > 0 ? row[0] : null;
   }
 
+  async getExtrasCountById(edition: number, userId: number) {
+    const rows: [{ count: number }] = await db.query(
+      `SELECT COUNT(*) as count FROM extra_bets WHERE id_edition = ? AND id_user = ?`,
+      [edition, userId],
+    );
+
+    return rows[0].count;
+  }
+
   async getFavoritesById(userId: number, editionId: number) {
     const row: { favorites: string }[] = await db.query(
       `SELECT users_favorites.favorites
@@ -90,22 +100,22 @@ export class UserService {
     return row.length > 0 ? row[0].favorites : "";
   }
 
-  async isEmailValid(email: string, userId?: number) {
+  async isEmailRegistered(email: string, userId?: number) {
     const [rows]: [{ count: number }] = await db.query(
       `SELECT SQL_NO_CACHE COUNT(*) as count FROM users WHERE email = ?${userId ? " AND id != ?" : ""}`,
       userId ? [email, userId] : [email],
     );
 
-    return rows.count === 0;
+    return rows.count > 0;
   }
 
-  async isNicknameValid(nickname: string, userId?: number) {
+  async isNicknameRegistered(nickname: string, userId?: number) {
     const [rows]: [{ count: number }] = await db.query(
       `SELECT SQL_NO_CACHE COUNT(*) as count FROM users WHERE nickname = ?${userId ? " AND id != ?" : ""}`,
       userId ? [nickname, userId] : [nickname],
     );
 
-    return rows.count === 0;
+    return rows.count > 0;
   }
 
   async login(email: string, password: string) {

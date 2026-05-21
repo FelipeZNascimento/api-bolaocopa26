@@ -3,7 +3,9 @@ import { createTransport, Transporter, TransportOptions } from "nodemailer";
 import { getActivationTemplate } from "#mailer/activation.template.js";
 import { getPasswordResetEmailTemplate } from "#mailer/reset.template.js";
 import { getSignupEmailTemplate } from "#mailer/signup.template.js";
+import { getSignupEmailTemplateEn } from "#mailer/signupEn.template.js";
 import { ENV } from "#utils/envParser.js";
+import { getPasswordResetEmailTemplateEn } from "./resetEn.template";
 
 export class MailerService {
   private readonly fromAddress: string;
@@ -52,7 +54,7 @@ export class MailerService {
       await this.transporter.sendMail({
         from: this.fromAddress,
         html: getActivationTemplate(nickname),
-        subject: "[BolaoCopa2026] Sua conta foi ativada!",
+        subject: "[BolaoCopa2026] Conta ativada | Account activated",
         to,
       });
     } catch (error) {
@@ -61,7 +63,7 @@ export class MailerService {
     }
   }
 
-  async sendPasswordResetEmail(to: string, resetToken: string) {
+  async sendPasswordResetEmail(to: string, resetToken: string, locale?: string) {
     if (!this.smtpEnabled) return;
 
     if (!process.env.BASE_URL) {
@@ -71,10 +73,12 @@ export class MailerService {
     const resetUrl = `${process.env.BASE_URL}/reset-password?token=${resetToken}&email=${encodeURIComponent(to)}`;
 
     try {
+      const isEn = locale?.toLowerCase().startsWith("en") ?? false;
+
       await this.transporter.sendMail({
         from: this.fromAddress,
-        html: getPasswordResetEmailTemplate(resetUrl),
-        subject: "[BolaoCopa2026] Redefinir sua senha",
+        html: isEn ? getPasswordResetEmailTemplateEn(resetUrl) : getPasswordResetEmailTemplate(resetUrl),
+        subject: isEn ? "[BolaoCopa2026] Reset your password" : "[BolaoCopa2026] Redefinir sua senha",
         to,
       });
     } catch (error) {
@@ -83,7 +87,7 @@ export class MailerService {
     }
   }
 
-  async sendSignupEmail(to: string, nickname: string) {
+  async sendSignupEmail(to: string, nickname: string, locale?: string) {
     if (!this.smtpEnabled) return;
 
     if (!process.env.BASE_URL) {
@@ -91,10 +95,14 @@ export class MailerService {
     }
 
     try {
+      const isEn = locale?.toLowerCase().startsWith("en") ?? false;
+
       await this.transporter.sendMail({
         from: this.fromAddress,
-        html: getSignupEmailTemplate(nickname),
-        subject: "[BolaoCopa2026] Bem-vindo ao Bolão da Copa 2026",
+        html: isEn ? getSignupEmailTemplateEn(nickname) : getSignupEmailTemplate(nickname),
+        subject: isEn
+          ? "[BolaoCopa2026] Welcome to the Bolão da Copa 2026"
+          : "[BolaoCopa2026] Bem-vindo ao Bolão da Copa 2026",
         to,
       });
     } catch (error) {
