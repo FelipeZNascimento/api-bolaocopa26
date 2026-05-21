@@ -11,18 +11,18 @@ export const checkExistingEntries = async (
   userId?: number,
 ) => {
   const [emailCheckResponse, nicknameCheckResponse] = await Promise.allSettled([
-    userService.isEmailValid(email, userId),
-    userService.isNicknameValid(nickname, userId),
+    userService.isEmailRegistered(email, userId),
+    userService.isNicknameRegistered(nickname, userId),
   ]);
 
   if (isRejected(emailCheckResponse) || isRejected(nicknameCheckResponse)) {
     throw new AppError("Base de dados inacessível", 204, ErrorCode.DB_ERROR);
   }
 
-  const isEmailValid = isFulfilled(emailCheckResponse) ? emailCheckResponse.value : false;
-  const isNicknameValid = isFulfilled(nicknameCheckResponse) ? nicknameCheckResponse.value : false;
+  const isEmailRegistered = isFulfilled(emailCheckResponse) ? emailCheckResponse.value : false;
+  const isNicknameRegistered = isFulfilled(nicknameCheckResponse) ? nicknameCheckResponse.value : false;
 
-  return isEmailValid && isNicknameValid;
+  return !isEmailRegistered && !isNicknameRegistered;
 };
 
 export const validateEmail = (email: string) => {

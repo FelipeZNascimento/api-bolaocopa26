@@ -3,6 +3,7 @@ import express, { ErrorRequestHandler } from "express";
 import mySqlSession from "express-mysql-session";
 import expressSession from "express-session";
 
+import adminRoutes from "#admin/admin.routes.js";
 import betRoutes from "#bet/bet.routes.js";
 import { connection } from "#database/db.js";
 import { httpLogger } from "#logger/logger.middleware.js";
@@ -114,6 +115,7 @@ app.use(httpLogger);
 const userService = new UserService();
 app.use(updateUserActivity(userService));
 
+app.use("/admin", cache(), adminRoutes);
 app.use("/team", cache(), teamRoutes);
 app.use("/match", matchRoutes);
 app.use("/bet", betRoutes);
