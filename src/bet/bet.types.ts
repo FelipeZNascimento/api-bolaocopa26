@@ -1,6 +1,7 @@
 import type { IUser } from "#user/user.types.js";
 
 import { IPlayer, ITeam } from "#team/team.types.js";
+import { STAGE_ID } from "./bet.constants";
 export interface IBet {
   id: number;
   matchId: number;
@@ -23,9 +24,10 @@ export interface IExtraBet {
   extraType: number;
   id: number;
   player: IPlayer | null;
+  stageId: TStageId;
   team: ITeam;
   timestamp: Date;
-  user: Pick<IUser, "id" | "isActive" | "name" | "nickname">;
+  user: IUser;
 }
 
 export interface IExtraBetRaw {
@@ -35,6 +37,7 @@ export interface IExtraBetRaw {
   name: string;
   nickname: string;
   playerId: null | number;
+  stageId: number;
   teamId: number;
   timestamp: Date;
   userId: number;
@@ -45,6 +48,7 @@ export interface IExtraBetResult {
   player: IPlayer | null;
   team: ITeam;
 }
+
 export interface IExtraBetResultRaw {
   extraType: number;
   playerBirth: Date | null;
@@ -58,3 +62,4 @@ export interface IExtraBetResultRaw {
   positionId: null | number;
   teamId: number;
 }
+export type TStageId = STAGE_ID.BEFORE_START | STAGE_ID.PLAYOFFS | STAGE_ID.QUARTERFINALS;
