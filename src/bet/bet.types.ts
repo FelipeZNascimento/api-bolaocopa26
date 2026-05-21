@@ -1,7 +1,7 @@
 import type { IUser } from "#user/user.types.js";
 
 import { IPlayer, ITeam } from "#team/team.types.js";
-import { STAGE_ID } from "./bet.constants";
+import { STAGE_ID } from "./bet.constants.js";
 export interface IBet {
   id: number;
   matchId: number;

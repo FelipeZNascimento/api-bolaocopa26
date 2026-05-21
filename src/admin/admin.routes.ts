@@ -3,7 +3,7 @@ import express from "express";
 import { MailerService } from "#mailer/mailer.service.js";
 import { requireAdmin } from "#middlewares/middlewares.js";
 import { UserService } from "#user/user.service.js";
-import { AdminController } from "./admin.controller";
+import { AdminController } from "./admin.controller.js";
 
 const router = express.Router();
 const userService = new UserService();

@@ -14,7 +14,7 @@ import { IUser } from "#user/user.types.js";
 import { AppError } from "#utils/appError.js";
 import { checkEdition } from "#utils/checkEdition.js";
 import { ErrorCode } from "#utils/errorCodes.js";
-import { EXTRA_TYPE_CHAMPION } from "./bet.constants";
+import { EXTRA_TYPE_CHAMPION } from "./bet.constants.js";
 
 export class BetController extends BaseController {
   constructor(

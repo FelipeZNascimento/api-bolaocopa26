@@ -5,7 +5,7 @@ import { getPasswordResetEmailTemplate } from "#mailer/reset.template.js";
 import { getSignupEmailTemplate } from "#mailer/signup.template.js";
 import { getSignupEmailTemplateEn } from "#mailer/signupEn.template.js";
 import { ENV } from "#utils/envParser.js";
-import { getPasswordResetEmailTemplateEn } from "./resetEn.template";
+import { getPasswordResetEmailTemplateEn } from "./resetEn.template.js";
 
 export class MailerService {
   private readonly fromAddress: string;
