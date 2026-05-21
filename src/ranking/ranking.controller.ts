@@ -76,11 +76,26 @@ export class RankingController extends BaseController {
         striker: [] as IExtraBet[],
       };
       if (isFulfilled(extrasResponse)) {
-        const groupedExtraBets = groupExtraBetsByType(extrasResponse.value, parseExtraBets, players, teams, "bets");
-        extraBets.champion = groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_CHAMPION)?.bets ?? [];
-        extraBets.striker = groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_STRIKER)?.bets ?? [];
-        extraBets.offense = groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_OFFENSE)?.bets ?? [];
-        extraBets.defense = groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_DEFENSE)?.bets ?? [];
+        const groupedExtraBets = groupExtraBetsByType(
+          extrasResponse.value,
+          parseExtraBets,
+          players,
+          teams,
+          users,
+          "bets",
+        );
+        extraBets.champion = (groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_CHAMPION)?.bets ?? []).filter(
+          (bet): bet is IExtraBet => bet.team !== null,
+        );
+        extraBets.striker = (groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_STRIKER)?.bets ?? []).filter(
+          (bet): bet is IExtraBet => bet.team !== null,
+        );
+        extraBets.offense = (groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_OFFENSE)?.bets ?? []).filter(
+          (bet): bet is IExtraBet => bet.team !== null,
+        );
+        extraBets.defense = (groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_DEFENSE)?.bets ?? []).filter(
+          (bet): bet is IExtraBet => bet.team !== null,
+        );
       }
 
       const extraBetsResults = {
@@ -95,6 +110,7 @@ export class RankingController extends BaseController {
           parseExtraBetResult,
           players,
           teams,
+          users,
           "results",
         );
         extraBetsResults.champion =

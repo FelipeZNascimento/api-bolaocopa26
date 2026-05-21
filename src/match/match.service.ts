@@ -11,8 +11,10 @@ import { IReferee, IStadium } from "#team/team.types.js";
 export class MatchService {
   async getByEdition(editionId: number) {
     const rows: IMatchRaw[] = await db.query(
-      `SELECT matches.id, matches.id_fifa as idFifa, matches.timestamp, matches.round, matches.goals_home as scoreHome, matches.goals_away as scoreAway,
-        matches.penalties_home as penaltiesHome, matches.penalties_away as penaltiesAway, matches.id_referee as idReferee, matches.id_stadium as idStadium,
+      `SELECT matches.id, matches.id_fifa as idFifa, matches.timestamp, matches.round,
+        matches.goals_home as scoreHome, matches.goals_away as scoreAway,
+        matches.penalties_home as penaltiesHome, matches.penalties_away as penaltiesAway,
+        matches.id_referee as idReferee, matches.id_stadium as idStadium,
         matches.status,
         
         matches.id_stadium as idStadium, matches.id_referee as idReferee,
@@ -27,10 +29,23 @@ export class MatchService {
     return rows;
   }
 
+  async getEarliestMatchesForRounds(editionId: number): Promise<{ round: number; timestamp: number }[]> {
+    const rows: { round: number; timestamp: number }[] = await db.query(
+      `SELECT round, MIN(timestamp) as timestamp
+        FROM matches
+        WHERE id_edition = ? AND round IN (4, 5)
+        GROUP BY round
+        ORDER BY round ASC`,
+      [editionId],
+    );
+    return rows;
+  }
+
   async getEvents(editionId: number) {
     const rows: IEventRaw[] = await db.query(
-      `SELECT events.id, events.id_match as matchId, events.gametime, events.id_player as playerId, events.id_player_two as playerTwoId,
-        events.id_event_info as eventId, events_info.description as eventDescription, events_info.description_en as eventDescriptionEn
+      `SELECT events.id, events.id_match as matchId, events.gametime, events.id_player as playerId,
+        events.id_player_two as playerTwoId, events.id_event_info as eventId,
+        events_info.description as eventDescription, events_info.description_en as eventDescriptionEn
         FROM events
         LEFT JOIN events_info ON events_info.id = events.id_event_info
         LEFT JOIN matches ON matches.id = events.id_match
@@ -67,49 +82,6 @@ export class MatchService {
     );
     return rows;
   }
-
-  // async getBySeasonWeek(season: number, week: number) {
-  //   return (await db.query(
-  //     `SELECT SQL_NO_CACHE matches.id, matches.timestamp, matches.week, matches.id_season as season, matches.status, matches.possession,
-  //       matches.away_points as awayScore, matches.home_points as homeScore, matches.clock, matches.overUnder, matches.homeTeamOdds,
-  //       teamHome.name AS teamHome, teamHome.alias AS teamHomeAlias, teamHome.id AS idTeamHome,
-  //       teamHome.code AS teamHomeCode, teamHome.background AS teamHomeBackground, teamHome.foreground AS teamHomeForeground,
-  //       teamAway.name AS teamAway, teamAway.alias AS teamAwayAlias, teamAway.id AS idTeamAway,
-  //       teamAway.code AS teamAwayCode, teamAway.background AS teamAwayBackground, teamAway.foreground AS teamAwayForeground
-  //       FROM matches
-  //       INNER JOIN teams as teamHome 		ON matches.id_home_team = teamHome.id
-  //       INNER JOIN teams as teamAway 		ON matches.id_away_team = teamAway.id
-  //       WHERE matches.id_season = ?
-  //       AND matches.week = ?
-  //       ORDER BY matches.timestamp ASC`,
-  //     [season, week],
-  //   )) as IMatch[];
-  // }
-
-  // async getCurrentWeek() {
-  //   const [row] = (await db.query(
-  //     `SELECT week
-  //       FROM matches
-  //       WHERE matches.timestamp > UNIX_TIMESTAMP() - 24 * 3600
-  //       ORDER BY timestamp ASC
-  //       LIMIT 1`,
-  //     [],
-  //   )) as IWeek[];
-
-  //   return row.week;
-  // }
-
-  // async getMatchesBySeason(season: number) {
-  //   return (await db.query(
-  //     `SELECT SQL_NO_CACHE matches.id, matches.timestamp, matches.week, matches.id_season as season, matches.status, matches.possession,
-  //       matches.away_points as awayScore, matches.home_points as homeScore, matches.clock, matches.overUnder, matches.homeTeamOdds,
-  //       matches.id_home_team as idHomeTeam, matches.id_away_team as idAwayTeam
-  //       FROM matches
-  //       WHERE matches.id_season = ?
-  //       ORDER BY matches.timestamp ASC`,
-  //     [season],
-  //   )) as IMatch[];
-  // }
 
   async getTimestampByMatchId(matchId: number) {
     const row = await db.query(
