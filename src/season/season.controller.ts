@@ -5,7 +5,7 @@ import { STAGE_ID } from "#bet/bet.constants.js";
 import { MatchService } from "#match/match.service.js";
 import { BaseController } from "#shared/base.controller.js";
 import { checkEdition } from "#utils/checkEdition.js";
-import { SeasonService } from "./season.service";
+import { SeasonService } from "./season.service.js";
 
 export class SeasonController extends BaseController {
   constructor(

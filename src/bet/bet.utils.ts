@@ -2,7 +2,7 @@ import type { IPlayer, ITeam } from "#team/team.types.js";
 import { logger } from "#logger/logger.service.js";
 import { IUser } from "#user/user.types.js";
 import { EXTRA_TYPES } from "./bet.constants.js";
-import { IBet, IBetRaw, IExtraBetRaw, IExtraBetResultRaw, TStageId } from "./bet.types";
+import { IBet, IBetRaw, IExtraBetRaw, IExtraBetResultRaw, TStageId } from "./bet.types.js";
 
 export const parseExtraBetResult = (extraBetResult: IExtraBetResultRaw, players: IPlayer[], teams: ITeam[]) => {
   const team = teams.find((t) => t.id === extraBetResult.teamId);

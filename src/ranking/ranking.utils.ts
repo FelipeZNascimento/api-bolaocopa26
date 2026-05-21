@@ -11,7 +11,7 @@ import {
   IRankingScoreExtras,
   IRoundRanking,
   TRankingWinner,
-} from "./ranking.types";
+} from "./ranking.types.js";
 
 const FINAL_ROUND_STATUSES = new Set<number>([FOOTBALL_MATCH_STATUS.FINAL, FOOTBALL_MATCH_STATUS.FINAL_PENALTIES]);
 export const getSeasonRanking = (

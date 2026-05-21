@@ -6,7 +6,7 @@ import { logger } from "#logger/logger.service.js";
 import { MATCH_STATUS, MatchStatus } from "#match/match.constants.js";
 import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
 
-import { MatchService } from "./match.service";
+import { MatchService } from "./match.service.js";
 
 export const isMatchEnded = (status: MatchStatus) => {
   return status === MATCH_STATUS.FINAL || status === MATCH_STATUS.FINAL_EXTRA_TIME || status === MATCH_STATUS.CANCELLED;
