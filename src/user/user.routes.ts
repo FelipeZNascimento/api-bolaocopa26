@@ -20,6 +20,6 @@ router.post("/register", userController.register);
 
 // Get routes
 router.get("/logout", requireAuth, userController.logout);
-router.get("/activeProfile", requireAuth, userController.getActiveProfile);
+router.get("/activeProfile", userController.getActiveProfile);
 
 export default router;
