@@ -1,5 +1,4 @@
 import type { IPlayer, ITeam } from "#team/team.types.js";
-import type { TStageId } from "./bet.types.js";
 
 import { logger } from "#logger/logger.service.js";
 import { IUser } from "#user/user.types.js";
@@ -34,7 +33,7 @@ export const parseExtraBets = (extraBets: IExtraBetRaw, players: IPlayer[], team
     extraType: extraBets.extraType,
     id: extraBets.id,
     player: player ?? null,
-    stageId: extraBets.stageId as TStageId,
+    stageId: extraBets.stageId,
     team: team ?? null,
     timestamp: extraBets.timestamp,
     user: user ?? null,
