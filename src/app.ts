@@ -43,7 +43,7 @@ const sessionSettings: ISessionSettings = {
     sameSite: isCrossOriginEnv ? "none" : "strict",
     secure: isCrossOriginEnv,
   },
-  resave: true,
+  resave: false,
   rolling: true,
   saveUninitialized: false,
   secret: sessionSecret,
