@@ -1,5 +1,4 @@
 import type { IUser } from "#user/user.types.js";
-import { promisify } from "util";
 
 import { NextFunction, Request, Response } from "express";
 
@@ -57,16 +56,20 @@ export class UserController extends BaseController {
     await this.handleRequest(req, res, next, async () => {
       const user = req.session.user;
 
+      if (!user) {
+        return null;
+      }
+
       const edition = req.params.edition || process.env.EDITION;
       if (!edition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
       const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
-      const userResponse = await this.userService.getById(user!.id, editionId);
+      const userResponse = await this.userService.getById(user.id, editionId);
       if (!userResponse) {
         return null;
       }
-      const favoritesResponse: string = await this.userService.getFavoritesById(user!.id, editionId);
+      const favoritesResponse: string = await this.userService.getFavoritesById(user.id, editionId);
       const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
       return { ...userResponse, favorites: parsedFavorites };
     });
@@ -113,9 +116,18 @@ export class UserController extends BaseController {
 
   logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const sessionDestroy = promisify(req.session.destroy.bind(req.session));
-      await sessionDestroy();
-      res.clearCookie("connect.sid");
+      req.session.user = null;
+      await new Promise<void>((resolve, reject) => {
+        req.session.destroy((err) => {
+          if (err) return reject(err instanceof Error ? err : new Error(String(err)));
+          resolve();
+        });
+      });
+      const isCrossOriginEnv = ["pprod", "production"].includes(process.env.NODE_ENV ?? "development");
+      res.clearCookie("connect.sid", {
+        sameSite: isCrossOriginEnv ? "none" : "strict",
+        secure: isCrossOriginEnv,
+      });
     });
   };
 

@@ -232,8 +232,9 @@ describe("UserController", () => {
 
       await controller.logout(req, res, next);
 
+      expect(req.session.user).toBeNull();
       expect(req.session.destroy).toHaveBeenCalled();
-      expect(res.clearCookie).toHaveBeenCalledWith("connect.sid");
+      expect(res.clearCookie).toHaveBeenCalledWith("connect.sid", { sameSite: "strict", secure: false });
     });
 
     it("should handle logout when no user in session", async () => {
@@ -241,6 +242,7 @@ describe("UserController", () => {
 
       await controller.logout(req, res, next);
 
+      expect(req.session.user).toBeNull();
       expect(req.session.destroy).toHaveBeenCalled();
     });
   });
