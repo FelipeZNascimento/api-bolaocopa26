@@ -71,28 +71,27 @@ const createMatch = (
   scoreAway: number,
   status = FOOTBALL_MATCH_STATUS.FINAL,
   round = 1,
-): IMatch =>
-  ({
-    awayTeam: null,
-    bets: [],
-    events: [],
-    group: null,
-    homeTeam: null,
-    id,
-    idFifa: id,
-    loggedUserBets: null,
-    referee: null,
-    round,
-    score: {
-      away: scoreAway,
-      awayPenalties: 0,
-      home: scoreHome,
-      homePenalties: 0,
-    },
-    stadium: null,
-    status,
-    timestamp: 1,
-  }) as IMatch;
+): IMatch => ({
+  awayTeam: null,
+  bets: [],
+  events: [],
+  group: null,
+  homeTeam: null,
+  id,
+  idFifa: id,
+  loggedUserBets: null,
+  referee: null,
+  round,
+  score: {
+    away: scoreAway,
+    awayPenalties: 0,
+    home: scoreHome,
+    homePenalties: 0,
+  },
+  stadium: null,
+  status,
+  timestamp: 1,
+});
 
 const createBet = (id: number, userId: number, matchId: number, scoreHome: number, scoreAway: number): IBet => ({
   id,
@@ -759,7 +758,7 @@ describe("RankingController", () => {
           1,
           {
             champion: [
-              createExtraBet(1, 10, undefined, 1, new Date("2026-01-01")), // First bet: team 10 during EDITION (correct)
+              createExtraBet(1, 10, undefined, 1, new Date("2026-01-01")), // First bet: team 10 pre EDITION (correct)
               createExtraBet(1, 99, undefined, 2, new Date("2026-02-01")), // Changed to team 99 during PLAYOFFS (wrong)
             ],
             defense: [],
