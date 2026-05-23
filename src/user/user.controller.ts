@@ -101,7 +101,7 @@ export class UserController extends BaseController {
       let user = userResponse.find((u) => u.editionId === editionId);
       // If the user exists but is not associated with the current edition, create the association
       if (user === undefined) {
-        await this.userService.setOnCurrentSeason(editionId, userResponse[0].id);
+        await this.userService.setOnCurrentEdition(editionId, userResponse[0].id);
       }
       user = userResponse[0];
 
@@ -157,9 +157,9 @@ export class UserController extends BaseController {
       }
 
       const { insertId } = registerResponse;
-      const setOnCurrentSeasonResponse = await this.userService.setOnCurrentSeason(parseInt(edition), insertId);
+      const setOnCurrentEditionResponse = await this.userService.setOnCurrentEdition(parseInt(edition), insertId);
 
-      if (setOnCurrentSeasonResponse.affectedRows === 0) {
+      if (setOnCurrentEditionResponse.affectedRows === 0) {
         throw new AppError("Registro falhou (edição)", 204, ErrorCode.DB_ERROR);
       }
 

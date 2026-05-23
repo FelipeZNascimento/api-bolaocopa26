@@ -1,7 +1,7 @@
 import db from "#database/db.js";
 import { FOOTBALL_MATCH_STATUS } from "#match/match.constants.js";
 
-export class SeasonService {
+export class EditionService {
   async getCurrentRound(editionId: number): Promise<null | number> {
     const rows: { currentRound: null | number }[] = await db.query(
       `SELECT COALESCE(
@@ -13,11 +13,19 @@ export class SeasonService {
     return rows[0]?.currentRound ?? null;
   }
 
-  async getInfo(season: number) {
+  async getEditionStart(editionId: number): Promise<null | number> {
+    const rows: { editionStart: null | number }[] = await db.query(
+      `SELECT MIN(timestamp) as editionStart FROM matches WHERE id_edition = ?`,
+      [editionId],
+    );
+    return rows[0]?.editionStart ?? null;
+  }
+
+  async getInfo(edition: number) {
     const rows = await db.query(
       `SELECT SQL_NO_CACHE seasons.id, seasons.description FROM seasons
         WHERE seasons.id = ?`,
-      [season],
+      [edition],
     );
 
     return rows;

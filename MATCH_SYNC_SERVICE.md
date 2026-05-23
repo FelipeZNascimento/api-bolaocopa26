@@ -58,7 +58,7 @@ MATCH_SYNC_ENABLED=true
 # Sync interval in milliseconds (default: 30000 = 30 seconds)
 MATCH_SYNC_INTERVAL=30000
 
-# Edition/season to sync matches for
+# Edition to sync matches for
 EDITION=1
 
 # External API base URL
@@ -349,7 +349,7 @@ Potential improvements:
 - [ ] Add retry logic for failed API requests
 - [ ] Implement exponential backoff for errors
 - [ ] Add metrics endpoint for monitoring
-- [ ] Support multiple editions/seasons simultaneously
+- [ ] Support multiple editions simultaneously
 - [ ] Add webhook support for push updates instead of polling
 - [ ] Implement differential updates (only send changed matches to clients)
 

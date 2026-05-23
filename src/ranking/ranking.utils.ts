@@ -14,7 +14,7 @@ import {
 } from "./ranking.types.js";
 
 const FINAL_ROUND_STATUSES = new Set<number>([FOOTBALL_MATCH_STATUS.FINAL, FOOTBALL_MATCH_STATUS.FINAL_PENALTIES]);
-export const getSeasonRanking = (
+export const getEditionRanking = (
   roundsRanking: IRoundRanking[],
   baseComparisonRoundNumber: number,
   extraBets: {
@@ -32,10 +32,10 @@ export const getSeasonRanking = (
 ) => {
   const lastRound = Math.max(...roundsRanking.map((r) => r.round));
   const lastRoundRanking = roundsRanking.find((r) => r.round === lastRound)?.ranking;
-  const isSeasonFinished =
+  const isEditionFinished =
     baseComparisonRoundNumber === lastRound && (lastRoundRanking?.every((line) => line.isFinished) ?? false);
 
-  let seasonRanking: ICalculatedRankingLine[] =
+  let editionRanking: ICalculatedRankingLine[] =
     lastRoundRanking?.map((line) => {
       const calculatedExtraBets = calculateExtraBets(line.user.id, extraBets, extraBetsResults);
       const extrasTotal =
@@ -51,7 +51,7 @@ export const getSeasonRanking = (
           extras: calculatedExtraBets,
           points: line.accumulatedScore.points + extrasTotal,
         },
-        isFinished: isSeasonFinished,
+        isFinished: isEditionFinished,
         score: {
           ...line.accumulatedScore,
           extras: calculatedExtraBets,
@@ -61,9 +61,9 @@ export const getSeasonRanking = (
       };
     }) ?? [];
 
-  seasonRanking = sortRanking(seasonRanking);
-  seasonRanking = addPositioning(seasonRanking);
-  return seasonRanking;
+  editionRanking = sortRanking(editionRanking);
+  editionRanking = addPositioning(editionRanking);
+  return editionRanking;
 };
 
 // This function is necessary because there may be multiple extra bets on the same category,
@@ -114,7 +114,7 @@ export const calculateExtraBets = (
 };
 
 export const getRoundsRanking = (
-  season: number,
+  edition: number,
   users: IUser[],
   matches: IMatch[],
   startedMatches: IMatch[],
@@ -124,7 +124,7 @@ export const getRoundsRanking = (
   const rounds = [...new Set(matches.map((match) => match.round))];
 
   rounds.forEach((round) => {
-    const roundCacheKey = getRoundCacheKey(season, round);
+    const roundCacheKey = getRoundCacheKey(edition, round);
     const cachedRanking = cachedInfo.get<ICalculatedRankingLine[]>(roundCacheKey);
     // If a cached ranking for the finished round exists, use it.
     if (cachedRanking) {
@@ -153,8 +153,8 @@ const isRoundFinished = (matches: IMatch[], round: number): boolean => {
   return roundMatches.length > 0 && roundMatches.every((match) => FINAL_ROUND_STATUSES.has(match.status));
 };
 
-const getRoundCacheKey = (season: number, round: number): string => {
-  return String(CACHE_KEYS.WEEKLY_RANKING) + "_" + String(season) + "_" + String(round);
+const getRoundCacheKey = (edition: number, round: number): string => {
+  return String(CACHE_KEYS.WEEKLY_RANKING) + "_" + String(edition) + "_" + String(round);
 };
 
 const calculateRound = (

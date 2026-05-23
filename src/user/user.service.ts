@@ -142,7 +142,7 @@ export class UserService {
     return rows;
   }
 
-  async setOnCurrentSeason(edition: number, id: number) {
+  async setOnCurrentEdition(edition: number, id: number) {
     const rows: ResultSetHeader = await db.query(`INSERT INTO users_edition (id_user, id_edition) VALUES (?, ?)`, [
       id,
       edition,

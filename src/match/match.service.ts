@@ -94,52 +94,6 @@ export class MatchService {
     return row as undefined | { id: number; timestamp: number };
   }
 
-  // async getWeekMatchesCount(season: number, week: number) {
-  //   const [row] = (await db.query(
-  //     `SELECT COUNT(*) as count
-  //       FROM matches
-  //       WHERE id_season = ?
-  //       AND week = ?`,
-  //     [season, week],
-  //   )) as ICount[];
-
-  //   return row.count;
-  // }
-
-  // async updateByMatchInfo(
-  //   awayPoints: number,
-  //   homePoints: number,
-  //   matchStatus: MatchStatus,
-  //   possession: "away" | "home" | null,
-  //   clock: null | string,
-  //   awayTeamCode: string,
-  //   homeTeamCode: string,
-  //   week: number,
-  //   season: number,
-  // ) {
-  //   return (await db.query(
-  //     `UPDATE matches
-  //       SET away_points = ?,
-  //       home_points = ?,
-  //       status = ?,
-  //       possession = ?,
-  //       clock = ?
-  //       WHERE id_away_team = (
-  //           SELECT id
-  //           FROM teams
-  //           WHERE code = ?
-  //       )
-  //       AND id_home_team = (
-  //           SELECT id
-  //           FROM teams
-  //           WHERE code = ?
-  //       )
-  //       AND week = ?
-  //       AND id_season = ?`,
-  //     [awayPoints, homePoints, matchStatus, possession, clock, awayTeamCode, homeTeamCode, week, season],
-  //   )) as ResultSetHeader;
-  // }
-
   /**
    * Update a match in the database
    * @param match - The match object with updated data

@@ -4,8 +4,9 @@ import { NextFunction, Request, Response } from "express";
 
 import { BetService } from "#bet/bet.service.js";
 import { groupExtraBetsByType, parseExtraBetResult, parseExtraBets } from "#bet/bet.utils.js";
+import { EditionService } from "#edition/edition.service.js";
+import { getEditionInfoFromCacheOrFetch } from "#edition/edition.util.js";
 import { MatchService } from "#match/match.service.js";
-import { SeasonService } from "#season/season.service.js";
 import { BaseController } from "#shared/base.controller.js";
 import { TeamService } from "#team/team.service.js";
 import { getPlayersFromCacheOrFetch, getTeamsFromCacheOrFetch } from "#team/team.util.js";
@@ -22,7 +23,7 @@ export class BetController extends BaseController {
     private matchService: MatchService,
     private userService: UserService,
     private teamService: TeamService,
-    private seasonService: SeasonService,
+    private editionService: EditionService,
   ) {
     super();
   }
@@ -30,14 +31,20 @@ export class BetController extends BaseController {
   getExtras = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
       const user = req.session.user;
-      const { edition, editionStart } = checkEdition(req.params.season);
+      const { currentEdition, editionStart } = await getEditionInfoFromCacheOrFetch(this.editionService);
+
+      if (!currentEdition || !editionStart) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+
+      // const { edition, editionStart } = checkEdition(req.params.edition);
       let activeProfileExtraBets: IExtraBetRaw[] = [];
       if (user) {
-        activeProfileExtraBets = await this.betService.getExtrasFromUserId(edition, user.id);
+        activeProfileExtraBets = await this.betService.getExtrasFromUserId(currentEdition, user.id);
       }
-      const users: IUser[] = await this.userService.getByEdition(edition);
-      const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
-      const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, edition, teams);
+      const users: IUser[] = await this.userService.getByEdition(currentEdition);
+      const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, currentEdition);
+      const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, currentEdition, teams);
       const activeProfileBets = groupExtraBetsByType(
         activeProfileExtraBets,
         parseExtraBets,
@@ -47,7 +54,7 @@ export class BetController extends BaseController {
         "bets",
       );
 
-      // Check to prevent fetching extras if season hasn't started yet
+      // Check to prevent fetching extras if edition hasn't started yet
       const nowTimestamp = Math.floor(new Date().getTime() / 1000);
       if (nowTimestamp < editionStart) {
         return {
@@ -56,7 +63,7 @@ export class BetController extends BaseController {
         };
       }
 
-      const extraBets: IExtraBetRaw[] = await this.betService.getExtras(edition, editionStart);
+      const extraBets: IExtraBetRaw[] = await this.betService.getExtras(currentEdition, editionStart);
       const bets = groupExtraBetsByType(extraBets, parseExtraBets, players, teams, users, "bets");
 
       return {
@@ -68,7 +75,7 @@ export class BetController extends BaseController {
 
   getExtrasResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const { edition, editionStart } = checkEdition(req.params.season);
+      const { edition, editionStart } = checkEdition(req.params.edition);
       const extraBetsResults: IExtraBetResultRaw[] = await this.betService.getExtrasResults(edition, editionStart);
       const users: IUser[] = await this.userService.getByEdition(edition);
       const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
@@ -109,10 +116,10 @@ export class BetController extends BaseController {
       }
 
       const nowTimestamp = Math.floor(new Date().getTime() / 1000);
-      const { edition, editionStart } = checkEdition(req.params.season);
+      const { edition, editionStart } = checkEdition(req.params.edition);
       const reqBody = req.body as { extraType: string; playerId: number; teamId: number };
       const { extraType, playerId, teamId } = reqBody;
-      const maxStartedRound = await this.seasonService.getMaxStartedRound(edition);
+      const maxStartedRound = await this.editionService.getMaxStartedRound(edition);
 
       if (!editionStart || !edition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
