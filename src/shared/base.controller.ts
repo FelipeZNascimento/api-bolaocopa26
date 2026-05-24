@@ -7,7 +7,7 @@ export abstract class BaseController {
     req: Request,
     res: Response,
     next: NextFunction,
-    action: () => Promise<T>,
+    action: () => Promise<T> | T,
   ): Promise<void> {
     try {
       const result: T = await action();
