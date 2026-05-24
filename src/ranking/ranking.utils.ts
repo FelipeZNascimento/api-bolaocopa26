@@ -283,7 +283,7 @@ const calculateRound = (
   return rankingByScore;
 };
 
-const getRoundMultiplier = (round: number): number => {
+export const getRoundMultiplier = (round: number): number => {
   return ROUND_MULTIPLIERS[round] ?? DEFAULT_ROUND_MULTIPLIER;
 };
 

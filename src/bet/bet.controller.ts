@@ -130,7 +130,7 @@ export class BetController extends BaseController {
       }
 
       let stageId: number = 1;
-      if (maxStartedRound === 1) {
+      if (maxStartedRound === null) {
         // No matches have started yet — edition hasn't begun
         stageId = 1;
       } else if (maxStartedRound < 4) {

@@ -4,8 +4,9 @@ import type { IPlayer, IReferee, IStadium, ITeam } from "#team/team.types.js";
 import { IBet } from "#bet/bet.types.js";
 import { logger } from "#logger/logger.service.js";
 import { MATCH_STATUS, MatchStatus } from "#match/match.constants.js";
+import { AWARD_POINTS_2026 } from "#ranking/ranking.constants.js";
+import { getRoundMultiplier } from "#ranking/ranking.utils.js";
 import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
-
 import { MatchService } from "./match.service.js";
 
 export const isMatchEnded = (status: MatchStatus) => {
@@ -111,7 +112,12 @@ export const formatMatches = (
     match.bets = matchBets;
     match.loggedUserBets = loggedUserMatchBets;
     match.events = matchEvents;
-    // match.group = match.round <= 3 && match.homeTeam?.group ? match.homeTeam.group : null;
+    match.pointsAwarded = {
+      exact: AWARD_POINTS_2026.exactScore * getRoundMultiplier(match.round),
+      minimal: AWARD_POINTS_2026.winnerOnly * getRoundMultiplier(match.round),
+      miss: 0,
+      partial: AWARD_POINTS_2026.oneScore * getRoundMultiplier(match.round),
+    };
 
     return match;
   });

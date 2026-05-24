@@ -35,6 +35,12 @@ export interface IMatch {
   id: number;
   idFifa: number;
   loggedUserBets: IBet | null;
+  pointsAwarded?: {
+    exact: number;
+    minimal: number;
+    miss: number;
+    partial: number;
+  };
   referee: IReferee | null;
   round: number;
   score: IScore;

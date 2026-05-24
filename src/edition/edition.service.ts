@@ -31,13 +31,13 @@ export class EditionService {
     return rows;
   }
 
-  async getMaxStartedRound(editionId: number): Promise<number> {
+  async getMaxStartedRound(editionId: number): Promise<null | number> {
     const rows: { maxRound: null | number }[] = await db.query(
       `SELECT MAX(round) as maxRound
         FROM matches
         WHERE id_edition = ? AND timestamp <= UNIX_TIMESTAMP()`,
       [editionId],
     );
-    return rows[0]?.maxRound ?? 1;
+    return rows[0]?.maxRound ?? null;
   }
 }
