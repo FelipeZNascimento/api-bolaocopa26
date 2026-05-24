@@ -1,7 +1,7 @@
 import express from "express";
 import { EditionService } from "#edition/edition.service.js";
-import { NewsController } from "./news.controller";
-import { NewsService } from "./news.service";
+import { NewsController } from "./news.controller.js";
+import { NewsService } from "./news.service.js";
 
 const router = express.Router();
 
