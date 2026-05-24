@@ -65,5 +65,5 @@ export const STOPPED_GAME = [
   MATCH_STATUS.NOT_STARTED,
 ];
 
-export type MatchStatus = (typeof MATCH_STATUS)[keyof typeof MATCH_STATUS];
 export type TMatchStatus = MatchStatus;
+type MatchStatus = (typeof MATCH_STATUS)[keyof typeof MATCH_STATUS];

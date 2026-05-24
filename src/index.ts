@@ -1,6 +1,7 @@
 // import { connection } from "#database/db.js";
 import { logger } from "#logger/logger.service.js";
 import { MatchSyncService } from "#match/match.sync.service.js";
+import { NewsScrapeService } from "#news/news.scrape.service.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
 
 import app from "./app.js";
@@ -17,12 +18,19 @@ WebSocketService.getInstance(server);
 const matchSyncService = MatchSyncService.getInstance();
 matchSyncService.start();
 
+// Start the news scraper service
+const newsScrapeService = NewsScrapeService.getInstance();
+newsScrapeService.start();
+
 // Graceful shutdown handler
 const shutdown = () => {
   console.warn("Shutdown signal received");
 
   // Stop match sync service
   matchSyncService.stop();
+
+  // Stop news scraper service
+  newsScrapeService.stop();
 
   // Add WebSocket cleanup
   const wsService = WebSocketService.getInstance();

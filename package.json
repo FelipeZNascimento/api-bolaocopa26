@@ -46,6 +46,7 @@
   },
   "homepage": "https://github.com/FelipeZNascimento/be-bolao-vue-ts#readme",
   "dependencies": {
+    "cheerio": "^1.2.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "express-mysql-session": "^3.0.3",

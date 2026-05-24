@@ -1,0 +1,3 @@
+export const WEBSOCKET_EVENTS = {
+  MATCHES_UPDATED: "MATCHES_UPDATED",
+};

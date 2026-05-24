@@ -12,6 +12,7 @@ import { logger } from "#logger/logger.service.js";
 import matchRoutes from "#match/match.routes.js";
 import { errorHandler } from "#middlewares/errorHandler.js";
 import { cache, middleware, updateUserActivity } from "#middlewares/middlewares.js";
+import newsRoutes from "#news/news.routes.js";
 import rankingRoutes from "#ranking/ranking.routes.js";
 import teamRoutes from "#team/team.routes.js";
 import userRoutes from "#user/user.routes.js";
@@ -122,6 +123,7 @@ app.use("/bet", betRoutes);
 app.use("/user", userRoutes);
 app.use("/edition", editionRoutes);
 app.use("/ranking", rankingRoutes);
+app.use("/news", newsRoutes);
 
 app.get("/", [middleware]);
 

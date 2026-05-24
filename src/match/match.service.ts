@@ -15,7 +15,7 @@ export class MatchService {
         matches.goals_home as scoreHome, matches.goals_away as scoreAway,
         matches.penalties_home as penaltiesHome, matches.penalties_away as penaltiesAway,
         matches.id_referee as idReferee, matches.id_stadium as idStadium,
-        matches.status,
+        matches.status, matches.gametime,
         
         matches.id_stadium as idStadium, matches.id_referee as idReferee,
         matches.id_home as idHome, matches.id_away as idAway
@@ -104,25 +104,21 @@ export class MatchService {
       `UPDATE matches
         SET 
           timestamp = ?,
-          round = ?,
           goals_home = ?,
           goals_away = ?,
           penalties_home = ?,
           penalties_away = ?,
           status = ?,
-          id_referee = ?,
-          id_stadium = ?
+          gametime = ?
         WHERE id = ?`,
       [
         match.timestamp,
-        match.round,
         match.score.home,
         match.score.away,
         match.score.homePenalties ?? 0,
         match.score.awayPenalties ?? 0,
         match.status,
-        match.referee?.id ?? null,
-        match.stadium?.id ?? null,
+        match.gametime,
         match.id,
       ],
     );

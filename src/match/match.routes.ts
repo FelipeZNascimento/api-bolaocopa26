@@ -1,6 +1,7 @@
 import express from "express";
 
 import { BetService } from "#bet/bet.service.js";
+import { EditionService } from "#edition/edition.service.js";
 import { MatchController } from "#match/match.controller.js";
 import { MatchService } from "#match/match.service.js";
 import { TeamService } from "#team/team.service.js";
@@ -14,8 +15,18 @@ const matchService = new MatchService();
 const userService = new UserService();
 const betService = new BetService();
 const teamService = new TeamService();
+const editionService = new EditionService();
 
-const matchController = new MatchController(matchService, userService, betService, teamService, websocketInstance);
+const matchController = new MatchController(
+  matchService,
+  userService,
+  betService,
+  teamService,
+  websocketInstance,
+  editionService,
+);
+
+router.post("/update", matchController.updateMatches);
 
 router.get("/", matchController.getByEdition);
 router.get("/next-matches", matchController.getNextMatches);

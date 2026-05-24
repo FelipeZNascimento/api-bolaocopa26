@@ -75,6 +75,7 @@ const createMatch = (
   awayTeam: null,
   bets: [],
   events: [],
+  gametime: "90'",
   group: null,
   homeTeam: null,
   id,
