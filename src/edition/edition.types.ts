@@ -15,6 +15,7 @@ export interface IStadium {
   geoLatitude: string;
   geoLongitude: string;
   id: number;
+  isoCode: string;
   name: string;
 }
 

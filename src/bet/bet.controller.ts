@@ -136,10 +136,14 @@ export class BetController extends BaseController {
       } else if (maxStartedRound < 4) {
         // Matches started, but none from round 4 onwards
         stageId = 2;
-      } else if (maxStartedRound < 6) {
-        // Round 4 matches started, but round 5+ has not
+      } else if (maxStartedRound < 5) {
+        // Matches started, but none from round 5 onwards
         stageId = 3;
+      } else {
+        // Round 5 matches started, no bet can be changed
+        throw new AppError("Não autorizado! A fase de playoffs já começou.", 401, ErrorCode.UNAUTHORIZED);
       }
+
       await this.betService.updateExtras(extraType, playerId ?? null, teamId, user!.id, edition, stageId);
     });
   };

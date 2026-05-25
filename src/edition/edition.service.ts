@@ -58,8 +58,8 @@ export class EditionService {
   async getStadiums(editionId: number) {
     const rows: IStadium[] = await db.query(
       `SELECT stadiums.id, stadiums.name, stadiums.city, stadiums.id_country as idCountry, stadiums.capacity,
-        stadiums.geo_latitude as geoLatitude, stadiums.geo_longitude as geoLongitude,
-        countries.name as country, countries.name_en as countryEn
+        stadiums.geo_latitude as geoLatitude, stadiums.geo_longitude as geoLongitude, 
+        countries.name as country, countries.name_en as countryEn, countries.iso_code as isoCode
         FROM stadiums
         LEFT JOIN countries ON countries.id = stadiums.id_country
         WHERE id_edition = ?
