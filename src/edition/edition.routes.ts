@@ -14,5 +14,6 @@ const editionController = new EditionController(matchService, editionService);
 router.get("/current/", editionController.getCurrentEditionAndRound);
 router.get("/stage-timestamps/", editionController.getStagesTimestamps);
 router.get("/stadiums/", editionController.getStadiums);
+router.get("/referees/", editionController.getReferees);
 
 export default router;

@@ -4,6 +4,7 @@ export interface IReferee {
   dateOfBirth: string;
   id: number;
   idFifa: number;
+  isoCode: string;
   name: string;
 }
 
