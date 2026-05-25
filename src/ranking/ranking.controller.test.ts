@@ -12,7 +12,7 @@ import { ErrorCode } from "#utils/errorCodes.js";
 import { AWARD_POINTS_2026 } from "./ranking.constants.js";
 import { RankingController } from "./ranking.controller";
 import { ICalculatedRankingLine } from "./ranking.types";
-import { calculateExtraBets, getRoundsRanking, getSeasonRanking } from "./ranking.utils";
+import { calculateExtraBets, getEditionRanking, getRoundsRanking } from "./ranking.utils";
 
 const apiResponseSuccess = vi.hoisted(() => vi.fn());
 const checkEditionMock = vi.hoisted(() =>
@@ -71,28 +71,28 @@ const createMatch = (
   scoreAway: number,
   status = FOOTBALL_MATCH_STATUS.FINAL,
   round = 1,
-): IMatch =>
-  ({
-    awayTeam: null,
-    bets: [],
-    events: [],
-    group: null,
-    homeTeam: null,
-    id,
-    idFifa: id,
-    loggedUserBets: null,
-    referee: null,
-    round,
-    score: {
-      away: scoreAway,
-      awayPenalties: 0,
-      home: scoreHome,
-      homePenalties: 0,
-    },
-    stadium: null,
-    status,
-    timestamp: 1,
-  }) as IMatch;
+): IMatch => ({
+  awayTeam: null,
+  bets: [],
+  events: [],
+  gametime: "90'",
+  group: null,
+  homeTeam: null,
+  id,
+  idFifa: id,
+  loggedUserBets: null,
+  referee: null,
+  round,
+  score: {
+    away: scoreAway,
+    awayPenalties: 0,
+    home: scoreHome,
+    homePenalties: 0,
+  },
+  stadium: null,
+  status,
+  timestamp: 1,
+});
 
 const createBet = (id: number, userId: number, matchId: number, scoreHome: number, scoreAway: number): IBet => ({
   id,
@@ -137,10 +137,10 @@ const createExtraBetResult = (teamId: number, playerId?: number): IExtraBetResul
   team: { abbreviation: "TEM", id: teamId, name: `Team ${String(teamId)}` } as any,
 });
 
-const getMockReqRes = (season?: string) => ({
+const getMockReqRes = (edition?: string) => ({
   next: vi.fn(),
   req: {
-    params: season ? { season } : {},
+    params: edition ? { edition } : {},
   } as unknown as Request,
   res: {} as Response,
 });
@@ -209,7 +209,7 @@ describe("RankingController", () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const result = apiResponseSuccess.mock.calls[0][1];
       expect(result).toHaveProperty("round");
-      expect(result).toHaveProperty("season");
+      expect(result).toHaveProperty("edition");
     });
 
     it("should call next with error when edition is missing", async () => {
@@ -479,8 +479,8 @@ describe("RankingController", () => {
     });
   });
 
-  describe("getSeasonRanking", () => {
-    it("should add extra bets points to season ranking", () => {
+  describe("getEditionRanking", () => {
+    it("should add extra bets points to edition ranking", () => {
       const user1 = createUser(1, "Alice");
       const roundRanking: ICalculatedRankingLine[] = [
         {
@@ -528,13 +528,13 @@ describe("RankingController", () => {
         striker: [createExtraBetResult(40, 100)],
       };
 
-      const seasonRanking = getSeasonRanking([{ ranking: roundRanking, round: 1 }], 1, extraBets, extraBetsResults);
+      const editionRanking = getEditionRanking([{ ranking: roundRanking, round: 1 }], 1, extraBets, extraBetsResults);
 
-      expect(seasonRanking[0].score.extras?.champion).toBe(AWARD_POINTS_2026.extraChampion);
-      expect(seasonRanking[0].score.extras?.defense).toBe(AWARD_POINTS_2026.extraDefense);
-      expect(seasonRanking[0].score.extras?.offense).toBe(AWARD_POINTS_2026.extraOffense);
-      expect(seasonRanking[0].score.extras?.striker).toBe(AWARD_POINTS_2026.extraStriker);
-      expect(seasonRanking[0].score.points).toBe(
+      expect(editionRanking[0].score.extras?.champion).toBe(AWARD_POINTS_2026.extraChampion);
+      expect(editionRanking[0].score.extras?.defense).toBe(AWARD_POINTS_2026.extraDefense);
+      expect(editionRanking[0].score.extras?.offense).toBe(AWARD_POINTS_2026.extraOffense);
+      expect(editionRanking[0].score.extras?.striker).toBe(AWARD_POINTS_2026.extraStriker);
+      expect(editionRanking[0].score.points).toBe(
         5 +
           AWARD_POINTS_2026.extraChampion +
           AWARD_POINTS_2026.extraDefense +
@@ -591,13 +591,13 @@ describe("RankingController", () => {
         striker: [],
       };
 
-      const seasonRanking = getSeasonRanking([{ ranking: roundRanking, round: 1 }], 1, extraBets, extraBetsResults);
+      const editionRanking = getEditionRanking([{ ranking: roundRanking, round: 1 }], 1, extraBets, extraBetsResults);
 
-      expect(seasonRanking[0].score.extras?.champion).toBe(0);
-      expect(seasonRanking[0].score.points).toBe(5); // No extra points added
+      expect(editionRanking[0].score.extras?.champion).toBe(0);
+      expect(editionRanking[0].score.points).toBe(5); // No extra points added
     });
 
-    it("should mark season as finished when all rounds are complete", () => {
+    it("should mark edition as finished when all rounds are complete", () => {
       const user1 = createUser(1, "Alice");
       const roundRanking: ICalculatedRankingLine[] = [
         {
@@ -631,7 +631,7 @@ describe("RankingController", () => {
         },
       ];
 
-      const seasonRanking = getSeasonRanking(
+      const editionRanking = getEditionRanking(
         [{ ranking: roundRanking, round: 1 }],
         1,
         {
@@ -648,7 +648,7 @@ describe("RankingController", () => {
         },
       );
 
-      expect(seasonRanking[0].isFinished).toBe(true);
+      expect(editionRanking[0].isFinished).toBe(true);
     });
   });
 
@@ -698,9 +698,9 @@ describe("RankingController", () => {
     });
 
     describe("Champion Bet Penalty System (EXTRAS_FACTORS)", () => {
-      it("should award full points (100%) for champion bet made during SEASON stage", () => {
+      it("should award full points (100%) for champion bet made during EDITION stage", () => {
         const extras = calculateExtraBets(
-          // stageId: 1 = SEASON
+          // stageId: 1 = EDITION
           1,
           { champion: [createExtraBet(1, 10, undefined, 1)], defense: [], offense: [], striker: [] },
           { champion: [createExtraBetResult(10)], defense: [], offense: [], striker: [] },
@@ -739,7 +739,7 @@ describe("RankingController", () => {
           1,
           {
             champion: [
-              createExtraBet(1, 5, undefined, 1, new Date("2026-01-01")), // First bet: team 5 during SEASON
+              createExtraBet(1, 5, undefined, 1, new Date("2026-01-01")), // First bet: team 5 during EDITION
               createExtraBet(1, 10, undefined, 2, new Date("2026-02-01")), // Changed to team 10 during PLAYOFFS
             ],
             defense: [],
@@ -759,7 +759,7 @@ describe("RankingController", () => {
           1,
           {
             champion: [
-              createExtraBet(1, 10, undefined, 1, new Date("2026-01-01")), // First bet: team 10 during SEASON (correct)
+              createExtraBet(1, 10, undefined, 1, new Date("2026-01-01")), // First bet: team 10 pre EDITION (correct)
               createExtraBet(1, 99, undefined, 2, new Date("2026-02-01")), // Changed to team 99 during PLAYOFFS (wrong)
             ],
             defense: [],
@@ -789,7 +789,7 @@ describe("RankingController", () => {
         );
 
         // Note: getLatestExtraBet sorts by stageId, not timestamp, so when multiple bets have same stageId,
-        // the result is non-deterministic. This test verifies that at least one of the SEASON bets is used.
+        // the result is non-deterministic. This test verifies that at least one of the EDITION bets is used.
         // In real scenarios, users should only have one bet per stage to avoid ambiguity.
         expect([0, AWARD_POINTS_2026.extraChampion]).toContain(extras.champion);
       });
@@ -799,7 +799,7 @@ describe("RankingController", () => {
           1,
           {
             champion: [
-              createExtraBet(1, 10, undefined, 1, new Date("2026-01-01")), // SEASON: team 10 (100% if kept)
+              createExtraBet(1, 10, undefined, 1, new Date("2026-01-01")), // EDITION: team 10 (100% if kept)
               createExtraBet(1, 15, undefined, 2, new Date("2026-02-01")), // PLAYOFFS: team 15 (60% if kept)
               createExtraBet(1, 10, undefined, 3, new Date("2026-03-01")), // QUARTERFINALS: back to team 10 (30%)
             ],
@@ -1101,7 +1101,7 @@ describe("RankingController", () => {
       expect(percentage).toBeLessThanOrEqual(70);
     });
 
-    it("should handle combined extra bets and match bets in season ranking", () => {
+    it("should handle combined extra bets and match bets in edition ranking", () => {
       const roundRanking: ICalculatedRankingLine[] = [
         {
           accumulatedScore: {
@@ -1135,7 +1135,7 @@ describe("RankingController", () => {
       ];
 
       const extraBets = {
-        champion: [createExtraBet(1, 10, undefined, 1)], // 50 points (SEASON)
+        champion: [createExtraBet(1, 10, undefined, 1)], // 50 points (EDITION)
         defense: [],
         offense: [],
         striker: [createExtraBet(1, 40, 100)], // 15 points
@@ -1148,12 +1148,12 @@ describe("RankingController", () => {
         striker: [createExtraBetResult(40, 100)],
       };
 
-      const seasonRanking = getSeasonRanking([{ ranking: roundRanking, round: 1 }], 1, extraBets, extraBetsResults);
+      const editionRanking = getEditionRanking([{ ranking: roundRanking, round: 1 }], 1, extraBets, extraBetsResults);
 
       // Total: 10 (match) + 50 (champion) + 15 (striker) = 75
-      expect(seasonRanking[0].score.points).toBe(75);
-      expect(seasonRanking[0].score.extras?.champion).toBe(50);
-      expect(seasonRanking[0].score.extras?.striker).toBe(15);
+      expect(editionRanking[0].score.points).toBe(75);
+      expect(editionRanking[0].score.extras?.champion).toBe(50);
+      expect(editionRanking[0].score.extras?.striker).toBe(15);
     });
   });
 });

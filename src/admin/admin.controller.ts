@@ -6,6 +6,7 @@ import { MailerService } from "#mailer/mailer.service.js";
 import { BaseController } from "#shared/base.controller.js";
 import { UserService } from "#user/user.service.js";
 import { AppError } from "#utils/appError.js";
+import { cachedInfo } from "#utils/dataCache.js";
 import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 
@@ -43,6 +44,10 @@ export class AdminController extends BaseController {
       const response: IUser[] = await this.userService.getAllByEdition(editionId);
       return response;
     });
+  };
+
+  flushAll = (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    return this.handleRequest(req, res, next, () => cachedInfo.flushAll());
   };
 
   getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

@@ -19,7 +19,7 @@ import { AppError } from "#utils/appError.js";
 import { checkEdition } from "#utils/checkEdition.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 
-import { getRoundsRanking, getSeasonRanking } from "./ranking.utils.js";
+import { getEditionRanking, getRoundsRanking } from "./ranking.utils.js";
 export class RankingController extends BaseController {
   constructor(
     private userService: UserService,
@@ -32,7 +32,7 @@ export class RankingController extends BaseController {
 
   getRanking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const { edition, editionStart } = checkEdition(req.params.season);
+      const { edition, editionStart } = checkEdition(req.params.edition);
 
       const queries = [
         this.userService.getByEdition(edition),
@@ -137,8 +137,8 @@ export class RankingController extends BaseController {
       const bets = parseRawBets(betsResponse);
 
       const roundsRanking = getRoundsRanking(edition, users, matches, startedMatches, bets);
-      const seasonRanking = getSeasonRanking(roundsRanking, baseComparisonRound, extraBets, extraBetsResults);
-      const seasonRankingWithoutExtras = getSeasonRanking(
+      const editionRanking = getEditionRanking(roundsRanking, baseComparisonRound, extraBets, extraBetsResults);
+      const editionRankingWithoutExtras = getEditionRanking(
         roundsRanking,
         baseComparisonRound,
         { champion: [], defense: [], offense: [], striker: [] },
@@ -146,9 +146,9 @@ export class RankingController extends BaseController {
       );
 
       return {
+        edition: editionRanking,
+        editionWithoutExtras: editionRankingWithoutExtras,
         round: roundsRanking,
-        season: seasonRanking,
-        seasonWithoutExtras: seasonRankingWithoutExtras,
       };
     });
   };

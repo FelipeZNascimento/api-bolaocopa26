@@ -1,4 +1,5 @@
 import { Server } from "http";
+import { AddressInfo } from "net";
 import { WebSocket, WebSocketServer } from "ws";
 
 import { logger } from "#logger/logger.service.js";
@@ -26,14 +27,15 @@ export class WebSocketService {
   }
 
   public broadcast(message: string) {
-    this.wss.clients.forEach((client) => {
-      client.send(message);
-    });
+    const openClients = [...this.wss.clients].filter((c) => c.readyState === WebSocket.OPEN);
+    logger.info(`Broadcasting "${message}" to ${openClients.length} open client(s)`);
+    openClients.forEach((client) => client.send(message));
   }
 
   private initialize(server: Server): void {
-    logger.info("WebSocket server initialized");
     this.wss = new WebSocketServer({ server });
+    const { port } = server.address() as AddressInfo;
+    logger.info({ port }, "WebSocket server initialized");
 
     this.wss.on("connection", (ws: WebSocket) => {
       logger.info("WebSocket connection established");

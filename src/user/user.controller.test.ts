@@ -19,7 +19,7 @@ const mockUserService = {
   isNicknameRegistered: vi.fn(),
   login: vi.fn(),
   register: vi.fn(),
-  setOnCurrentSeason: vi.fn(),
+  setOnCurrentEdition: vi.fn(),
   updateFavorites: vi.fn(),
   updateLastOnlineTime: vi.fn(),
   updatePassword: vi.fn(),
@@ -280,7 +280,7 @@ describe("UserController", () => {
     it("should register user successfully and log them in", async () => {
       mockCheckExistingEntries.mockResolvedValue(true);
       mockUserService.register.mockResolvedValue({ affectedRows: 1, insertId: 10 });
-      mockUserService.setOnCurrentSeason.mockResolvedValue({ affectedRows: 1 });
+      mockUserService.setOnCurrentEdition.mockResolvedValue({ affectedRows: 1 });
       mockUserService.login.mockResolvedValue([mockUser]);
       mockUserService.getFavoritesById.mockResolvedValue("[1,2,3]");
       const { next, req, res } = getMockReqResSession();
@@ -294,7 +294,7 @@ describe("UserController", () => {
       await controller.register(req, res, next);
 
       expect(mockUserService.register).toHaveBeenCalledWith("new@example.com", "New User", "newuser", "password123");
-      expect(mockUserService.setOnCurrentSeason).toHaveBeenCalledWith(2024, 10);
+      expect(mockUserService.setOnCurrentEdition).toHaveBeenCalledWith(2024, 10);
       expect(mockUserService.login).toHaveBeenCalledWith("new@example.com", "password123");
       expect(mockUserService.getFavoritesById).toHaveBeenCalledWith(1, 2024);
       expect(req.session.user).toEqual(mockUser);
@@ -319,10 +319,10 @@ describe("UserController", () => {
       expect(error.code).toBe(ErrorCode.DB_ERROR);
     });
 
-    it("should throw error if setting user on season fails", async () => {
+    it("should throw error if setting user on edition fails", async () => {
       mockCheckExistingEntries.mockResolvedValue(true);
       mockUserService.register.mockResolvedValue({ affectedRows: 1, insertId: 10 });
-      mockUserService.setOnCurrentSeason.mockResolvedValue({ affectedRows: 0 });
+      mockUserService.setOnCurrentEdition.mockResolvedValue({ affectedRows: 0 });
       const { next, req, res } = getMockReqResSession();
       req.body = {
         email: "new@example.com",

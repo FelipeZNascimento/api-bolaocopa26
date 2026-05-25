@@ -6,13 +6,14 @@ import expressSession from "express-session";
 import adminRoutes from "#admin/admin.routes.js";
 import betRoutes from "#bet/bet.routes.js";
 import { connection } from "#database/db.js";
+import editionRoutes from "#edition/edition.routes.js";
 import { httpLogger } from "#logger/logger.middleware.js";
 import { logger } from "#logger/logger.service.js";
 import matchRoutes from "#match/match.routes.js";
 import { errorHandler } from "#middlewares/errorHandler.js";
 import { cache, middleware, updateUserActivity } from "#middlewares/middlewares.js";
+import newsRoutes from "#news/news.routes.js";
 import rankingRoutes from "#ranking/ranking.routes.js";
-import seasonRoutes from "#season/season.routes.js";
 import teamRoutes from "#team/team.routes.js";
 import userRoutes from "#user/user.routes.js";
 import { UserService } from "#user/user.service.js";
@@ -120,8 +121,9 @@ app.use("/team", cache(), teamRoutes);
 app.use("/match", matchRoutes);
 app.use("/bet", betRoutes);
 app.use("/user", userRoutes);
-app.use("/season", seasonRoutes);
+app.use("/edition", editionRoutes);
 app.use("/ranking", rankingRoutes);
+app.use("/news", newsRoutes);
 
 app.get("/", [middleware]);
 

@@ -1,7 +1,10 @@
-name: CI
+name: ❄️ CI and Deploy to PPROD
 
 on:
-  push:
+  pull_request:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   quality-checks:
@@ -23,17 +26,24 @@ jobs:
       - name: Run tests
         run: npm run test:run
 
-      - name: Run TypeScript type checking
-        run: npm run type-check
-
-      - name: Run ESLint and fix
-        run: npm run lint:fix
-
-      - name: Format with Prettier
-        run: npm run format
-
-      - name: Check for remaining ESLint errors
+      - name: Run ESLint
         run: npm run lint
 
-      - name: Check for remaining formatting issues
+      - name: Check formatting
         run: npm run format:check
+
+      - name: 🔨 Build Project
+        run: npm run build
+
+      - name: 📦 Prepare dist for deployment
+        run: cp package.json package-lock.json dist/
+
+      - name: 📂 Sync files to PPROD folder
+        uses: Dylan700/sftp-upload-action@latest
+        with:
+          server: ${{ secrets.server }}
+          username: ${{ secrets.username_pprod }}
+          password: ${{secrets.password_pprod}}
+          port: 22
+          uploads: |
+            ./dist/ => ./

@@ -42,14 +42,14 @@ export class BetService {
     return rows as IExtraBetRaw[];
   }
 
-  async getExtrasResults(season: number, editionStart: number) {
+  async getExtrasResults(edition: number, editionStart: number) {
     const rows: IExtraBetResultRaw[] = await db.query(
       `SELECT extra_bets_results.id_player as playerId, extra_bets_results.id_team as teamId,
         extra_bets_results.id_type as extraType
         FROM extra_bets_results
         LEFT JOIN players ON players.id = extra_bets_results.id_player
         WHERE extra_bets_results.id_edition = ? AND ? < UNIX_TIMESTAMP()`,
-      [season, editionStart],
+      [edition, editionStart],
     );
 
     return rows;

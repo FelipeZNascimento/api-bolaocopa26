@@ -9,7 +9,7 @@ import globals from "globals";
 
 export default [
   {
-    ignores: ["**/*.js", "dist/**", "node_modules/**"],
+    ignores: ["**/*.js", "dist/**", "node_modules/**", "src/mailer/*.template.ts"],
   },
   eslint.configs.recommended,
   {

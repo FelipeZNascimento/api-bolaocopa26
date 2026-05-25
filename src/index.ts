@@ -1,9 +1,47 @@
 // import { connection } from "#database/db.js";
+import { EditionService } from "#edition/edition.service.js";
+import {
+  getEditionInfoFromCacheOrFetch,
+  getRefereesFromCacheOrFetch,
+  getStadiumsFromCacheOrFetch,
+} from "#edition/edition.util.js";
 import { logger } from "#logger/logger.service.js";
+import { MatchService } from "#match/match.service.js";
 import { MatchSyncService } from "#match/match.sync.service.js";
+import { getEventsFromCacheOrFetch, getMatchesFromCacheOrFetch } from "#match/match.utils.js";
+import { NewsScrapeService } from "#news/news.scrape.service.js";
+import { TeamService } from "#team/team.service.js";
+import { getPlayersFromCacheOrFetch, getTeamsFromCacheOrFetch } from "#team/team.util.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
 
 import app from "./app.js";
+
+const warmUpCache = async (): Promise<void> => {
+  const editionService = new EditionService();
+  const matchService = new MatchService();
+  const teamService = new TeamService();
+
+  const { currentEdition } = await getEditionInfoFromCacheOrFetch(editionService);
+  if (!currentEdition) {
+    logger.warn("No current edition configured, skipping cache warm-up");
+    return;
+  }
+
+  const [teams, stadiums, referees] = await Promise.all([
+    getTeamsFromCacheOrFetch(teamService, currentEdition),
+    getStadiumsFromCacheOrFetch(editionService, currentEdition, currentEdition),
+    getRefereesFromCacheOrFetch(editionService, currentEdition, currentEdition),
+  ]);
+
+  const players = await getPlayersFromCacheOrFetch(teamService, currentEdition, teams);
+
+  await Promise.all([
+    getMatchesFromCacheOrFetch(matchService, currentEdition, currentEdition, teams, stadiums, referees),
+    getEventsFromCacheOrFetch(matchService, currentEdition, players),
+  ]);
+
+  logger.info("Cache warm-up complete");
+};
 
 const port = process.env.PORT ?? "9001";
 
@@ -13,9 +51,16 @@ const server = app.listen(port, () => {
 
 WebSocketService.getInstance(server);
 
+// Warm up all caches before accepting traffic
+void warmUpCache();
+
 // Start the match sync service
 const matchSyncService = MatchSyncService.getInstance();
 matchSyncService.start();
+
+// Start the news scraper service
+const newsScrapeService = NewsScrapeService.getInstance();
+newsScrapeService.start();
 
 // Graceful shutdown handler
 const shutdown = () => {
@@ -23,6 +68,9 @@ const shutdown = () => {
 
   // Stop match sync service
   matchSyncService.stop();
+
+  // Stop news scraper service
+  newsScrapeService.stop();
 
   // Add WebSocket cleanup
   const wsService = WebSocketService.getInstance();

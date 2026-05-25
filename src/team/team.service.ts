@@ -5,7 +5,7 @@ import db from "#database/db.js";
 export class TeamService {
   async getAll(editionId: number) {
     const rows: ITeam[] = await db.query(
-      `SELECT teams.id as id, teams.group, teams.id_fifa as idFifa,
+      `SELECT teams.id as id, teams.group, countries.id_fifa as idFifa,
         countries.id_confederation as idConfederation, countries.name as name,
         countries.name_en as nameEn, countries.abbreviation as abbreviation,
         countries.abbreviation_en as abbreviationEn, countries.iso_code as isoCode, 
@@ -23,7 +23,7 @@ export class TeamService {
   }
   async getById(teamId: number, editionId: number) {
     const [row]: ITeam[] = await db.query(
-      `SELECT teams.id as id, teams.group as teamGroup, teams.id_fifa as idFifa,
+      `SELECT teams.id as id, teams.group as teamGroup, countries.id_fifa as idFifa,
         countries.id_confederation as idConfederation, countries.name as name,
         countries.name_en as nameEn, countries.abbreviation as abbreviation,
         countries.abbreviation_en as abbreviationEn, countries.iso_code as isoCode, 
@@ -46,8 +46,10 @@ export class TeamService {
 
   async getClubs(clubIds: number[]) {
     const rows: IClubRaw[] = await db.query(
-      `SELECT clubs.id, clubs.name, clubs.id_country as idCountry, countries.id as countryId, countries.name as countryName, countries.name_en as countryNameEn,
-        countries.abbreviation as countryAbbreviation, countries.abbreviation_en as countryAbbreviationEn, countries.iso_code as countryIsoCode
+      `SELECT clubs.id, clubs.name, clubs.id_country as idCountry, countries.id as countryId,
+      countries.name as countryName, countries.name_en as countryNameEn,
+        countries.abbreviation as countryAbbreviation, countries.abbreviation_en as countryAbbreviationEn,
+        countries.iso_code as countryIsoCode
         FROM clubs
         LEFT JOIN countries ON countries.id = clubs.id_country
         WHERE clubs.id IN (?)
@@ -69,9 +71,11 @@ export class TeamService {
 
   async getPlayers(editionId: number) {
     const rows: IPlayerRaw[] = await db.query(
-      `SELECT players.id, players.id_fifa as idFifa, players.id_fifa_picture as idFifaPicture, players.name, players.id_team as idTeam, players.id_position as idPosition,
-          players.id_club as idClub, players.date_of_birth as dateOfBirth, players.height, players.number as number,
-          positions.description as positionDescription, positions.description_en as positionDescriptionEn, positions.abbreviation as positionAbbreviation, positions.abbreviation_en as positionAbbreviationEn
+      `SELECT players.id, players.id_fifa as idFifa, players.id_fifa_picture as idFifaPicture, players.name,
+          players.id_team as idTeam, players.id_position as idPosition, players.id_club as idClub,
+          players.date_of_birth as dateOfBirth, players.height, players.number as number,
+          positions.description as positionDescription, positions.description_en as positionDescriptionEn,
+          positions.abbreviation as positionAbbreviation, positions.abbreviation_en as positionAbbreviationEn
           FROM players
           LEFT JOIN positions ON positions.id = players.id_position
           WHERE players.id_edition = ?

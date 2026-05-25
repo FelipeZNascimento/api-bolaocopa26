@@ -1,14 +1,16 @@
 import type { IEvent, IEventRaw, IMatch, IMatchRaw } from "#match/match.types.js";
-import type { IPlayer, IReferee, IStadium, ITeam } from "#team/team.types.js";
+import type { IPlayer, ITeam } from "#team/team.types.js";
 
 import { IBet } from "#bet/bet.types.js";
+import { IReferee, IStadium } from "#edition/edition.types.js";
 import { logger } from "#logger/logger.service.js";
-import { MATCH_STATUS, MatchStatus } from "#match/match.constants.js";
+import { MATCH_STATUS, TMatchStatus } from "#match/match.constants.js";
+import { AWARD_POINTS_2026 } from "#ranking/ranking.constants.js";
+import { getRoundMultiplier } from "#ranking/ranking.utils.js";
 import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
-
 import { MatchService } from "./match.service.js";
 
-export const isMatchEnded = (status: MatchStatus) => {
+export const isMatchEnded = (status: TMatchStatus) => {
   return status === MATCH_STATUS.FINAL || status === MATCH_STATUS.FINAL_EXTRA_TIME || status === MATCH_STATUS.CANCELLED;
 };
 
@@ -44,6 +46,7 @@ export const parseRawMatch = (match: IMatchRaw, teams: ITeam[], stadiums: IStadi
     awayTeam: awayTeam ?? null,
     bets: [],
     events: [],
+    gametime: match.gametime,
     group: match.round <= 3 && homeTeam?.group ? homeTeam.group : null,
     homeTeam: homeTeam ?? null,
     id: match.id,
@@ -111,7 +114,12 @@ export const formatMatches = (
     match.bets = matchBets;
     match.loggedUserBets = loggedUserMatchBets;
     match.events = matchEvents;
-    // match.group = match.round <= 3 && match.homeTeam?.group ? match.homeTeam.group : null;
+    match.pointsAwarded = {
+      exact: AWARD_POINTS_2026.exactScore * getRoundMultiplier(match.round),
+      minimal: AWARD_POINTS_2026.winnerOnly * getRoundMultiplier(match.round),
+      miss: 0,
+      partial: AWARD_POINTS_2026.oneScore * getRoundMultiplier(match.round),
+    };
 
     return match;
   });
@@ -135,39 +143,46 @@ export const getEventsFromCacheOrFetch = async (
   return [...events];
 };
 
-export const getStadiumsFromCacheOrFetch = async (
-  matchService: MatchService,
-  requestedEdition: number,
-  currentEdition: number,
-): Promise<IStadium[]> => {
-  const cachedStadiums: IStadium[] | undefined = cachedInfo.get(CACHE_KEYS.STADIUMS);
+// export const getStadiumsFromCacheOrFetch = async (
+//   matchService: MatchService,
+//   requestedEdition: number,
+//   currentEdition: number,
+// ): Promise<IStadium[]> => {
+//   const cachedStadiums: IStadium[] | undefined = cachedInfo.get(CACHE_KEYS.STADIUMS);
 
-  if (cachedStadiums && requestedEdition === currentEdition) {
-    logger.debug("Returning stadiums from cache");
-    return cachedStadiums;
-  }
+//   if (cachedStadiums && requestedEdition === currentEdition) {
+//     logger.debug("Returning stadiums from cache");
+//     return cachedStadiums;
+//   }
 
-  const stadiums = await matchService.getStadiums(requestedEdition);
+//   const stadiums = await matchService.getStadiums(requestedEdition);
 
-  if (requestedEdition === currentEdition) {
-    setStadiumsCache(stadiums);
-  }
-  return [...stadiums];
-};
+//   if (requestedEdition === currentEdition) {
+//     setStadiumsCache(stadiums);
+//   }
+//   return [...stadiums];
+// };
 
 export const getMatchesFromCacheOrFetch = async (
   matchService: MatchService,
   requestedEdition: number,
   currentEdition: number,
-  teams: ITeam[],
-  stadiums: IStadium[],
-  referees: IReferee[],
+  teams?: ITeam[],
+  stadiums?: IStadium[],
+  referees?: IReferee[],
 ): Promise<IMatch[]> => {
   const cachedMatches: IMatch[] | undefined = cachedInfo.get(CACHE_KEYS.MATCHES);
 
   if (cachedMatches && requestedEdition === currentEdition) {
     logger.debug("Returning matches from cache");
     return cachedMatches;
+  }
+
+  if (!teams || !stadiums || !referees) {
+    logger.error(
+      `Missing data for parsing matches. Teams: ${!!teams}, Stadiums: ${!!stadiums}, Referees: ${!!referees}`,
+    );
+    return []; // Return empty array if any of the required data is missing to prevent errors, and log the issue
   }
 
   const matchesRaw: IMatchRaw[] = await matchService.getByEdition(requestedEdition);
@@ -177,34 +192,6 @@ export const getMatchesFromCacheOrFetch = async (
     setMatchesCache(filteredMatches);
   }
   return [...filteredMatches];
-};
-
-export const getRefereesFromCacheOrFetch = async (
-  matchService: MatchService,
-  requestedEdition: number,
-  currentEdition: number,
-): Promise<IReferee[]> => {
-  const cachedReferees: IReferee[] | undefined = cachedInfo.get(CACHE_KEYS.REFEREES);
-
-  if (cachedReferees && requestedEdition === currentEdition) {
-    logger.debug("Returning referees from cache");
-    return cachedReferees;
-  }
-
-  const referees = await matchService.getReferees(requestedEdition);
-
-  if (requestedEdition === currentEdition) {
-    setRefereesCache(referees);
-  }
-  return [...referees];
-};
-
-export const setStadiumsCache = (stadiums: IStadium[]): void => {
-  cachedInfo.set(CACHE_KEYS.STADIUMS, stadiums, 60 * 60 * 24 * 14); // Cache for 14 days
-};
-
-export const setRefereesCache = (referees: IReferee[]): void => {
-  cachedInfo.set(CACHE_KEYS.REFEREES, referees, 60 * 60 * 24 * 14); // Cache for 14 days
 };
 
 export const setMatchesCache = (matches: IMatch[]): void => {

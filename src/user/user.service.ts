@@ -22,7 +22,8 @@ export class UserService {
         users_edition.is_active as isActive,
         users.timestamp, users.admin,
         (users.timestamp IS NOT NULL AND (UNIX_TIMESTAMP(NOW()) - users.timestamp) < 600) AS isOnline,
-        (SELECT COUNT(*) FROM extra_bets WHERE id_edition = users_edition.id_edition AND id_user = users.id) AS extrasCount
+        (SELECT COUNT(*) FROM extra_bets WHERE id_edition = users_edition.id_edition
+        AND id_user = users.id) AS extrasCount
         FROM users
         JOIN users_edition ON users.id = users_edition.id_user
         WHERE users_edition.id_edition = ?
@@ -142,7 +143,7 @@ export class UserService {
     return rows;
   }
 
-  async setOnCurrentSeason(edition: number, id: number) {
+  async setOnCurrentEdition(edition: number, id: number) {
     const rows: ResultSetHeader = await db.query(`INSERT INTO users_edition (id_user, id_edition) VALUES (?, ?)`, [
       id,
       edition,

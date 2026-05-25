@@ -1,28 +1,15 @@
-import type { IMatchRaw } from "#match/match.types.js";
-
 import { logger } from "#logger/logger.service.js";
 import { AppError } from "#utils/appError.js";
 import { ErrorCode } from "#utils/errorCodes.js";
-
-/**
- * External API response structure for matches
- * Adjust this interface based on your actual external API response
- */
-export interface IExternalMatchResponse {
-  data: IMatchRaw[];
-  success: boolean;
-}
+import { IFifaMatch } from "./match.types";
 
 /**
  * Configuration for the external API
  */
 const API_CONFIG = {
-  baseUrl: process.env.EXTERNAL_API_URL ?? "https://api.example.com",
+  baseUrl: process.env.EXTERNAL_API_URL ?? "",
   headers: {
     "Content-Type": "application/json",
-    ...(process.env.EXTERNAL_API_KEY && {
-      Authorization: `Bearer ${process.env.EXTERNAL_API_KEY}`,
-    }),
   },
   timeout: 10000, // 10 seconds
 };
@@ -32,20 +19,20 @@ const API_CONFIG = {
  */
 export class MatchExternalAPI {
   /**
-   * Fetch all matches for a specific edition from the external API
-   * @param editionId - The edition ID to fetch matches for
-   * @returns Array of matches from the external API
+   * Fetch a specific match from the external API
+   * @param matchId - The match ID to fetch
+   * @returns The match data from the external API
    */
-  async fetchMatches(editionId: number): Promise<IMatchRaw[]> {
+  async fetchMatch(matchId: number): Promise<IFifaMatch> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
     }, API_CONFIG.timeout);
 
     try {
-      logger.debug({ editionId }, "Fetching matches from external API");
+      logger.debug({ matchId }, "Fetching match from external API");
 
-      const url = `${API_CONFIG.baseUrl}/matches?edition=${String(editionId)}`;
+      const url = `${API_CONFIG.baseUrl}/${matchId}?language=pt-BR`;
       const response = await fetch(url, {
         headers: API_CONFIG.headers,
         method: "GET",
@@ -60,14 +47,10 @@ export class MatchExternalAPI {
         );
       }
 
-      const data = (await response.json()) as IExternalMatchResponse;
+      const data = (await response.json()) as IFifaMatch;
 
-      if (!data.success || !Array.isArray(data.data)) {
-        throw new AppError("Invalid response format from external API", 500, ErrorCode.EXTERNAL_SERVICE_ERROR);
-      }
-
-      logger.info({ editionId, matchCount: data.data.length }, "Successfully fetched matches from external API");
-      return data.data;
+      logger.info({ matchId }, "Successfully fetched match from external API");
+      return data;
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
         throw new AppError("External API request timed out", 408, ErrorCode.EXTERNAL_SERVICE_ERROR);
@@ -77,8 +60,8 @@ export class MatchExternalAPI {
         throw error;
       }
 
-      logger.error({ err: error }, "Error fetching matches from external API");
-      throw new AppError("Failed to fetch matches from external API", 500, ErrorCode.EXTERNAL_SERVICE_ERROR);
+      logger.error({ err: error }, "Error fetching match from external API");
+      throw new AppError("Failed to fetch match from external API", 500, ErrorCode.EXTERNAL_SERVICE_ERROR);
     } finally {
       clearTimeout(timeoutId);
     }
