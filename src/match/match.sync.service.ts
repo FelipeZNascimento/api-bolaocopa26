@@ -13,7 +13,7 @@ import { AppError } from "#utils/appError.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { WEBSOCKET_EVENTS } from "#websocket/websocket.constants.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
-import { MATCH_STATUS } from "./match.constants";
+import { MATCH_STATUS } from "./match.constants.js";
 
 export interface IMatchSyncStats {
   duration: number;
