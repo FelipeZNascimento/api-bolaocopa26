@@ -175,7 +175,7 @@ export const getActivationTemplate = (user: string) => `
                           style="text-align:center;padding:16px 0px 16px 0px"
                         >
                           <a
-                            href="https://bolaocopa.omegafox.me/jogos"
+                            href="https://bolaocopa.omegafox.me/partidas"
                             style="color:#FFFFFF;font-size:16px;font-weight:bold;background-color:#284ea0;border-radius:4px;display:block;padding:12px 20px;text-decoration:none"
                             target="_blank"
                             ><span
@@ -410,7 +410,7 @@ export const getActivationTemplate = (user: string) => `
                           style="text-align:center;padding:16px 0px 16px 0px"
                         >
                           <a
-                            href="https://bolaocopa.omegafox.me/jogos"
+                            href="https://bolaocopa.omegafox.me/partidas"
                             style="color:#FFFFFF;font-size:16px;font-weight:bold;background-color:#284ea0;border-radius:4px;display:block;padding:12px 20px;text-decoration:none"
                             target="_blank"
                             ><span
@@ -787,7 +787,7 @@ export const getActivationTemplate = (user: string) => `
         "fullWidth": true,
         "size": "medium",
         "text": "Apostar",
-        "url": "https://bolaocopa.omegafox.me/jogos"
+        "url": "https://bolaocopa.omegafox.me/partidas"
       }
     }
   },
@@ -1348,7 +1348,7 @@ export const getActivationTemplate = (user: string) => `
         "fullWidth": true,
         "size": "medium",
         "text": "Bet",
-        "url": "https://bolaocopa.omegafox.me/jogos"
+        "url": "https://bolaocopa.omegafox.me/partidas"
       }
     }
   },

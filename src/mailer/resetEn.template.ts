@@ -386,7 +386,7 @@ export const getPasswordResetEmailTemplateEn = (resetUrl: string) => `
         "buttonBackgroundColor": "#284ea0",
         "size": "small",
         "text": "Bet",
-        "url": "https://bolaocopa.omegafox.me/jogos"
+        "url": "https://bolaocopa.omegafox.me/partidas"
       }
     }
   },

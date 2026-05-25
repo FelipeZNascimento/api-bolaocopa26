@@ -1,12 +1,7 @@
 import type { IEventRaw, IMatch, IMatchRaw } from "#match/match.types.js";
-// import type { IMatch, IMatchRaw, IWeek } from "#match/match.types.js";
-// import type { ICount } from "#shared/shared.types.js";
-
 import { ResultSetHeader } from "mysql2/promise";
 
 import db from "#database/db.js";
-// import { MatchStatus } from "#match/match.constants.js";
-import { IReferee, IStadium } from "#team/team.types.js";
 
 export class MatchService {
   async getByEdition(editionId: number) {
@@ -51,33 +46,6 @@ export class MatchService {
         LEFT JOIN matches ON matches.id = events.id_match
         WHERE matches.id_edition = ?
         ORDER BY matches.timestamp ASC`,
-      [editionId],
-    );
-    return rows;
-  }
-
-  async getReferees(editionId: number) {
-    const rows: IReferee[] = await db.query(
-      `SELECT referees.id, referees.id_fifa as idFifa, referees.name, referees.date_of_birth as dateOfBirth,
-        countries.name as country, countries.name_en as countryEn
-        FROM referees
-        LEFT JOIN countries ON countries.id = referees.id_country
-        WHERE id_edition = ?
-        ORDER BY name ASC`,
-      [editionId],
-    );
-    return rows;
-  }
-
-  async getStadiums(editionId: number) {
-    const rows: IStadium[] = await db.query(
-      `SELECT stadiums.id, stadiums.name, stadiums.city, stadiums.id_country as idCountry, stadiums.capacity,
-        stadiums.geo_latitude as geoLatitude, stadiums.geo_longitude as geoLongitude,
-        countries.name as country, countries.name_en as countryEn
-        FROM stadiums
-        LEFT JOIN countries ON countries.id = stadiums.id_country
-        WHERE id_edition = ?
-        ORDER BY name ASC`,
       [editionId],
     );
     return rows;

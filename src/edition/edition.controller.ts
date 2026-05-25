@@ -7,7 +7,7 @@ import { BaseController } from "#shared/base.controller.js";
 import { AppError } from "#utils/appError.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { EditionService } from "./edition.service.js";
-import { getEditionInfoFromCacheOrFetch } from "./edition.util.js";
+import { getEditionInfoFromCacheOrFetch, getStadiumsFromCacheOrFetch } from "./edition.util.js";
 
 export class EditionController extends BaseController {
   constructor(
@@ -20,6 +20,17 @@ export class EditionController extends BaseController {
   getCurrentEditionAndRound = async (req: Request, res: Response, next: NextFunction) => {
     await this.handleRequest(req, res, next, async () => {
       return getEditionInfoFromCacheOrFetch(this.editionService);
+    });
+  };
+
+  getStadiums = async (req: Request, res: Response, next: NextFunction) => {
+    await this.handleRequest(req, res, next, async () => {
+      const { currentEdition, editionStart } = await getEditionInfoFromCacheOrFetch(this.editionService);
+      if (!currentEdition || !editionStart) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+
+      return getStadiumsFromCacheOrFetch(this.editionService, currentEdition, currentEdition);
     });
   };
 

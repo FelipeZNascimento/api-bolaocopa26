@@ -1,14 +1,19 @@
-import type { IMatch } from "#match/match.types.js";
-import type { IReferee, IStadium } from "#team/team.types.js";
+import type { IFifaMatch, IMatch } from "#match/match.types.js";
 
+import { readFileSync } from "fs";
+
+import { EditionService } from "#edition/edition.service.js";
+import { getEditionInfoFromCacheOrFetch } from "#edition/edition.util.js";
 import { logger } from "#logger/logger.service.js";
 import { MatchExternalAPI } from "#match/match.external-api.js";
 import { MatchService } from "#match/match.service.js";
-import { parseRawMatch, setMatchesCache } from "#match/match.utils.js";
+import { getMatchesFromCacheOrFetch, setMatchesCache } from "#match/match.utils.js";
 import { TeamService } from "#team/team.service.js";
-import { getTeamsFromCacheOrFetch } from "#team/team.util.js";
-import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
+import { AppError } from "#utils/appError.js";
+import { ErrorCode } from "#utils/errorCodes.js";
+import { WEBSOCKET_EVENTS } from "#websocket/websocket.constants.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
+import { MATCH_STATUS } from "./match.constants";
 
 export interface IMatchSyncStats {
   duration: number;
@@ -24,7 +29,8 @@ export interface IMatchSyncStats {
 const SYNC_CONFIG = {
   edition: parseInt(process.env.EDITION ?? "0"),
   enabled: process.env.MATCH_SYNC_ENABLED !== "false", // Enabled by default, disable with env var
-  interval: parseInt(process.env.MATCH_SYNC_INTERVAL ?? "30000"), // 30 seconds default
+  // interval: parseInt(process.env.MATCH_SYNC_INTERVAL ?? "30000"), // 30 seconds default
+  interval: parseInt(process.env.MATCH_SYNC_INTERVAL ?? "5000"), // 30 seconds default
 };
 
 /**
@@ -34,6 +40,7 @@ const SYNC_CONFIG = {
  */
 export class MatchSyncService {
   private static instance: MatchSyncService;
+  private editionService: EditionService;
   private externalAPI: MatchExternalAPI;
   private intervalId: NodeJS.Timeout | null = null;
   private isSyncing = false;
@@ -52,6 +59,7 @@ export class MatchSyncService {
     this.externalAPI = new MatchExternalAPI();
     this.matchService = new MatchService();
     this.teamService = new TeamService();
+    this.editionService = new EditionService();
     this.websocketService = WebSocketService.getInstance();
   }
 
@@ -90,9 +98,6 @@ export class MatchSyncService {
 
     logger.info({ edition: SYNC_CONFIG.edition, interval: SYNC_CONFIG.interval }, "Starting match sync service");
 
-    // Run initial sync
-    void this.sync();
-
     // Set up periodic sync
     this.intervalId = setInterval(() => {
       void this.sync();
@@ -113,19 +118,45 @@ export class MatchSyncService {
   /**
    * Broadcast matches to all connected WebSocket clients
    */
-  private broadcastMatches(matches: IMatch[], updatedCount: number): void {
+  private broadcastMatches(updatedCount: number): void {
     try {
-      const message = JSON.stringify({
-        data: matches,
-        timestamp: Date.now(),
-        type: "matches_update",
-        updatedCount,
-      });
-
-      this.websocketService.broadcast(message);
-      logger.info({ matchCount: matches.length, updatedCount }, "Broadcasted matches to WebSocket clients");
+      this.websocketService.broadcast(WEBSOCKET_EVENTS.MATCHES_UPDATED);
+      logger.info({ updatedCount }, "Broadcasted matches update to WebSocket clients");
     } catch (error) {
       logger.error({ err: error }, "Error broadcasting matches to WebSocket");
+    }
+  }
+
+  /**
+   * Convert FIFA API period to our internal match status
+   * This is a simplified mapping and may need to be expanded based on actual API values
+   */
+  private convertPeriodToStatus(period: number): number {
+    switch (period) {
+      case 2:
+        return MATCH_STATUS.NOT_STARTED;
+      case 3:
+        return MATCH_STATUS.FIRST_HALF;
+      case 4:
+        return MATCH_STATUS.HALFTIME;
+      case 5:
+        return MATCH_STATUS.SECOND_HALF;
+      case 6:
+        return MATCH_STATUS.AWAITING_EXTRA_TIME;
+      case 7:
+        return MATCH_STATUS.FIRST_EXTRA_TIME;
+      case 8:
+        return MATCH_STATUS.HALFTIME_EXTRA_TIME;
+      case 9:
+        return MATCH_STATUS.SECOND_EXTRA_TIME;
+      case 10:
+        return MATCH_STATUS.FINAL;
+      case 11:
+        return MATCH_STATUS.AWAITING_PENALTIES;
+      case 12:
+        return MATCH_STATUS.PENALTIES;
+      default:
+        return 0; // Unknown status
     }
   }
 
@@ -148,28 +179,6 @@ export class MatchSyncService {
   }
 
   /**
-   * Get referees from cache or fetch from database
-   */
-  private async getRefereesFromCacheOrFetch(editionId: number): Promise<IReferee[]> {
-    const cached: IReferee[] | undefined = cachedInfo.get(CACHE_KEYS.REFEREES);
-    if (cached) {
-      return cached;
-    }
-    return await this.matchService.getReferees(editionId);
-  }
-
-  /**
-   * Get stadiums from cache or fetch from database
-   */
-  private async getStadiumsFromCacheOrFetch(editionId: number): Promise<IStadium[]> {
-    const cached: IStadium[] | undefined = cachedInfo.get(CACHE_KEYS.STADIUMS);
-    if (cached) {
-      return cached;
-    }
-    return await this.matchService.getStadiums(editionId);
-  }
-
-  /**
    * Check if a match has changed by comparing relevant fields
    */
   private hasMatchChanged(oldMatch: IMatch, newMatch: IMatch): boolean {
@@ -179,7 +188,7 @@ export class MatchSyncService {
       oldMatch.score.away !== newMatch.score.away ||
       oldMatch.score.homePenalties !== newMatch.score.homePenalties ||
       oldMatch.score.awayPenalties !== newMatch.score.awayPenalties ||
-      oldMatch.timestamp !== newMatch.timestamp
+      oldMatch.gametime !== newMatch.gametime
     );
   }
 
@@ -193,31 +202,70 @@ export class MatchSyncService {
       return;
     }
 
-    this.isSyncing = true;
     const startTime = Date.now();
+    this.isSyncing = true;
 
     try {
       logger.debug("Starting match sync");
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+      if (!currentEdition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
 
-      // Fetch matches from external API
-      const externalMatches = await this.externalAPI.fetchMatches(SYNC_CONFIG.edition);
-      this.stats.totalFetched = externalMatches.length;
+      // Fetch matches from cache/db
+      const allMatches = await getMatchesFromCacheOrFetch(this.matchService, currentEdition, currentEdition);
+      // const cachedMatches = allMatches.filter(
+      //   // Only consider matches within 1 day (before or after)
+      //   (m) => m.timestamp >= startTime - 60 * 60 * 24 || m.timestamp <= startTime + 60 * 60 * 24,
+      // );
 
-      // Get cached matches for comparison
-      const cachedMatches: IMatch[] | undefined = cachedInfo.get(CACHE_KEYS.MATCHES);
+      // For testing, only fetch one match from external API
+      const cachedMatches = allMatches.filter((m) => m.idFifa === 400021443);
 
-      // Get teams, stadiums, and referees for parsing
-      const [teams, stadiums, referees] = await Promise.all([
-        getTeamsFromCacheOrFetch(this.teamService, SYNC_CONFIG.edition),
-        this.getStadiumsFromCacheOrFetch(SYNC_CONFIG.edition),
-        this.getRefereesFromCacheOrFetch(SYNC_CONFIG.edition),
-      ]);
+      cachedMatches.forEach((m) =>
+        logger.debug({ matchId: m.id, timestamp: m.timestamp }, "Match close to current time, will check for updates"),
+      );
 
-      // Parse external matches to the standard format
-      const parsedMatches = externalMatches.map((match) => parseRawMatch(match, teams, stadiums, referees));
+      // Fetch matches from external API in parallel for all close matches
+      // const externalAPIMatchResponse = await Promise.allSettled(
+      //   cachedMatches.map((m) => this.externalAPI.fetchMatch(m.idFifa)),
+      // );
+      // const externalAPIMatches = externalAPIMatchResponse.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+
+      // [TESTING] Read from local file instead of external API
+      const externalAPIMatches = [
+        JSON.parse(readFileSync(new URL("./fifaApiResponse.json", import.meta.url), "utf-8")) as IFifaMatch,
+      ];
+
+      // Parse external match to select fields we care about and convert to our internal format
+      const parsedMatches: IMatch[] = cachedMatches.map((match) => {
+        const external = externalAPIMatches.find((m) => parseInt(m.IdMatch, 10) === match.idFifa);
+        if (!external) return match;
+
+        logger.debug(
+          {
+            convertedStatus: this.convertPeriodToStatus(external.Period),
+            externalStatus: external.Period,
+            matchId: match.id,
+          },
+          "Fetched match data from external API",
+        );
+
+        return {
+          ...match,
+          gametime: external.MatchTime,
+          score: {
+            away: external.AwayTeam.Score,
+            awayPenalties: external.AwayTeamPenaltyScore,
+            home: external.HomeTeam.Score,
+            homePenalties: external.HomeTeamPenaltyScore,
+          },
+          status: this.convertPeriodToStatus(external.Period),
+        };
+      });
 
       // Detect changes
-      const changedMatches = this.detectChanges(cachedMatches ?? [], parsedMatches);
+      const changedMatches = this.detectChanges(cachedMatches, parsedMatches);
       this.stats.updated = changedMatches.length;
 
       if (changedMatches.length > 0) {
@@ -226,17 +274,19 @@ export class MatchSyncService {
         // Update database for changed matches
         await this.updateDatabase(changedMatches);
 
-        // Update cache with all matches
-        setMatchesCache(parsedMatches);
+        // Merge updated close matches back into the full match list before caching
+        const updatedById = new Map(parsedMatches.map((m) => [m.id, m]));
+        const updatedAllMatches = allMatches.map((m) => updatedById.get(m.id) ?? m);
+        setMatchesCache(updatedAllMatches);
 
         // Broadcast to all connected clients
-        this.broadcastMatches(parsedMatches, changedMatches.length);
+        this.broadcastMatches(changedMatches.length);
       } else {
         logger.debug("No match changes detected");
 
         // Still update cache to refresh TTL
-        if (parsedMatches.length > 0) {
-          setMatchesCache(parsedMatches);
+        if (allMatches.length > 0) {
+          setMatchesCache(allMatches);
         }
       }
 

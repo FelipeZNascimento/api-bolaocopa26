@@ -1,7 +1,8 @@
 import type { IEvent, IEventRaw, IMatch, IMatchRaw } from "#match/match.types.js";
-import type { IPlayer, IReferee, IStadium, ITeam } from "#team/team.types.js";
+import type { IPlayer, ITeam } from "#team/team.types.js";
 
 import { IBet } from "#bet/bet.types.js";
+import { IReferee, IStadium } from "#edition/edition.types.js";
 import { logger } from "#logger/logger.service.js";
 import { MATCH_STATUS, TMatchStatus } from "#match/match.constants.js";
 import { AWARD_POINTS_2026 } from "#ranking/ranking.constants.js";
@@ -142,25 +143,25 @@ export const getEventsFromCacheOrFetch = async (
   return [...events];
 };
 
-export const getStadiumsFromCacheOrFetch = async (
-  matchService: MatchService,
-  requestedEdition: number,
-  currentEdition: number,
-): Promise<IStadium[]> => {
-  const cachedStadiums: IStadium[] | undefined = cachedInfo.get(CACHE_KEYS.STADIUMS);
+// export const getStadiumsFromCacheOrFetch = async (
+//   matchService: MatchService,
+//   requestedEdition: number,
+//   currentEdition: number,
+// ): Promise<IStadium[]> => {
+//   const cachedStadiums: IStadium[] | undefined = cachedInfo.get(CACHE_KEYS.STADIUMS);
 
-  if (cachedStadiums && requestedEdition === currentEdition) {
-    logger.debug("Returning stadiums from cache");
-    return cachedStadiums;
-  }
+//   if (cachedStadiums && requestedEdition === currentEdition) {
+//     logger.debug("Returning stadiums from cache");
+//     return cachedStadiums;
+//   }
 
-  const stadiums = await matchService.getStadiums(requestedEdition);
+//   const stadiums = await matchService.getStadiums(requestedEdition);
 
-  if (requestedEdition === currentEdition) {
-    setStadiumsCache(stadiums);
-  }
-  return [...stadiums];
-};
+//   if (requestedEdition === currentEdition) {
+//     setStadiumsCache(stadiums);
+//   }
+//   return [...stadiums];
+// };
 
 export const getMatchesFromCacheOrFetch = async (
   matchService: MatchService,
@@ -191,34 +192,6 @@ export const getMatchesFromCacheOrFetch = async (
     setMatchesCache(filteredMatches);
   }
   return [...filteredMatches];
-};
-
-export const getRefereesFromCacheOrFetch = async (
-  matchService: MatchService,
-  requestedEdition: number,
-  currentEdition: number,
-): Promise<IReferee[]> => {
-  const cachedReferees: IReferee[] | undefined = cachedInfo.get(CACHE_KEYS.REFEREES);
-
-  if (cachedReferees && requestedEdition === currentEdition) {
-    logger.debug("Returning referees from cache");
-    return cachedReferees;
-  }
-
-  const referees = await matchService.getReferees(requestedEdition);
-
-  if (requestedEdition === currentEdition) {
-    setRefereesCache(referees);
-  }
-  return [...referees];
-};
-
-export const setStadiumsCache = (stadiums: IStadium[]): void => {
-  cachedInfo.set(CACHE_KEYS.STADIUMS, stadiums, 60 * 60 * 24 * 14); // Cache for 14 days
-};
-
-export const setRefereesCache = (referees: IReferee[]): void => {
-  cachedInfo.set(CACHE_KEYS.REFEREES, referees, 60 * 60 * 24 * 14); // Cache for 14 days
 };
 
 export const setMatchesCache = (matches: IMatch[]): void => {

@@ -1,5 +1,6 @@
 import { IBet } from "#bet/bet.types.js";
-import { IPlayer, IReferee, IStadium, ITeam } from "#team/team.types.js";
+import { IReferee, IStadium } from "#edition/edition.types.js";
+import { IPlayer, ITeam } from "#team/team.types.js";
 // import { RowDataPacket } from "mysql2/promise";
 
 export interface IEvent {
@@ -24,6 +25,57 @@ export interface IEventRaw {
   matchId: number;
   playerId: number;
   playerTwoId: null | number;
+}
+
+export interface IFifaBooking {
+  Card: number; // 1 for yellow, 2 for red
+  IdPlayer: string;
+  IdTeam: string;
+  Minute: string;
+}
+export interface IFifaGoal {
+  IdAssistPlayer: string;
+  IdPlayer: string;
+  IdTeam: string; // It may not be the same as the main team id in case of own goals
+  Minute: string;
+  Type: number; // 1 for penalty, 2 for regular goal, 3 for own goal (tbc)
+}
+
+export interface IFifaMatch {
+  Attendance: string;
+  AwayTeam: IFifaTeam;
+  AwayTeamPenaltyScore: number;
+  HomeTeam: IFifaTeam;
+  HomeTeamPenaltyScore: number;
+  IdMatch: string;
+  MatchTime: string;
+  // 2: not started, 3: first half, 4: halftime, 5: second half,
+  // 6: waiting ET, 7: ET 1st half, 8: ET halftime, 9: ET 2nd half
+  // 10: final
+  // 11: penalties
+  Period: number;
+  Weather: IFifaWeather;
+}
+
+export interface IFifaSubstitution {
+  IdPlayerOff: string;
+  IdPlayerOn: string;
+  IdTeam: string;
+  Minute: string;
+}
+
+export interface IFifaTeam {
+  Bookings: IFifaBooking[];
+  Goals: IFifaGoal[];
+  Score: number;
+  Substitutions: IFifaSubstitution[];
+  Tactics: string;
+}
+
+export interface IFifaWeather {
+  Humidity: string;
+  Temperature: string;
+  WindSpeed: string;
 }
 
 export interface IMatch {

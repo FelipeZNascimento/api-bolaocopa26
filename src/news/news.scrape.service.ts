@@ -10,7 +10,7 @@ import { NewsService } from "#news/news.service.js";
 const SCRAPER_CONFIG = {
   enabled: process.env.NEWS_SCRAPER_ENABLED !== "false",
   interval: parseInt(process.env.NEWS_SCRAPER_INTERVAL ?? "1800000"), // 30 minutes default
-  timeout: 15000, // 15 seconds
+  timeout: 1000 * 60 * 30, // 30 minutes
   url: process.env.NEWS_SCRAPER_URL ?? "https://ge.globo.com/futebol/copa-do-mundo/",
 };
 
@@ -66,7 +66,6 @@ export class NewsScrapeService {
     logger.info({ interval: SCRAPER_CONFIG.interval, url: SCRAPER_CONFIG.url }, "Starting news scraper service");
 
     void this.scrape();
-
     this.intervalId = setInterval(() => {
       void this.scrape();
     }, SCRAPER_CONFIG.interval);
