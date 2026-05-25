@@ -222,8 +222,9 @@ export class MatchSyncService {
       // For testing, only fetch one match from external API
       const cachedMatches = allMatches.filter((m) => m.idFifa === 400021443);
 
-      cachedMatches.forEach((m) =>
-        logger.debug({ matchId: m.id, timestamp: m.timestamp }, "Match close to current time, will check for updates"),
+      logger.debug(
+        { changedMatches: JSON.stringify(cachedMatches.map((m) => m.id)) },
+        "Match close to current time, will check for updates",
       );
 
       // Fetch matches from external API in parallel for all close matches
@@ -241,15 +242,6 @@ export class MatchSyncService {
       const parsedMatches: IMatch[] = cachedMatches.map((match) => {
         const external = externalAPIMatches.find((m) => parseInt(m.IdMatch, 10) === match.idFifa);
         if (!external) return match;
-
-        logger.debug(
-          {
-            convertedStatus: this.convertPeriodToStatus(external.Period),
-            externalStatus: external.Period,
-            matchId: match.id,
-          },
-          "Fetched match data from external API",
-        );
 
         return {
           ...match,
