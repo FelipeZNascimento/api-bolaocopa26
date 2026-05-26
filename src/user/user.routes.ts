@@ -37,6 +37,7 @@ router.post("/update-password-from-token", userController.updatePasswordFromToke
 router.post("/update-profile", requireAuth, userController.updateProfile);
 router.post("/update-favorites", requireAuth, userController.updateFavorites);
 router.post("/register", authLimiter, userController.register);
+router.post("/push/subscribe", requireAuth, userController.subscribePushNotifications);
 
 // Get routes
 router.get("/logout", requireAuth, userController.logout);

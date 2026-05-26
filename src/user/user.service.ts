@@ -239,4 +239,13 @@ export class UserService {
 
     return rows;
   }
+
+  updatePushSubscription(userId: number, endpoint: string, keys: { auth: string; p256dh: string }) {
+    return db.query(
+      `INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE p256dh = VALUES(p256dh), auth = VALUES(auth)`,
+      [userId, endpoint, keys.p256dh, keys.auth],
+    );
+  }
 }

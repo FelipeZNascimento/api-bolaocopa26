@@ -9,6 +9,7 @@ import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  subscribePushNotificationSchema,
   updateFavoritesSchema,
   updatePasswordFromTokenSchema,
   updatePasswordSchema,
@@ -172,6 +173,15 @@ export class UserController extends BaseController {
 
       await this.mailerService.sendSignupEmail(email, nickname, locale);
       return { ...user, favorites: parsedFavorites };
+    });
+  };
+
+  subscribePushNotifications = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    await this.handleRequest(req, res, next, async () => {
+      const user = req.session.user;
+      const { endpoint, keys } = parseBody(subscribePushNotificationSchema, req.body);
+
+      await this.userService.updatePushSubscription(user!.id, endpoint, keys);
     });
   };
 

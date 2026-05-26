@@ -14,6 +14,7 @@ import matchRoutes from "#match/match.routes.js";
 import { errorHandler } from "#middlewares/errorHandler.js";
 import { cache, updateUserActivity } from "#middlewares/middlewares.js";
 import newsRoutes from "#news/news.routes.js";
+import { initPushNotifications } from "#push/push.service.js";
 import rankingRoutes from "#ranking/ranking.routes.js";
 import teamRoutes from "#team/team.routes.js";
 import userRoutes from "#user/user.routes.js";
@@ -21,6 +22,7 @@ import { UserService } from "#user/user.service.js";
 import { IUser } from "#user/user.types.js";
 
 const app = express();
+initPushNotifications();
 const environment = process.env.NODE_ENV ?? "development";
 const sevenDays = 7 * 24 * 60 * 60 * 1000;
 const sessionSecret = process.env.SESSION_SECRET ?? "this is not secure";
