@@ -7,7 +7,7 @@ export const updateBetSchema = z.object({
 });
 
 export const updateExtraBetSchema = z.object({
-  extraType: z.enum(["0", "1", "2", "3"]),
+  extraType: z.number().int().min(0).max(3),
   playerId: z.number().int().nonnegative().optional(),
   teamId: z.number().int().positive(),
 });

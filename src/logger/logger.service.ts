@@ -40,7 +40,7 @@ const logger = pino({
   transport: isDevelopment
     ? {
         options: {
-          colorize: true,
+          colorize: process.stdout.isTTY,
           ignore: "pid,hostname",
           singleLine: false,
           translateTime: "SYS:standard",

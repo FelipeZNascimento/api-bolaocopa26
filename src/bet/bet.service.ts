@@ -108,7 +108,7 @@ export class BetService {
   }
 
   async updateExtras(
-    extraType: string,
+    extraType: number,
     playerId: null | number,
     teamId: number,
     userId: number,

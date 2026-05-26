@@ -125,7 +125,7 @@ export class BetController extends BaseController {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
 
-      if (parseInt(extraType, 10) !== EXTRA_TYPE_CHAMPION && nowTimestamp >= editionStart) {
+      if (extraType !== EXTRA_TYPE_CHAMPION && nowTimestamp >= editionStart) {
         throw new AppError("Não autorizado! A temporada já começou.", 401, ErrorCode.UNAUTHORIZED);
       }
 
