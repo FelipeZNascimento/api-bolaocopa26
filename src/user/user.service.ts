@@ -21,7 +21,7 @@ export class UserService {
   // Get all users for an edition, including inactive ones (for admin view)
   async getAllByEdition(edition: number) {
     const rows: IUser[] = await db.query(
-      `SELECT SQL_NO_CACHE users.id, users.email, users.name, users.nickname,
+      `SELECT users.id, users.email, users.name, users.nickname,
         users_edition.is_active as isActive,
         users.timestamp, users.admin,
         (users.timestamp IS NOT NULL AND (UNIX_TIMESTAMP(NOW()) - users.timestamp) < 600) AS isOnline,
@@ -39,7 +39,7 @@ export class UserService {
 
   async getByEdition(edition: number) {
     const rows: IUser[] = await db.query(
-      `SELECT SQL_NO_CACHE users.id, users.name, users.nickname,
+      `SELECT users.id, users.name, users.nickname,
         users_edition.is_active as isActive,
         users.timestamp, users.admin,
         (users.timestamp IS NOT NULL AND (UNIX_TIMESTAMP(NOW()) - users.timestamp) < 600) AS isOnline
@@ -54,13 +54,15 @@ export class UserService {
   }
 
   async getByEmail(email: string) {
+    const normalizedEmail = email.toLowerCase();
+
     const row: IUser[] = await db.query(
-      `SELECT SQL_NO_CACHE users.id, users.email, users.name, users.nickname, users.admin,
+      `SELECT users.id, users.email, users.name, users.nickname, users.admin,
         users_edition.id AS seasonId, users_edition.is_active as isActive
         FROM users
         INNER JOIN users_edition ON users.id = users_edition.id_user
         WHERE users.email = ?`,
-      [email],
+      [normalizedEmail],
     );
 
     return row.length > 0 ? row[0] : null;
@@ -68,7 +70,7 @@ export class UserService {
 
   async getById(userId: number, editionId: number) {
     const row: IUser[] = await db.query(
-      `SELECT SQL_NO_CACHE users.id, users.name, users.nickname, users.email, users.admin,
+      `SELECT users.id, users.name, users.nickname, users.email, users.admin,
         users_edition.is_active as isActive,
         users.timestamp,
         users_favorites.favorites
@@ -105,9 +107,11 @@ export class UserService {
   }
 
   async isEmailRegistered(email: string, userId?: number) {
+    const normalizedEmail = email.toLowerCase();
+
     const [rows]: [{ count: number }] = await db.query(
-      `SELECT SQL_NO_CACHE COUNT(*) as count FROM users WHERE email = ?${userId ? " AND id != ?" : ""}`,
-      userId ? [email, userId] : [email],
+      `SELECT COUNT(*) as count FROM users WHERE email = ?${userId ? " AND id != ?" : ""}`,
+      userId ? [normalizedEmail, userId] : [normalizedEmail],
     );
 
     return rows.count > 0;
@@ -115,7 +119,7 @@ export class UserService {
 
   async isNicknameRegistered(nickname: string, userId?: number) {
     const [rows]: [{ count: number }] = await db.query(
-      `SELECT SQL_NO_CACHE COUNT(*) as count FROM users WHERE nickname = ?${userId ? " AND id != ?" : ""}`,
+      `SELECT COUNT(*) as count FROM users WHERE nickname = ?${userId ? " AND id != ?" : ""}`,
       userId ? [nickname, userId] : [nickname],
     );
 
@@ -134,7 +138,7 @@ export class UserService {
     if (!passwordMatch) return [];
 
     const rows: IUser[] = await db.query(
-      `SELECT SQL_NO_CACHE users.id, users.email, users.name, users.nickname, users.timestamp, users.admin,
+      `SELECT users.id, users.email, users.name, users.nickname, users.timestamp, users.admin,
         users_edition.is_active as isActive, users_favorites.favorites, users_edition.id_edition AS editionId
         FROM users
         LEFT JOIN users_edition ON users.id = users_edition.id_user

@@ -53,7 +53,7 @@ export class MatchService {
 
   async getTimestampByMatchId(matchId: number) {
     const row = await db.query(
-      `SELECT SQL_NO_CACHE matches.id, matches.timestamp
+      `SELECT matches.id, matches.timestamp
         FROM matches
         WHERE matches.id = ?`,
       [matchId],

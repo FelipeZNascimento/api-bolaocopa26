@@ -9,7 +9,7 @@ export class NewsService {
         news.title, news.summary, news.link, news.image, news.edition_id as editionId
         FROM news
         WHERE news.edition_id = ?
-        ORDER BY news.timestamp ASC`,
+        ORDER BY news.timestamp DESC`,
       [editionId],
     );
 

@@ -2,6 +2,7 @@ import type { IUser } from "#user/user.types.js";
 
 import { NextFunction, Request, Response } from "express";
 
+import { deleteFromEditionSchema, updateActiveStatusSchema } from "#admin/admin.schemas.js";
 import { MailerService } from "#mailer/mailer.service.js";
 import { BaseController } from "#shared/base.controller.js";
 import { UserService } from "#user/user.service.js";
@@ -9,6 +10,7 @@ import { AppError } from "#utils/appError.js";
 import { cachedInfo } from "#utils/dataCache.js";
 import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
+import { parseBody } from "#utils/parseBody.js";
 
 // Extend express-session types to include 'user' property
 declare module "express-session" {
@@ -33,12 +35,7 @@ export class AdminController extends BaseController {
       }
       const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
 
-      const reqBody = req.body as { userId: number };
-      const { userId } = reqBody;
-
-      if (!userId) {
-        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-      }
+      const { userId } = parseBody(deleteFromEditionSchema, req.body);
 
       await this.userService.deleteFromEdition(userId, editionId);
       const response: IUser[] = await this.userService.getAllByEdition(editionId);
@@ -93,12 +90,7 @@ export class AdminController extends BaseController {
       }
       const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
 
-      const reqBody = req.body as { newStatus: boolean; userId: number };
-      const { newStatus, userId } = reqBody;
-
-      if (newStatus === undefined || !userId) {
-        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-      }
+      const { newStatus, userId } = parseBody(updateActiveStatusSchema, req.body);
 
       await this.userService.updateActiveStatus(userId, editionId, newStatus);
       if (newStatus === true) {

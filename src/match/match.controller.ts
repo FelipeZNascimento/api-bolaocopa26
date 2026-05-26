@@ -13,7 +13,8 @@ import {
   getStadiumsFromCacheOrFetch,
 } from "#edition/edition.util.js";
 import { logger } from "#logger/logger.service.js";
-import { FOOTBALL_MATCH_STATUS, STOPPED_GAME, TMatchStatus } from "#match/match.constants.js";
+import { FOOTBALL_MATCH_STATUS, STOPPED_GAME } from "#match/match.constants.js";
+import { updateMatchesSchema } from "#match/match.schemas.js";
 import { MatchService } from "#match/match.service.js";
 import {
   formatMatches,
@@ -29,6 +30,7 @@ import { isFulfilled, isRejected } from "#utils/apiResponse.js";
 import { AppError } from "#utils/appError.js";
 import { checkEdition } from "#utils/checkEdition.js";
 import { ErrorCode } from "#utils/errorCodes.js";
+import { parseBody } from "#utils/parseBody.js";
 import { WEBSOCKET_EVENTS } from "#websocket/websocket.constants.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
 
@@ -87,20 +89,7 @@ export class MatchController extends BaseController {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
 
-      const reqBody = req.body as {
-        updatedMatches: {
-          awayScore?: number;
-          fifaId?: number;
-          gametime: string;
-          homeScore?: number;
-          status: TMatchStatus;
-        }[];
-      };
-      const { updatedMatches } = reqBody;
-
-      if (!updatedMatches || !Array.isArray(updatedMatches) || updatedMatches.length === 0) {
-        throw new AppError("Campo obrigatório ausente ou inválido", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-      }
+      const { updatedMatches } = parseBody(updateMatchesSchema, req.body);
 
       const matches = await getMatchesFromCacheOrFetch(this.matchService, currentEdition, currentEdition);
       if (!matches || matches.length === 0) {

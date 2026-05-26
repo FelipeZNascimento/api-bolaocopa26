@@ -197,7 +197,7 @@ describe("AdminController", () => {
 
       expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0] as AppError;
-      expect(error.code).toBe(ErrorCode.MISSING_REQUIRED_FIELD);
+      expect(error.code).toBe(ErrorCode.INVALID_INPUT);
     });
 
     it("should throw error if edition is missing", async () => {
@@ -268,7 +268,7 @@ describe("AdminController", () => {
 
       expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0] as AppError;
-      expect(error.code).toBe(ErrorCode.MISSING_REQUIRED_FIELD);
+      expect(error.code).toBe(ErrorCode.INVALID_INPUT);
     });
 
     it("should throw error if newStatus is missing", async () => {
@@ -279,7 +279,7 @@ describe("AdminController", () => {
 
       expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0] as AppError;
-      expect(error.code).toBe(ErrorCode.MISSING_REQUIRED_FIELD);
+      expect(error.code).toBe(ErrorCode.INVALID_INPUT);
     });
 
     it("should throw error if edition is missing", async () => {

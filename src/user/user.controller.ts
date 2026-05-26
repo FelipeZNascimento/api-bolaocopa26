@@ -5,13 +5,22 @@ import { NextFunction, Request, Response } from "express";
 import { MailerService } from "#mailer/mailer.service.js";
 import { clearRankingCache } from "#ranking/ranking.utils.js";
 import { BaseController } from "#shared/base.controller.js";
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  registerSchema,
+  updateFavoritesSchema,
+  updatePasswordFromTokenSchema,
+  updatePasswordSchema,
+  updateProfileSchema,
+} from "#user/user.schemas.js";
 import { UserService } from "#user/user.service.js";
 import { checkExistingEntries } from "#user/user.utils.js";
-// import { generateVerificationToken, validateEmail } from "#user/user.utils.js";
 import { AppError } from "#utils/appError.js";
 import { cachedInfo } from "#utils/dataCache.js";
 import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
+import { parseBody } from "#utils/parseBody.js";
 
 import { generateVerificationToken } from "./user.utils.js";
 
@@ -32,12 +41,7 @@ export class UserController extends BaseController {
 
   forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const reqBody = req.body as { email: string };
-      const { email } = reqBody;
-
-      if (!email) {
-        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-      }
+      const { email } = parseBody(forgotPasswordSchema, req.body);
 
       const isEmailRegistered = await this.userService.isEmailRegistered(email);
       if (!isEmailRegistered) {
@@ -86,12 +90,7 @@ export class UserController extends BaseController {
       if (req.session.user) {
         return req.session.user;
       }
-      const reqBody = req.body as { email: string; password: string };
-      const { email, password } = reqBody;
-
-      if (!email || !password) {
-        throw new AppError("Credenciais inválidas", 401, ErrorCode.UNAUTHORIZED);
-      }
+      const { email, password } = parseBody(loginSchema, req.body);
 
       const userResponse = await this.userService.login(email, password);
       if (userResponse.length === 0) {
@@ -139,12 +138,7 @@ export class UserController extends BaseController {
       }
       const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
 
-      const reqBody = req.body as { email: string; name: string; nickname: string; password: string };
-      const { email, name, nickname, password } = reqBody;
-
-      if (!email || !password || !name || !nickname) {
-        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-      }
+      const { email, name, nickname, password } = parseBody(registerSchema, req.body);
 
       const isValid = await checkExistingEntries(this.userService, email, nickname);
       if (!isValid) {
@@ -190,12 +184,7 @@ export class UserController extends BaseController {
       }
 
       const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
-      const reqBody = req.body as { favorites: number[] };
-      const { favorites } = reqBody;
-
-      if (!favorites) {
-        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-      }
+      const { favorites } = parseBody(updateFavoritesSchema, req.body);
 
       const favoritesString = JSON.stringify(favorites);
       const updateResponse = await this.userService.updateFavorites(user!.id, editionId, favoritesString);
@@ -211,38 +200,29 @@ export class UserController extends BaseController {
 
   updatePassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const reqBody = req.body as { currentPassword: string; email: string; newPassword: string; token: string };
-      const { currentPassword, email, newPassword, token } = reqBody;
-
-      if (token) {
-        // If token is provided, it's a password reset request
-        if (!email || !newPassword) {
-          throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-        }
-
-        const cachedToken = cachedInfo.get(`PASSWORD_RESET_${email}`);
-        if (cachedToken !== token) {
-          throw new AppError("Token inválido ou expirado", 409, ErrorCode.VALIDATION_ERROR);
-        }
-
-        const user = await this.userService.getByEmail(email);
-        cachedInfo.del(`PASSWORD_RESET_${email}`);
-        void this.userService.updateLastOnlineTime(user!.id);
-        return await this.userService.updatePasswordFromToken(newPassword, user!.id);
-      } else if (currentPassword) {
-        // If currentPassword is provided, it's a regular password update request
-        if (!newPassword) {
-          throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-        }
-        const user = req.session.user;
-        const updatePasswordResponse = await this.userService.updatePassword(currentPassword, newPassword, user!.id);
-        if (updatePasswordResponse.affectedRows === 0) {
-          throw new AppError("Senha incorreta", 409, ErrorCode.INVALID_PASSWORD);
-        }
-        return;
-      } else {
-        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+      const { currentPassword, newPassword } = parseBody(updatePasswordSchema, req.body);
+      const user = req.session.user;
+      const updatePasswordResponse = await this.userService.updatePassword(currentPassword, newPassword, user!.id);
+      if (updatePasswordResponse.affectedRows === 0) {
+        throw new AppError("Senha incorreta", 409, ErrorCode.INVALID_PASSWORD);
       }
+      return;
+    });
+  };
+
+  updatePasswordFromToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    await this.handleRequest(req, res, next, async () => {
+      const { email, newPassword, token } = parseBody(updatePasswordFromTokenSchema, req.body);
+
+      const cachedToken = cachedInfo.get(`PASSWORD_RESET_${email}`);
+      if (cachedToken !== token) {
+        throw new AppError("Token inválido ou expirado", 409, ErrorCode.VALIDATION_ERROR);
+      }
+
+      const user = await this.userService.getByEmail(email);
+      cachedInfo.del(`PASSWORD_RESET_${email}`);
+      void this.userService.updateLastOnlineTime(user!.id);
+      return await this.userService.updatePasswordFromToken(newPassword, user!.id);
     });
   };
 
@@ -255,12 +235,7 @@ export class UserController extends BaseController {
       }
       const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
 
-      const reqBody = req.body as { name: string; nickname: string };
-      const { name, nickname } = reqBody;
-
-      if (!name || !nickname) {
-        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
-      }
+      const { name, nickname } = parseBody(updateProfileSchema, req.body);
 
       const isValid = await checkExistingEntries(this.userService, user!.email, nickname, user!.id);
       if (!isValid) {

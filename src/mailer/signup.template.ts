@@ -344,7 +344,7 @@ export const getSignupEmailTemplate = (user: string) => `
                   target="_blank"
                   ><img
                     alt="Illustration"
-                    src="https://sports.sbt.com.br/_next/image?url=https%3A%2F%2Fsbt-sports-assets-prod.s3.sa-east-1.amazonaws.com%2FCopa_do_Mundo_2026_comeca_em_junho_com_formato_inedito_e_48_selecoes_4bfcd02ef3.jpg&amp;w=1920&amp;q=90"
+                    src="https://assets.omegafox.me/copa/misc/email-footer.png"
                     style="outline:none;border:none;text-decoration:none;vertical-align:middle;display:inline-block;max-width:100%"
                 /></a>
               </div>

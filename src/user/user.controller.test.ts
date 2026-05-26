@@ -186,8 +186,8 @@ describe("UserController", () => {
 
       expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0] as AppError;
-      expect(error.statusCode).toBe(401);
-      expect(error.code).toBe(ErrorCode.UNAUTHORIZED);
+      expect(error.statusCode).toBe(400);
+      expect(error.code).toBe(ErrorCode.INVALID_INPUT);
     });
 
     it("should throw error if login fails", async () => {
@@ -256,7 +256,7 @@ describe("UserController", () => {
 
       expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0] as AppError;
-      expect(error.code).toBe(ErrorCode.MISSING_REQUIRED_FIELD);
+      expect(error.code).toBe(ErrorCode.INVALID_INPUT);
     });
 
     it("should throw error if email or nickname already exists", async () => {
@@ -351,7 +351,7 @@ describe("UserController", () => {
         token: "token123",
       };
 
-      await controller.updatePassword(req, res, next);
+      await controller.updatePasswordFromToken(req, res, next);
 
       expect(mockCachedInfo.get).toHaveBeenCalledWith("PASSWORD_RESET_test@example.com");
       expect(mockCachedInfo.del).toHaveBeenCalledWith("PASSWORD_RESET_test@example.com");
@@ -367,7 +367,7 @@ describe("UserController", () => {
         token: "token123",
       };
 
-      await controller.updatePassword(req, res, next);
+      await controller.updatePasswordFromToken(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0] as AppError;
@@ -412,7 +412,7 @@ describe("UserController", () => {
 
       expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0] as AppError;
-      expect(error.code).toBe(ErrorCode.MISSING_REQUIRED_FIELD);
+      expect(error.code).toBe(ErrorCode.INVALID_INPUT);
     });
   });
 
@@ -425,7 +425,7 @@ describe("UserController", () => {
 
       expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0] as AppError;
-      expect(error.code).toBe(ErrorCode.MISSING_REQUIRED_FIELD);
+      expect(error.code).toBe(ErrorCode.INVALID_INPUT);
     });
 
     it("should throw error if nickname already exists", async () => {
@@ -477,7 +477,7 @@ describe("UserController", () => {
 
       expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0] as AppError;
-      expect(error.code).toBe(ErrorCode.MISSING_REQUIRED_FIELD);
+      expect(error.code).toBe(ErrorCode.INVALID_INPUT);
     });
 
     it("should send password reset email and cache token", async () => {
