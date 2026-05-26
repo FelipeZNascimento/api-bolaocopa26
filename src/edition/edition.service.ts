@@ -24,7 +24,7 @@ export class EditionService {
 
   async getInfo(edition: number) {
     const rows = await db.query(
-      `SELECT SQL_NO_CACHE seasons.id, seasons.description FROM seasons
+      `SELECT seasons.id, seasons.description FROM seasons
         WHERE seasons.id = ?`,
       [edition],
     );
