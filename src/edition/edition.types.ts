@@ -4,6 +4,7 @@ export interface IReferee {
   dateOfBirth: string;
   id: number;
   idFifa: number;
+  isoCode: string;
   name: string;
 }
 
@@ -15,6 +16,7 @@ export interface IStadium {
   geoLatitude: string;
   geoLongitude: string;
   id: number;
+  isoCode: string;
   name: string;
 }
 

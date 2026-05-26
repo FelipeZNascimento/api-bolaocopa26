@@ -99,10 +99,7 @@ export class NewsScrapeService {
 
         const image = "";
 
-        const dateMatch = link.match(/\/(\d{4})\/(\d{2})\/(\d{2})\//);
-        const timestamp = dateMatch
-          ? Math.floor(new Date(`${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`).getTime() / 1000)
-          : Math.floor(Date.now() / 1000);
+        const timestamp = Math.floor(Date.now() / 1000);
 
         items.push({ edition_id: null, ge_id, image, link, summary, timestamp, title });
       } catch (err) {
