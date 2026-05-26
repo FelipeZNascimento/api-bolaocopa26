@@ -1,9 +1,12 @@
 import type { IUser } from "#user/user.types.js";
 
 // import { ICount } from "#shared/shared.types.js";
+import bcrypt from "bcrypt";
 import { ResultSetHeader } from "mysql2/promise";
 
 import db from "#database/db.js";
+
+const SALT_ROUNDS = 12;
 
 export class UserService {
   async deleteFromEdition(userId: number, editionId: number) {
@@ -120,24 +123,33 @@ export class UserService {
   }
 
   async login(email: string, password: string) {
+    const hashRows: { password: string }[] = await db.query(`SELECT password FROM users WHERE email = ? LIMIT 1`, [
+      email,
+    ]);
+
+    if (hashRows.length === 0) return [];
+
+    const passwordMatch = await bcrypt.compare(password, hashRows[0].password);
+    if (!passwordMatch) return [];
+
     const rows: IUser[] = await db.query(
       `SELECT SQL_NO_CACHE users.id, users.email, users.name, users.nickname, users.timestamp, users.admin,
         users_edition.is_active as isActive, users_favorites.favorites, users_edition.id_edition AS editionId
         FROM users
         LEFT JOIN users_edition ON users.id = users_edition.id_user
         LEFT JOIN users_favorites ON users.id = users_favorites.user_id
-        WHERE users.email = ?
-        AND users.password = ?`,
-      [email, password],
+        WHERE users.email = ?`,
+      [email],
     );
 
     return rows;
   }
 
   async register(email: string, name: string, nickname: string, password: string) {
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const rows: ResultSetHeader = await db.query(
       `INSERT INTO users (email, password, name, nickname) VALUES (?, ?, ?, ?)`,
-      [email, password, name, nickname],
+      [email, hashedPassword, name, nickname],
     );
 
     return rows;
@@ -185,23 +197,26 @@ export class UserService {
   }
 
   async updatePassword(currentPassword: string, newPassword: string, id: number) {
-    const rows: ResultSetHeader = await db.query(
-      `UPDATE users
-        SET users.password = ?
-        WHERE users.id = ?
-        AND users.password = ?`,
-      [newPassword, id, currentPassword],
-    );
+    const stored: { password: string }[] = await db.query(`SELECT password FROM users WHERE id = ? LIMIT 1`, [id]);
+
+    if (stored.length === 0) return { affectedRows: 0 } as ResultSetHeader;
+
+    const passwordMatch = await bcrypt.compare(currentPassword, stored[0].password);
+    if (!passwordMatch) return { affectedRows: 0 } as ResultSetHeader;
+
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    const rows: ResultSetHeader = await db.query(`UPDATE users SET password = ? WHERE id = ?`, [hashedPassword, id]);
 
     return rows;
   }
 
   async updatePasswordFromToken(newPassword: string, id: number) {
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
     const rows: ResultSetHeader = await db.query(
       `UPDATE users
         SET password = ?
         WHERE id = ?`,
-      [newPassword, id],
+      [hashedPassword, id],
     );
 
     return rows;

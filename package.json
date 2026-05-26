@@ -46,6 +46,7 @@
   },
   "homepage": "https://github.com/FelipeZNascimento/be-bolao-vue-ts#readme",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cheerio": "^1.2.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
@@ -63,6 +64,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@tsconfig/node22": "^22.0.2",
+    "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/express-mysql-session": "^3.0.3",
