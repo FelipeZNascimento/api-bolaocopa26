@@ -101,6 +101,7 @@ export class UserController extends BaseController {
       // If the user exists but is not associated with the current edition, create the association
       if (user === undefined) {
         await this.userService.setOnCurrentEdition(editionId, userResponse[0].id);
+        userResponse[0].isActive = false; // Set new edition users as inactive by default
       }
       user = userResponse[0];
 
