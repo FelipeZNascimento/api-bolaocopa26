@@ -1,3 +1,5 @@
+import { randomBytes } from "crypto";
+
 import { isFulfilled, isRejected } from "#utils/apiResponse.js";
 import { AppError } from "#utils/appError.js";
 import { ErrorCode } from "#utils/errorCodes.js";
@@ -10,6 +12,10 @@ export const checkExistingEntries = async (
   nickname: string,
   userId?: number,
 ) => {
+  if (!validateEmail(email)) {
+    throw new AppError("Email inválido", 400, ErrorCode.INVALID_EMAIL);
+  }
+
   const [emailCheckResponse, nicknameCheckResponse] = await Promise.allSettled([
     userService.isEmailRegistered(email, userId),
     userService.isNicknameRegistered(nickname, userId),
@@ -25,7 +31,7 @@ export const checkExistingEntries = async (
   return !isEmailRegistered && !isNicknameRegistered;
 };
 
-export const validateEmail = (email: string) => {
+const validateEmail = (email: string) => {
   const re =
     // eslint-disable-next-line max-len
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -33,8 +39,5 @@ export const validateEmail = (email: string) => {
 };
 
 export const generateVerificationToken = (): string => {
-  const randomA = Math.random().toString(36).substring(2); // remove `0.`
-  const randomB = Math.random().toString(36).substring(2); // remove `0.`
-
-  return `${randomA}${randomB}`;
+  return randomBytes(32).toString("hex");
 };

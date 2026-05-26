@@ -1,5 +1,6 @@
 import { createTransport, Transporter, TransportOptions } from "nodemailer";
 
+import { logger } from "#logger/logger.service.js";
 import { getActivationTemplate } from "#mailer/activation.template.js";
 import { getPasswordResetEmailTemplate } from "#mailer/reset.template.js";
 import { getSignupEmailTemplate } from "#mailer/signup.template.js";
@@ -59,12 +60,14 @@ export class MailerService {
       });
     } catch (error) {
       if (this.isProduction) throw error;
-      console.warn("sendActivationEmail failed (non-production, skipping)", error);
+      logger.warn({ error }, "sendActivationEmail failed (non-production, skipping)");
     }
   }
 
   async sendPasswordResetEmail(to: string, resetToken: string, locale?: string) {
     if (!this.smtpEnabled) return;
+
+    logger.info({ locale, to }, "Preparing to send password reset email");
 
     if (!process.env.BASE_URL) {
       throw new Error("BASE_URL is not defined in environment variables");
@@ -83,7 +86,7 @@ export class MailerService {
       });
     } catch (error) {
       if (this.isProduction) throw error;
-      console.warn("sendPasswordResetEmail failed (non-production, skipping)", error);
+      logger.warn({ error }, "sendPasswordResetEmail failed (non-production, skipping)");
     }
   }
 
@@ -107,7 +110,7 @@ export class MailerService {
       });
     } catch (error) {
       if (this.isProduction) throw error;
-      console.warn("sendSignupEmail failed (non-production, skipping)", error);
+      logger.warn({ error }, "sendSignupEmail failed (non-production, skipping)");
     }
   }
 
@@ -115,18 +118,18 @@ export class MailerService {
     try {
       // getVerificationEmailTemplate("test", "test"); // Pre-compile by running once
       getPasswordResetEmailTemplate("test"); // Pre-compile by running once
-      console.info("Email templates precompiled successfully");
+      logger.info("Email templates precompiled successfully");
     } catch (error) {
-      console.error("Failed to precompile email templates", { error });
+      logger.error({ error }, "Failed to precompile email templates");
     }
   }
 
   private async testConnection() {
     try {
       await this.transporter.verify();
-      console.info("SMTP connection verified");
+      logger.info("SMTP connection verified");
     } catch (error) {
-      console.error("SMTP connection failed", { error });
+      logger.error({ error }, "SMTP connection failed");
     }
   }
 }

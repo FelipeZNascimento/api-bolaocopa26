@@ -2,6 +2,7 @@ import cors from "cors";
 import express, { ErrorRequestHandler } from "express";
 import mySqlSession from "express-mysql-session";
 import expressSession from "express-session";
+import helmet from "helmet";
 
 import adminRoutes from "#admin/admin.routes.js";
 import betRoutes from "#bet/bet.routes.js";
@@ -70,6 +71,7 @@ const corsOptions = {
 
 // CORS must be registered before session middleware so preflight OPTIONS
 // requests are resolved before any other middleware runs.
+app.use(helmet());
 app.use(cors(corsOptions));
 
 const MySQLStore = mySqlSession(expressSession as never);

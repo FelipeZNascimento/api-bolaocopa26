@@ -351,7 +351,7 @@ describe("UserController", () => {
         token: "token123",
       };
 
-      await controller.updatePassword(req, res, next);
+      await controller.updatePasswordFromToken(req, res, next);
 
       expect(mockCachedInfo.get).toHaveBeenCalledWith("PASSWORD_RESET_test@example.com");
       expect(mockCachedInfo.del).toHaveBeenCalledWith("PASSWORD_RESET_test@example.com");
@@ -367,7 +367,7 @@ describe("UserController", () => {
         token: "token123",
       };
 
-      await controller.updatePassword(req, res, next);
+      await controller.updatePasswordFromToken(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(AppError));
       const error = next.mock.calls[0][0] as AppError;

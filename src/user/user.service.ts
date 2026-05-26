@@ -54,13 +54,15 @@ export class UserService {
   }
 
   async getByEmail(email: string) {
+    const normalizedEmail = email.toLowerCase();
+
     const row: IUser[] = await db.query(
       `SELECT SQL_NO_CACHE users.id, users.email, users.name, users.nickname, users.admin,
         users_edition.id AS seasonId, users_edition.is_active as isActive
         FROM users
         INNER JOIN users_edition ON users.id = users_edition.id_user
         WHERE users.email = ?`,
-      [email],
+      [normalizedEmail],
     );
 
     return row.length > 0 ? row[0] : null;
@@ -105,9 +107,11 @@ export class UserService {
   }
 
   async isEmailRegistered(email: string, userId?: number) {
+    const normalizedEmail = email.toLowerCase();
+
     const [rows]: [{ count: number }] = await db.query(
       `SELECT SQL_NO_CACHE COUNT(*) as count FROM users WHERE email = ?${userId ? " AND id != ?" : ""}`,
-      userId ? [email, userId] : [email],
+      userId ? [normalizedEmail, userId] : [normalizedEmail],
     );
 
     return rows.count > 0;
