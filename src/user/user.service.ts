@@ -123,8 +123,9 @@ export class UserService {
   }
 
   async login(email: string, password: string) {
+    const normalizedEmail = email.toLowerCase();
     const hashRows: { password: string }[] = await db.query(`SELECT password FROM users WHERE email = ? LIMIT 1`, [
-      email,
+      normalizedEmail,
     ]);
 
     if (hashRows.length === 0) return [];
@@ -139,17 +140,18 @@ export class UserService {
         LEFT JOIN users_edition ON users.id = users_edition.id_user
         LEFT JOIN users_favorites ON users.id = users_favorites.user_id
         WHERE users.email = ?`,
-      [email],
+      [normalizedEmail],
     );
 
     return rows;
   }
 
   async register(email: string, name: string, nickname: string, password: string) {
+    const normalizedEmail = email.toLowerCase();
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const rows: ResultSetHeader = await db.query(
       `INSERT INTO users (email, password, name, nickname) VALUES (?, ?, ?, ?)`,
-      [email, hashedPassword, name, nickname],
+      [normalizedEmail, hashedPassword, name, nickname],
     );
 
     return rows;
