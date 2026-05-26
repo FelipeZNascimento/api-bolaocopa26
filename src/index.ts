@@ -109,4 +109,14 @@ const shutdown = () => {
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
 
+process.on("uncaughtException", (error: Error) => {
+  logger.error({ err: error }, "Uncaught exception — shutting down");
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason: unknown) => {
+  logger.error({ reason }, "Unhandled promise rejection — shutting down");
+  process.exit(1);
+});
+
 export default server;

@@ -2,6 +2,7 @@ import type { IExtraBetRaw, IExtraBetResultRaw } from "#bet/bet.types.js";
 import type { IPlayer, ITeam } from "#team/team.types.js";
 import { NextFunction, Request, Response } from "express";
 
+import { updateBetSchema, updateExtraBetSchema } from "#bet/bet.schemas.js";
 import { BetService } from "#bet/bet.service.js";
 import { groupExtraBetsByType, parseExtraBetResult, parseExtraBets } from "#bet/bet.utils.js";
 import { EditionService } from "#edition/edition.service.js";
@@ -15,6 +16,7 @@ import { IUser } from "#user/user.types.js";
 import { AppError } from "#utils/appError.js";
 import { checkEdition } from "#utils/checkEdition.js";
 import { ErrorCode } from "#utils/errorCodes.js";
+import { parseBody } from "#utils/parseBody.js";
 import { EXTRA_TYPE_CHAMPION } from "./bet.constants.js";
 
 export class BetController extends BaseController {
@@ -92,8 +94,7 @@ export class BetController extends BaseController {
         throw new AppError("Usuário inativo", 403, ErrorCode.FORBIDDEN);
       }
 
-      const reqBody = req.body as { awayScore: null | number; homeScore: null | number; matchId: number };
-      const { awayScore, homeScore, matchId } = reqBody;
+      const { awayScore, homeScore, matchId } = parseBody(updateBetSchema, req.body);
 
       const matchResponse = await this.matchService.getTimestampByMatchId(matchId);
       const nowTimestamp = Math.floor(new Date().getTime() / 1000);
@@ -117,8 +118,7 @@ export class BetController extends BaseController {
 
       const nowTimestamp = Math.floor(new Date().getTime() / 1000);
       const { edition, editionStart } = checkEdition(req.params.edition);
-      const reqBody = req.body as { extraType: string; playerId: number; teamId: number };
-      const { extraType, playerId, teamId } = reqBody;
+      const { extraType, playerId, teamId } = parseBody(updateExtraBetSchema, req.body);
       const maxStartedRound = await this.editionService.getMaxStartedRound(edition);
 
       if (!editionStart || !edition) {

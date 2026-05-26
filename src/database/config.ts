@@ -18,9 +18,5 @@ const config = {
       : {}),
   },
   listPerPage: 100,
-  port: 3306,
-  ssl: {
-    rejectUnauthorized: true,
-  },
 };
 export default config;

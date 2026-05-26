@@ -12,7 +12,7 @@ import { httpLogger } from "#logger/logger.middleware.js";
 import { logger } from "#logger/logger.service.js";
 import matchRoutes from "#match/match.routes.js";
 import { errorHandler } from "#middlewares/errorHandler.js";
-import { cache, middleware, updateUserActivity } from "#middlewares/middlewares.js";
+import { cache, updateUserActivity } from "#middlewares/middlewares.js";
 import newsRoutes from "#news/news.routes.js";
 import rankingRoutes from "#ranking/ranking.routes.js";
 import teamRoutes from "#team/team.routes.js";
@@ -127,7 +127,14 @@ app.use("/edition", editionRoutes);
 app.use("/ranking", rankingRoutes);
 app.use("/news", newsRoutes);
 
-app.get("/", [middleware]);
+app.get("/health", async (_req, res) => {
+  try {
+    await connection.query("SELECT 1");
+    res.status(200).json({ db: "ok", status: "ok" });
+  } catch {
+    res.status(503).json({ db: "unreachable", status: "error" });
+  }
+});
 
 // Error Handler should be last
 const errorMiddleware: ErrorRequestHandler = (err, req, res, next) => {

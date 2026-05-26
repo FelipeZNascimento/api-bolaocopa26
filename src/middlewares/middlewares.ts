@@ -43,7 +43,3 @@ export const requireAdmin: RequestHandler = (req, res, next) => {
   }
   next();
 };
-
-export const middleware: RequestHandler = (req, res) => {
-  res.send("Hello World!");
-};
