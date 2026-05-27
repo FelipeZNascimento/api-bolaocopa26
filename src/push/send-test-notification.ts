@@ -18,6 +18,7 @@ import { initPushNotifications, sendPushNotification } from "#push/push.service.
 interface IPushSubscriptionRow extends RowDataPacket {
   auth: string;
   endpoint: string;
+  locale: null | string;
   p256dh: string;
   user_id: number;
 }
@@ -30,10 +31,17 @@ async function sendTestNotification(): Promise<void> {
 
   const [rows] = userId
     ? await connection.query<IPushSubscriptionRow[]>(
-        "SELECT user_id, endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ?",
+        `SELECT ps.user_id, ps.endpoint, ps.p256dh, ps.auth, u.locale
+         FROM push_subscriptions ps
+         INNER JOIN users u ON ps.user_id = u.id
+         WHERE ps.user_id = ?`,
         [userId],
       )
-    : await connection.query<IPushSubscriptionRow[]>("SELECT user_id, endpoint, p256dh, auth FROM push_subscriptions");
+    : await connection.query<IPushSubscriptionRow[]>(
+        `SELECT ps.user_id, ps.endpoint, ps.p256dh, ps.auth, u.locale
+         FROM push_subscriptions ps
+         INNER JOIN users u ON ps.user_id = u.id`,
+      );
 
   if (rows.length === 0) {
     logger.warn({ userId }, "No subscriptions found");
@@ -41,11 +49,6 @@ async function sendTestNotification(): Promise<void> {
   }
 
   logger.info({ total: rows.length }, "Sending test notification(s)");
-
-  const payload = {
-    body: "Se você está vendo isso, as notificações estão funcionando!",
-    title: "Bolão da Copa 2026 🏆",
-  };
 
   let sent = 0;
   let failed = 0;
@@ -55,6 +58,11 @@ async function sendTestNotification(): Promise<void> {
       endpoint: row.endpoint,
       keys: { auth: row.auth, p256dh: row.p256dh },
     };
+
+    const isEn = row.locale?.toLowerCase().startsWith("en") ?? false;
+    const payload = isEn
+      ? { body: "If you're seeing this, notifications are working!", title: "Bolão da Copa 2026 🏆" }
+      : { body: "Se você está vendo isso, as notificações estão funcionando!", title: "Bolão da Copa 2026 🏆" };
 
     try {
       await sendPushNotification(subscription, payload);

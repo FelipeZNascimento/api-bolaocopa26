@@ -60,6 +60,7 @@ const createUser = (id: number, name: string, nickname?: string): IUser => ({
   id,
   isActive: true,
   isOnline: true,
+  locale: null,
   name,
   nickname: nickname ?? name,
   timestamp: 0,

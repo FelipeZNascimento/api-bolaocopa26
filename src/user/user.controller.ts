@@ -11,6 +11,7 @@ import {
   registerSchema,
   subscribePushNotificationSchema,
   updateFavoritesSchema,
+  updateLocaleSchema,
   updatePasswordFromTokenSchema,
   updatePasswordSchema,
   updateProfileSchema,
@@ -206,6 +207,21 @@ export class UserController extends BaseController {
 
         return req.session.user;
       }
+    });
+  };
+
+  updateLocale = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    await this.handleRequest(req, res, next, async () => {
+      const user = req.session.user;
+      const { locale } = parseBody(updateLocaleSchema, req.body);
+
+      if (!user) {
+        return;
+      }
+
+      await this.userService.updateLocale(user.id, locale);
+      user.locale = locale;
+      req.session.user = user;
     });
   };
 

@@ -7,6 +7,7 @@ export interface IUser {
   id: number;
   isActive: boolean;
   isOnline: boolean;
+  locale: null | string;
   name: string;
   nickname: string;
   timestamp: number;

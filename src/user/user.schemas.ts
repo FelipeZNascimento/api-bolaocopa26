@@ -36,6 +36,10 @@ export const updateProfileSchema = z.object({
   nickname: z.string().trim().min(4).max(12),
 });
 
+export const updateLocaleSchema = z.object({
+  locale: z.string().min(2).max(10),
+});
+
 export const subscribePushNotificationSchema = z.object({
   endpoint: z.url(),
   expirationTime: z.number().nullable(),
