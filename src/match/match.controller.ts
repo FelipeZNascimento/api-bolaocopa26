@@ -33,7 +33,7 @@ import { ErrorCode } from "#utils/errorCodes.js";
 import { parseBody } from "#utils/parseBody.js";
 import { WEBSOCKET_EVENTS } from "#websocket/websocket.constants.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
-import { MatchSyncService } from "./match.sync.service";
+import { MatchSyncService } from "./match.sync.service.js";
 
 export class MatchController extends BaseController {
   constructor(
