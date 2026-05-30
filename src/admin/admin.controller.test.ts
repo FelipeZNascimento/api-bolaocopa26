@@ -50,6 +50,7 @@ const mockUser: IUser = {
   id: 1,
   isActive: true,
   isOnline: false,
+  locale: null,
   name: "Test User",
   nickname: "testuser",
   timestamp: 123456789,

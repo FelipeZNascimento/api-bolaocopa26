@@ -23,7 +23,7 @@ export class UserService {
     const rows: IUser[] = await db.query(
       `SELECT users.id, users.email, users.name, users.nickname,
         users_edition.is_active as isActive,
-        users.timestamp, users.admin,
+        users.timestamp, users.admin, users.locale,
         (users.timestamp IS NOT NULL AND (UNIX_TIMESTAMP(NOW()) - users.timestamp) < 600) AS isOnline,
         (SELECT COUNT(*) FROM extra_bets WHERE id_edition = users_edition.id_edition
         AND id_user = users.id) AS extrasCount
@@ -41,7 +41,7 @@ export class UserService {
     const rows: IUser[] = await db.query(
       `SELECT users.id, users.name, users.nickname,
         users_edition.is_active as isActive,
-        users.timestamp, users.admin,
+        users.timestamp, users.admin, users.locale,
         (users.timestamp IS NOT NULL AND (UNIX_TIMESTAMP(NOW()) - users.timestamp) < 600) AS isOnline
         FROM users
         JOIN users_edition ON users.id = users_edition.id_user
@@ -57,7 +57,7 @@ export class UserService {
     const normalizedEmail = email.toLowerCase();
 
     const row: IUser[] = await db.query(
-      `SELECT users.id, users.email, users.name, users.nickname, users.admin,
+      `SELECT users.id, users.email, users.name, users.nickname, users.admin, users.locale,
         users_edition.id AS seasonId, users_edition.is_active as isActive
         FROM users
         INNER JOIN users_edition ON users.id = users_edition.id_user
@@ -70,7 +70,7 @@ export class UserService {
 
   async getById(userId: number, editionId: number) {
     const row: IUser[] = await db.query(
-      `SELECT users.id, users.name, users.nickname, users.email, users.admin,
+      `SELECT users.id, users.name, users.nickname, users.email, users.admin, users.locale,
         users_edition.is_active as isActive,
         users.timestamp,
         users_favorites.favorites
@@ -138,7 +138,7 @@ export class UserService {
     if (!passwordMatch) return [];
 
     const rows: IUser[] = await db.query(
-      `SELECT users.id, users.email, users.name, users.nickname, users.timestamp, users.admin,
+      `SELECT users.id, users.email, users.name, users.nickname, users.timestamp, users.admin, users.locale,
         users_edition.is_active as isActive, users_favorites.favorites, users_edition.id_edition AS editionId
         FROM users
         LEFT JOIN users_edition ON users.id = users_edition.id_user
@@ -202,6 +202,11 @@ export class UserService {
     return rows;
   }
 
+  async updateLocale(userId: number, locale: string) {
+    const rows: ResultSetHeader = await db.query(`UPDATE users SET locale = ? WHERE id = ?`, [locale, userId]);
+    return rows;
+  }
+
   async updatePassword(currentPassword: string, newPassword: string, id: number) {
     const stored: { password: string }[] = await db.query(`SELECT password FROM users WHERE id = ? LIMIT 1`, [id]);
 
@@ -238,5 +243,14 @@ export class UserService {
     );
 
     return rows;
+  }
+
+  updatePushSubscription(userId: number, endpoint: string, keys: { auth: string; p256dh: string }) {
+    return db.query(
+      `INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE p256dh = VALUES(p256dh), auth = VALUES(auth)`,
+      [userId, endpoint, keys.p256dh, keys.auth],
+    );
   }
 }
