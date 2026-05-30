@@ -4,21 +4,26 @@ import { IPlayer, ITeam } from "#team/team.types.js";
 // import { RowDataPacket } from "mysql2/promise";
 
 export interface IEvent {
-  event: {
-    description: string;
-    descriptionEn: string;
-    gametime: string;
-    id: number;
-  };
-  id: number;
+  coach?: boolean;
+  event: IEventInfo | null;
+  gametime: string;
+  id?: number;
   matchId: number;
-  player: IPlayer;
+  player: IPlayer | null;
   playerAssist: IPlayer | null;
+  staff?: boolean;
+  teamId: number;
+}
+
+export interface IEventInfo {
+  code: string;
+  description: string;
+  descriptionEn: string;
+  fifaId: number;
+  id: number;
 }
 
 export interface IEventRaw {
-  eventDescription: string;
-  eventDescriptionEn: string;
   eventId: number;
   gametime: string;
   id: number;
@@ -29,7 +34,9 @@ export interface IEventRaw {
 
 export interface IFifaBooking {
   Card: number; // 1 for yellow, 2 for red
-  IdPlayer: string;
+  IdCoach?: string;
+  IdPlayer?: string;
+  IdStaff?: string;
   IdTeam: string;
   Minute: string;
 }
@@ -38,6 +45,7 @@ export interface IFifaGoal {
   IdPlayer: string;
   IdTeam: string; // It may not be the same as the main team id in case of own goals
   Minute: string;
+  Period: number;
   Type: number; // 1 for penalty, 2 for regular goal, 3 for own goal (tbc)
 }
 

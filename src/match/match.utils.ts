@@ -1,4 +1,4 @@
-import type { IEvent, IEventRaw, IMatch, IMatchRaw } from "#match/match.types.js";
+import type { IEvent, IEventInfo, IEventRaw, IMatch, IMatchRaw } from "#match/match.types.js";
 import type { IPlayer, ITeam } from "#team/team.types.js";
 
 import { IBet } from "#bet/bet.types.js";
@@ -14,26 +14,24 @@ export const isMatchEnded = (status: TMatchStatus) => {
   return status === MATCH_STATUS.FINAL || status === MATCH_STATUS.FINAL_EXTRA_TIME || status === MATCH_STATUS.CANCELLED;
 };
 
-export const parseRawEvents = (eventsRaw: IEventRaw[], players: IPlayer[]): IEvent[] => {
+export const parseRawEvents = (eventsRaw: IEventRaw[], eventsInfo: IEventInfo[], players: IPlayer[]): IEvent[] => {
   return eventsRaw.map((event) => {
     const player = players.find((p) => p.id === event.playerId);
     const playerTwo = event.playerTwoId ? players.find((p) => p.id === event.playerTwoId) : null;
+    const eventInfo = eventsInfo.find((e) => e.id === event.eventId) ?? null;
 
     if (!player) {
       throw new Error(`Player with ID ${event.playerId.toString()} not found for event ${event.id.toString()}`);
     }
 
     return {
-      event: {
-        description: event.eventDescription,
-        descriptionEn: event.eventDescriptionEn,
-        gametime: event.gametime,
-        id: event.eventId,
-      },
+      event: eventInfo,
+      gametime: event.gametime,
       id: event.id,
       matchId: event.matchId,
       player,
       playerAssist: playerTwo ?? null,
+      teamId: 0, // TODO: Add team ID on DB
     };
   });
 };
@@ -138,30 +136,25 @@ export const getEventsFromCacheOrFetch = async (
   }
 
   const eventsRaw: IEventRaw[] = await matchService.getEvents(editionId);
-  const events: IEvent[] = parseRawEvents(eventsRaw, players);
+  const eventsInfo = await getEventsInfoFromCacheOrFetch(matchService);
+
+  const events: IEvent[] = parseRawEvents(eventsRaw, eventsInfo, players);
   cachedInfo.set(CACHE_KEYS.EVENTS, events, 60 * 60 * 24 * 14); // Cache for 14 days
   return [...events];
 };
 
-// export const getStadiumsFromCacheOrFetch = async (
-//   matchService: MatchService,
-//   requestedEdition: number,
-//   currentEdition: number,
-// ): Promise<IStadium[]> => {
-//   const cachedStadiums: IStadium[] | undefined = cachedInfo.get(CACHE_KEYS.STADIUMS);
+export const getEventsInfoFromCacheOrFetch = async (matchService: MatchService): Promise<IEventInfo[]> => {
+  const cachedEventInfo: IEventInfo[] | undefined = cachedInfo.get(CACHE_KEYS.EVENTS_INFO);
 
-//   if (cachedStadiums && requestedEdition === currentEdition) {
-//     logger.debug("Returning stadiums from cache");
-//     return cachedStadiums;
-//   }
+  if (cachedEventInfo) {
+    logger.debug("Returning event info from cache");
+    return cachedEventInfo;
+  }
 
-//   const stadiums = await matchService.getStadiums(requestedEdition);
-
-//   if (requestedEdition === currentEdition) {
-//     setStadiumsCache(stadiums);
-//   }
-//   return [...stadiums];
-// };
+  const eventsInfo: IEventInfo[] = await matchService.getEventsInfo();
+  cachedInfo.set(CACHE_KEYS.EVENTS_INFO, eventsInfo, 60 * 60 * 24 * 14); // Cache for 14 days
+  return [...eventsInfo];
+};
 
 export const getMatchesFromCacheOrFetch = async (
   matchService: MatchService,

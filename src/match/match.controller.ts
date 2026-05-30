@@ -33,6 +33,7 @@ import { ErrorCode } from "#utils/errorCodes.js";
 import { parseBody } from "#utils/parseBody.js";
 import { WEBSOCKET_EVENTS } from "#websocket/websocket.constants.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
+import { MatchSyncService } from "./match.sync.service";
 
 export class MatchController extends BaseController {
   constructor(
@@ -79,6 +80,13 @@ export class MatchController extends BaseController {
         .filter((match) => match.status === FOOTBALL_MATCH_STATUS.NOT_STARTED)
         .sort((a, b) => a.timestamp - b.timestamp)
         .slice(0, 3);
+    });
+  };
+
+  syncMatches = (req: Request, res: Response, next: NextFunction): void => {
+    this.handleRequestFromCache(req, res, next, () => {
+      const matchSyncService = MatchSyncService.getInstance();
+      void matchSyncService.sync();
     });
   };
 

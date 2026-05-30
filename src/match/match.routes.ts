@@ -22,6 +22,7 @@ router.post("/update", matchController.updateMatches);
 router.get("/", matchController.getByEdition);
 router.get("/next-matches", matchController.getNextMatches);
 router.get("/live-matches", matchController.getLiveMatches);
+router.get("/sync-matches", matchController.syncMatches);
 router.get("/:edition{/:round}", matchController.getByEdition);
 
 export default router;

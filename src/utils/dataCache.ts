@@ -13,6 +13,7 @@ export const CACHE_KEYS = {
   CLUBS: 8,
   EVENTS: 9,
   EDITION_INFO: 10,
+  EVENTS_INFO: 11,
 };
 
 export const cachedInfo = new NodeCache();
