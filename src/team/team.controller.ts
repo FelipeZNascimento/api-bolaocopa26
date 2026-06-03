@@ -2,7 +2,6 @@ import type { IPlayer, ITeam } from "#team/team.types.js";
 
 import { NextFunction, Request, Response } from "express";
 
-import { logger } from "#logger/logger.service.js";
 import { BaseController } from "#shared/base.controller.js";
 import { TeamService } from "#team/team.service.js";
 import { AppError } from "#utils/appError.js";
