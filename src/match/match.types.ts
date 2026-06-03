@@ -9,7 +9,7 @@ export interface IEvent {
   gametime: string;
   id?: number;
   matchId: number;
-  player: IPlayer | null;
+  player: IPlayer;
   playerAssist: IPlayer | null;
   staff?: boolean;
   teamId: number;
@@ -124,7 +124,7 @@ export interface IMatchRaw {
   scoreAway: number;
   scoreHome: number;
   status: number;
-  timestamp: number;
+  timestamp: string;
 }
 
 export interface IScore {

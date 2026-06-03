@@ -25,7 +25,7 @@
   "Attendance": "88966",
   "Date": "2022-12-18T15:00:00Z",
   "LocalDate": "2022-12-18T18:00:00Z",
-  "MatchTime": "45'",
+  "MatchTime": "6'",
   "SecondHalfTime": null,
   "FirstHalfTime": null,
   "FirstHalfExtraTime": null,
@@ -33,7 +33,7 @@
   "Winner": "43911",
   "Period": 3,
   "HomeTeam": {
-    "Score": 3,
+    "Score": 4,
     "Side": null,
     "IdTeam": "43911",
     "PictureUrl": "https://api.fifa.com/api/v3/picture/flags-{format}-{size}/MEX",
@@ -513,7 +513,68 @@
         "LineupY": null
       }
     ],
-    "Bookings": [],
+    "Bookings": [
+      {
+        "Card": 1,
+        "Period": 3,
+        "IdEvent": null,
+        "EventNumber": null,
+        "IdPlayer": "270775",
+        "IdCoach": null,
+        "IdStaff": null,
+        "IdTeam": "43911",
+        "Minute": "45'+7'",
+        "Reason": null
+      },
+      {
+        "Card": 1,
+        "Period": 5,
+        "IdEvent": null,
+        "EventNumber": null,
+        "IdPlayer": "270775",
+        "IdCoach": null,
+        "IdStaff": null,
+        "IdTeam": "43911",
+        "Minute": "90'+8'",
+        "Reason": null
+      },
+      {
+        "Card": 1,
+        "Period": 9,
+        "IdEvent": null,
+        "EventNumber": null,
+        "IdPlayer": "270775",
+        "IdCoach": null,
+        "IdStaff": null,
+        "IdTeam": "43911",
+        "Minute": "114'",
+        "Reason": null
+      },
+      {
+        "Card": 1,
+        "Period": 9,
+        "IdEvent": null,
+        "EventNumber": null,
+        "IdPlayer": "270775",
+        "IdCoach": null,
+        "IdStaff": null,
+        "IdTeam": "43911",
+        "Minute": "116'",
+        "Reason": null
+      },
+      {
+        "Card": 1,
+        "Period": 11,
+        "IdEvent": null,
+        "EventNumber": null,
+        "IdPlayer": "270775",
+        "IdCoach": null,
+        "IdStaff": null,
+        "IdTeam": "43911",
+        "Minute": "125'",
+        "Reason": null
+      }
+    ],
     "Goals": [
       {
         "Type": 1,
@@ -527,18 +588,54 @@
       {
         "Type": 2,
         "IdPlayer": "270775",
-        "Minute": "38'",
+        "Minute": "36'",
         "IdAssistPlayer": "270775",
         "Period": 3,
         "IdGoal": null,
         "IdTeam": "43911"
       },
       {
+        "Type": 2,
+        "IdPlayer": "270775",
+        "Minute": "108'",
+        "IdAssistPlayer": "270775",
+        "Period": 9,
+        "IdGoal": null,
+        "IdTeam": "43911"
+      },
+      {
         "Type": 1,
         "IdPlayer": "270775",
-        "Minute": "45'+3'",
+        "Minute": "121'",
         "IdAssistPlayer": "270775",
-        "Period": 3,
+        "Period": 11,
+        "IdGoal": null,
+        "IdTeam": "43911"
+      },
+      {
+        "Type": 1,
+        "IdPlayer": "270775",
+        "Minute": "123'",
+        "IdAssistPlayer": "270775",
+        "Period": 11,
+        "IdGoal": null,
+        "IdTeam": "43911"
+      },
+      {
+        "Type": 1,
+        "IdPlayer": "270775",
+        "Minute": "125'",
+        "IdAssistPlayer": "270775",
+        "Period": 11,
+        "IdGoal": null,
+        "IdTeam": "43911"
+      },
+      {
+        "Type": 1,
+        "IdPlayer": "270775",
+        "Minute": "126'",
+        "IdAssistPlayer": "270775",
+        "Period": 11,
         "IdGoal": null,
         "IdTeam": "43911"
       }
@@ -1080,9 +1177,79 @@
         "IdTeam": "43883",
         "Minute": "55'",
         "Reason": null
+      },
+      {
+        "Card": 1,
+        "Period": 5,
+        "IdEvent": null,
+        "EventNumber": null,
+        "IdPlayer": "403109",
+        "IdCoach": null,
+        "IdStaff": null,
+        "IdTeam": "43883",
+        "Minute": "87'",
+        "Reason": null
+      },
+      {
+        "Card": 1,
+        "Period": 5,
+        "IdEvent": null,
+        "EventNumber": null,
+        "IdPlayer": "403109",
+        "IdCoach": null,
+        "IdStaff": null,
+        "IdTeam": "43883",
+        "Minute": "90'+5'",
+        "Reason": null
       }
     ],
-    "Goals": [],
+    "Goals": [
+      {
+        "Type": 1,
+        "IdPlayer": "403109",
+        "Minute": "80'",
+        "IdAssistPlayer": "403109",
+        "Period": 5,
+        "IdGoal": null,
+        "IdTeam": "43883"
+      },
+      {
+        "Type": 2,
+        "IdPlayer": "403109",
+        "Minute": "81'",
+        "IdAssistPlayer": "403109",
+        "Period": 5,
+        "IdGoal": null,
+        "IdTeam": "43883"
+      },
+      {
+        "Type": 1,
+        "IdPlayer": "403109",
+        "Minute": "118'",
+        "IdAssistPlayer": "403109",
+        "Period": 9,
+        "IdGoal": null,
+        "IdTeam": "43883"
+      },
+      {
+        "Type": 1,
+        "IdPlayer": "403109",
+        "Minute": "121'",
+        "IdAssistPlayer": "403109",
+        "Period": 11,
+        "IdGoal": null,
+        "IdTeam": "43883"
+      },
+      {
+        "Type": 1,
+        "IdPlayer": "403109",
+        "Minute": "126'",
+        "IdAssistPlayer": "403109",
+        "Period": 11,
+        "IdGoal": null,
+        "IdTeam": "43883"
+      }
+    ],
     "Substitutions": [
       {
         "IdEvent": null,

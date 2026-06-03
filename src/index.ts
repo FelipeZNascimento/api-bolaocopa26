@@ -17,7 +17,6 @@ import { NewsScrapeService } from "#news/news.scrape.service.js";
 import { TeamService } from "#team/team.service.js";
 import { getPlayersFromCacheOrFetch, getTeamsFromCacheOrFetch } from "#team/team.util.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
-
 import app from "./app.js";
 
 const warmUpCache = async (): Promise<void> => {

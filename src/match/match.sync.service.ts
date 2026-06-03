@@ -1,6 +1,6 @@
-import type { IEvent, IFifaMatch, IMatch } from "#match/match.types.js";
+import type { IEvent, IEventInfo, IFifaMatch, IMatch } from "#match/match.types.js";
 
-import { readFileSync } from "fs";
+// import { readFileSync } from "fs";
 
 import { EditionService } from "#edition/edition.service.js";
 import { getEditionInfoFromCacheOrFetch } from "#edition/edition.util.js";
@@ -9,9 +9,9 @@ import { MatchExternalAPI } from "#match/match.external-api.js";
 import { MatchService } from "#match/match.service.js";
 import { getEventsInfoFromCacheOrFetch, getMatchesFromCacheOrFetch, setMatchesCache } from "#match/match.utils.js";
 import { TeamService } from "#team/team.service.js";
+import { IPlayer } from "#team/team.types.js";
 import { getPlayersFromCacheOrFetch, getTeamsFromCacheOrFetch } from "#team/team.util.js";
 import { AppError } from "#utils/appError.js";
-import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { WEBSOCKET_EVENTS } from "#websocket/websocket.constants.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
@@ -46,6 +46,7 @@ export class MatchSyncService {
   private externalAPI: MatchExternalAPI;
   private intervalId: NodeJS.Timeout | null = null;
   private isSyncing = false;
+  private matchesToBeFetched: IMatch[];
   private matchService: MatchService;
   private stats: IMatchSyncStats = {
     duration: 0,
@@ -63,6 +64,7 @@ export class MatchSyncService {
     this.teamService = new TeamService();
     this.editionService = new EditionService();
     this.websocketService = WebSocketService.getInstance();
+    this.matchesToBeFetched = [];
   }
 
   public static getInstance(): MatchSyncService {
@@ -127,7 +129,7 @@ export class MatchSyncService {
       return;
     }
 
-    const startTime = Date.now();
+    const nowTimeOnStart = Math.floor(Date.now() / 1000);
     this.isSyncing = true;
 
     try {
@@ -142,110 +144,62 @@ export class MatchSyncService {
       const matches = await getMatchesFromCacheOrFetch(this.matchService, currentEdition, currentEdition);
       const teams = await getTeamsFromCacheOrFetch(this.teamService, currentEdition);
       const players = await getPlayersFromCacheOrFetch(this.teamService, currentEdition, teams);
-      // const cachedMatches = allMatches.filter(
-      //   // Only consider matches within 1 day (before or after)
-      //   (m) => m.timestamp >= startTime - 60 * 60 * 24 || m.timestamp <= startTime + 60 * 60 * 24,
-      // );
-
-      // For testing, only fetch one match from external API
-      const cachedMatches = matches.filter((m) => m.idFifa === 400021443);
-
-      logger.debug(
-        { changedMatches: JSON.stringify(cachedMatches.map((m) => m.id)) },
-        "Match close to current time, will check for updates",
+      const closeMatches = matches.filter(
+        // Only consider matches within 2 hours before AND 4h after
+        (m) => m.timestamp >= nowTimeOnStart - 60 * 60 * 2 && m.timestamp <= nowTimeOnStart + 60 * 60 * 4,
       );
 
+      // Include close matches to the fetch list
+      closeMatches.forEach((m) => this.matchesToBeFetched.includes(m) || this.matchesToBeFetched.push(m));
+      let matchesToBeSaved: IMatch[] = [];
+
+      // Remove matches that are more than 4 hours old from the fetch list, add to the save list
+      this.matchesToBeFetched.forEach((m) => {
+        if (m.timestamp < nowTimeOnStart - 60 * 60 * 4) {
+          logger.info(
+            { matchId: m.id, matchTimestamp: m.timestamp, now: nowTimeOnStart },
+            "Found match that started 4h+ ago, will save on DB and remove from fetch list",
+          );
+
+          matchesToBeSaved.push(m);
+          this.matchesToBeFetched.splice(
+            this.matchesToBeFetched.findIndex((match) => match.id === m.id),
+            1,
+          );
+        }
+      });
+
+      // If there are matches to be saved, update them in the database before fetching new data
+      if (matchesToBeSaved.length > 0) {
+        logger.info({ matchesToBeSavedCount: matchesToBeSaved.length }, "Saving old matches to database");
+        await this.updateDatabase(matchesToBeSaved);
+        matchesToBeSaved = [];
+      }
+
+      // For testing, only fetch one match from JSON file
+
       // Fetch matches from external API in parallel for all close matches
-      // const externalAPIMatchResponse = await Promise.allSettled(
-      //   cachedMatches.map((m) => this.externalAPI.fetchMatch(m.idFifa)),
-      // );
-      // const externalAPIMatches = externalAPIMatchResponse.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+      const externalAPIMatchResponse = await Promise.allSettled(
+        this.matchesToBeFetched.map((m) => this.externalAPI.fetchMatch(m.idFifa)),
+      );
+      const externalAPIMatches = externalAPIMatchResponse.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
 
       // [TESTING] Read from local file instead of external API
-      const externalAPIMatches = [
-        JSON.parse(readFileSync(new URL("./fifaApiResponse.json", import.meta.url), "utf-8")) as IFifaMatch,
-      ];
+      // this.matchesToBeFetched = matches.filter((m) => m.idFifa === 400021443);
+      // const externalAPIMatches = [
+      //   JSON.parse(readFileSync(new URL("./fifaApiResponse.json", import.meta.url), "utf-8")) as IFifaMatch,
+      // ];
 
-      // Parse external match to select fields we care about and convert to our internal format
-      const parsedMatches: IMatch[] = cachedMatches.map((match) => {
+      // Parse external match to select wanted fields and convert to internal format
+      const parsedMatches: IMatch[] = this.matchesToBeFetched.map((match) => {
         const external = externalAPIMatches.find((m) => parseInt(m.IdMatch, 10) === match.idFifa);
         if (!external) return match;
 
-        const homeGoals: IEvent[] = external.HomeTeam.Goals.map((goal) => {
-          let event = eventsInfo.find((e) => e.fifaId === goal.Type) ?? null;
-          if (goal.Period === 11) {
-            event = eventsInfo.find((e) => e.id === 8) ?? null; // Penalty shootout if period === 11
-          }
-
-          return {
-            event: event,
-            gametime: goal.Minute,
-            matchId: match.id,
-            player: players.find((p) => p.fifa.id === parseInt(goal.IdPlayer, 10)) ?? null,
-            playerAssist: players.find((p) => p.fifa.id === parseInt(goal.IdPlayer, 10)) ?? null,
-            teamId: match.homeTeam!.id,
-          };
-        });
-
-        const homeCards: IEvent[] = external.HomeTeam.Bookings.map((booking) => {
-          let event = booking.Card === 1 ? eventsInfo.find((e) => e.id === 4) : eventsInfo.find((e) => e.id === 5);
-          let player = booking.IdPlayer
-            ? players.find((p) => p.fifa.id === parseInt(booking.IdPlayer as string, 10))
-            : null;
-
-          return {
-            coach: booking.IdCoach ? true : false,
-            event: event ?? null,
-            gametime: booking.Minute,
-            matchId: match.id,
-            player: player ?? null,
-            playerAssist: null,
-            staff: booking.IdStaff ? true : false,
-            teamId: match.homeTeam!.id,
-          };
-        });
-
-        const awayGoals: IEvent[] = external.AwayTeam.Goals.map((goal) => {
-          let event = eventsInfo.find((e) => e.fifaId === goal.Type) ?? null;
-          if (goal.Period === 11) {
-            event = eventsInfo.find((e) => e.id === 8) ?? null; // Penalty shootout if period === 11
-          }
-
-          return {
-            event: event,
-            gametime: goal.Minute,
-            matchId: match.id,
-            player: players.find((p) => p.fifa.id === parseInt(goal.IdPlayer, 10)) ?? null,
-            playerAssist: players.find((p) => p.fifa.id === parseInt(goal.IdPlayer, 10)) ?? null,
-            teamId: match.awayTeam!.id,
-          };
-        });
-
-        const awayCards: IEvent[] = external.AwayTeam.Bookings.map((booking) => {
-          let event = booking.Card === 1 ? eventsInfo.find((e) => e.id === 4) : eventsInfo.find((e) => e.id === 5);
-          let player = booking.IdPlayer
-            ? players.find((p) => p.fifa.id === parseInt(booking.IdPlayer as string, 10))
-            : null;
-
-          return {
-            coach: booking.IdCoach ? true : false,
-            event: event ?? null,
-            gametime: booking.Minute,
-            matchId: match.id,
-            player: player ?? null,
-            playerAssist: null,
-            staff: booking.IdStaff ? true : false,
-            teamId: match.awayTeam!.id,
-          };
-        });
-
-        // Cache for 14 days
-        cachedInfo.set(CACHE_KEYS.EVENTS, [...homeGoals, ...awayGoals, ...homeCards, ...awayCards], 60 * 60 * 24 * 14);
-        // TODO: Add to DB
+        const parsedEvents = this.parseEvents(external, match, players, eventsInfo);
 
         return {
           ...match,
-          events: [...homeGoals, ...awayGoals, ...homeCards, ...awayCards],
+          events: parsedEvents,
           gametime: external.MatchTime,
           score: {
             away: external.AwayTeam.Score,
@@ -258,34 +212,29 @@ export class MatchSyncService {
       });
 
       // Detect changes
-      const changedMatches = this.detectChanges(cachedMatches, parsedMatches);
+      const changedMatches = this.detectChanges(this.matchesToBeFetched, parsedMatches);
       this.stats.updated = changedMatches.length;
 
       if (changedMatches.length > 0) {
-        logger.info({ changedCount: changedMatches.length }, "Detected changed matches");
-
-        // Update database for changed matches
-        await this.updateDatabase(changedMatches);
-
         // Merge updated close matches back into the full match list before caching
         const updatedById = new Map(parsedMatches.map((m) => [m.id, m]));
+        parsedMatches.forEach((m) =>
+          logger.debug({ eventsLength: m.events.length, matchId: m.id }, "Parsed match details"),
+        );
         const updatedAllMatches: IMatch[] = matches.map((m) => updatedById.get(m.id) ?? m);
-
         setMatchesCache(updatedAllMatches);
 
         // Broadcast to all connected clients
         this.broadcastMatches(changedMatches.length);
       } else {
-        logger.debug("No match changes detected");
-
         // Still update cache to refresh TTL
         if (matches.length > 0) {
           setMatchesCache(matches);
         }
       }
 
-      this.stats.lastSync = Date.now();
-      this.stats.duration = Date.now() - startTime;
+      this.stats.lastSync = Math.floor(Date.now() / 1000);
+      this.stats.duration = Math.floor(Date.now() / 1000) - nowTimeOnStart;
       logger.info({ duration: this.stats.duration, updated: this.stats.updated }, "Match sync completed");
     } catch (error) {
       this.stats.errors++;
@@ -375,12 +324,88 @@ export class MatchSyncService {
   }
 
   /**
+   * Iterate over home and away events to create a unified list of events for easier processing and caching
+   */
+  private parseEvents(
+    externalMatch: IFifaMatch,
+    match: IMatch,
+    players: IPlayer[],
+    eventsInfo: IEventInfo[],
+  ): IEvent[] {
+    const undefinedPlayer = players.find((p) => p.fifa.id === 864); // FIFA ID 864 is used for "undefined player"
+    const homeGoals: IEvent[] = externalMatch.HomeTeam.Goals.map((goal) => {
+      let event = eventsInfo.find((e) => e.fifaId === goal.Type) ?? null;
+      if (goal.Period === 11) {
+        event = eventsInfo.find((e) => e.id === 8) ?? null; // Penalty shootout if period === 11
+      }
+
+      return {
+        event: event,
+        gametime: goal.Minute,
+        matchId: match.id,
+        player: players.find((p) => p.fifa.id === parseInt(goal.IdPlayer, 10)) ?? undefinedPlayer!,
+        playerAssist: players.find((p) => p.fifa.id === parseInt(goal.IdPlayer, 10)) ?? null,
+        teamId: match.homeTeam!.id,
+      };
+    });
+
+    const awayGoals: IEvent[] = externalMatch.AwayTeam.Goals.map((goal) => {
+      let event = eventsInfo.find((e) => e.fifaId === goal.Type) ?? null;
+      if (goal.Period === 11) {
+        event = eventsInfo.find((e) => e.id === 8) ?? null; // Penalty shootout if period === 11
+      }
+
+      return {
+        event: event,
+        gametime: goal.Minute,
+        matchId: match.id,
+        player: players.find((p) => p.fifa.id === parseInt(goal.IdPlayer, 10)) ?? undefinedPlayer!,
+        playerAssist: players.find((p) => p.fifa.id === parseInt(goal.IdPlayer, 10)) ?? null,
+        teamId: match.awayTeam!.id,
+      };
+    });
+
+    const homeCards: IEvent[] = externalMatch.HomeTeam.Bookings.map((booking) => {
+      let event = booking.Card === 1 ? eventsInfo.find((e) => e.id === 4) : eventsInfo.find((e) => e.id === 5);
+
+      return {
+        coach: booking.IdCoach ? true : false,
+        event: event ?? null,
+        gametime: booking.Minute,
+        matchId: match.id,
+        player: players.find((p) => p.fifa.id === parseInt(booking.IdPlayer as string, 10)) ?? undefinedPlayer!,
+        playerAssist: null,
+        staff: booking.IdStaff ? true : false,
+        teamId: match.homeTeam!.id,
+      };
+    });
+
+    const awayCards: IEvent[] = externalMatch.AwayTeam.Bookings.map((booking) => {
+      let event = booking.Card === 1 ? eventsInfo.find((e) => e.id === 4) : eventsInfo.find((e) => e.id === 5);
+
+      return {
+        coach: booking.IdCoach ? true : false,
+        event: event ?? null,
+        gametime: booking.Minute,
+        matchId: match.id,
+        player: players.find((p) => p.fifa.id === parseInt(booking.IdPlayer as string, 10)) ?? undefinedPlayer!,
+        playerAssist: null,
+        staff: booking.IdStaff ? true : false,
+        teamId: match.awayTeam!.id,
+      };
+    });
+
+    return [...homeGoals, ...awayGoals, ...homeCards, ...awayCards];
+  }
+
+  /**
    * Update database with changed matches
    */
   private async updateDatabase(matches: IMatch[]): Promise<void> {
     const updatePromises = matches.map(async (match) => {
       try {
         await this.matchService.updateMatch(match);
+        await this.matchService.updateEvents(match.events);
         logger.debug({ matchId: match.id }, "Updated match in database");
       } catch (error) {
         logger.error({ err: error, matchId: match.id }, "Failed to update match");

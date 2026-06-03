@@ -31,7 +31,7 @@ export const parseRawEvents = (eventsRaw: IEventRaw[], eventsInfo: IEventInfo[],
       matchId: event.matchId,
       player,
       playerAssist: playerTwo ?? null,
-      teamId: 0, // TODO: Add team ID on DB
+      teamId: player.team?.id ?? 0,
     };
   });
 };
@@ -60,7 +60,7 @@ export const parseRawMatch = (match: IMatchRaw, teams: ITeam[], stadiums: IStadi
     },
     stadium: stadiums.find((stadium) => stadium.id === match.idStadium) ?? null,
     status: match.status,
-    timestamp: match.timestamp,
+    timestamp: parseInt(match.timestamp),
   };
 
   return parsedMatch;
@@ -74,7 +74,6 @@ export const formatMatches = (
   userId: null | number = null,
 ): IMatch[] => {
   return matches.map((match: IMatch) => {
-    const matchEvents = events.filter((event) => event.matchId === match.id);
     const matchBets = bets
       .filter((bet) => bet.matchId === match.id && bet.user.id !== userId)
       .sort((a, b) => a.user.nickname.localeCompare(b.user.nickname))
@@ -111,7 +110,6 @@ export const formatMatches = (
 
     match.bets = matchBets;
     match.loggedUserBets = loggedUserMatchBets;
-    match.events = matchEvents;
     match.pointsAwarded = {
       exact: AWARD_POINTS_2026.exactScore * getRoundMultiplier(match.round),
       minimal: AWARD_POINTS_2026.winnerOnly * getRoundMultiplier(match.round),
@@ -139,7 +137,9 @@ export const getEventsFromCacheOrFetch = async (
   const eventsInfo = await getEventsInfoFromCacheOrFetch(matchService);
 
   const events: IEvent[] = parseRawEvents(eventsRaw, eventsInfo, players);
-  cachedInfo.set(CACHE_KEYS.EVENTS, events, 60 * 60 * 24 * 14); // Cache for 14 days
+  // Events are being maintained inside the matches now, so we can avoid caching them separately.
+  // If needed, we can reintroduce this cache in the future.
+  // cachedInfo.set(CACHE_KEYS.EVENTS, events, 60 * 60 * 24 * 14); // Cache for 14 days
   return [...events];
 };
 
