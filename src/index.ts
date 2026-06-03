@@ -8,12 +8,15 @@ import {
 import { logger } from "#logger/logger.service.js";
 import { MatchService } from "#match/match.service.js";
 import { MatchSyncService } from "#match/match.sync.service.js";
-import { getEventsFromCacheOrFetch, getMatchesFromCacheOrFetch } from "#match/match.utils.js";
+import {
+  getEventsFromCacheOrFetch,
+  getEventsInfoFromCacheOrFetch,
+  getMatchesFromCacheOrFetch,
+} from "#match/match.utils.js";
 import { NewsScrapeService } from "#news/news.scrape.service.js";
 import { TeamService } from "#team/team.service.js";
 import { getPlayersFromCacheOrFetch, getTeamsFromCacheOrFetch } from "#team/team.util.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
-
 import app from "./app.js";
 
 const warmUpCache = async (): Promise<void> => {
@@ -38,6 +41,7 @@ const warmUpCache = async (): Promise<void> => {
   await Promise.all([
     getMatchesFromCacheOrFetch(matchService, currentEdition, currentEdition, teams, stadiums, referees),
     getEventsFromCacheOrFetch(matchService, currentEdition, players),
+    getEventsInfoFromCacheOrFetch(matchService),
   ]);
 
   logger.info("Cache warm-up complete");

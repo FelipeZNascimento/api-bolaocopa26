@@ -73,7 +73,7 @@ export class TeamService {
     const rows: IPlayerRaw[] = await db.query(
       `SELECT players.id, players.id_fifa as idFifa, players.id_fifa_picture as idFifaPicture, players.name,
           players.id_team as idTeam, players.id_position as idPosition, players.id_club as idClub,
-          players.date_of_birth as dateOfBirth, players.height, players.number as number,
+          players.date_of_birth as dateOfBirth, players.height, players.number as number, players.weight,
           positions.description as positionDescription, positions.description_en as positionDescriptionEn,
           positions.abbreviation as positionAbbreviation, positions.abbreviation_en as positionAbbreviationEn
           FROM players

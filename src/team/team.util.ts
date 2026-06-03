@@ -127,6 +127,7 @@ const parseRawPlayers = (playersRaw: IPlayerRaw[], teams: ITeam[], clubs: IClub[
         id: player.idPosition,
       },
       team: team ?? null,
+      weight: player.weight,
     };
   });
 };

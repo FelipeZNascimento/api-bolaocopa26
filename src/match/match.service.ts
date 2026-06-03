@@ -1,7 +1,8 @@
-import type { IEventRaw, IMatch, IMatchRaw } from "#match/match.types.js";
+import type { IEvent, IEventInfo, IEventRaw, IMatch, IMatchRaw } from "#match/match.types.js";
 import { ResultSetHeader } from "mysql2/promise";
 
 import db from "#database/db.js";
+import { logger } from "#logger/logger.service.js";
 
 export class MatchService {
   async getByEdition(editionId: number) {
@@ -39,14 +40,19 @@ export class MatchService {
   async getEvents(editionId: number) {
     const rows: IEventRaw[] = await db.query(
       `SELECT events.id, events.id_match as matchId, events.gametime, events.id_player as playerId,
-        events.id_player_two as playerTwoId, events.id_event_info as eventId,
-        events_info.description as eventDescription, events_info.description_en as eventDescriptionEn
+        events.id_player_two as playerTwoId, events.id_event_info as eventId
         FROM events
-        LEFT JOIN events_info ON events_info.id = events.id_event_info
         LEFT JOIN matches ON matches.id = events.id_match
         WHERE matches.id_edition = ?
         ORDER BY matches.timestamp ASC`,
       [editionId],
+    );
+    return rows;
+  }
+
+  async getEventsInfo() {
+    const rows: IEventInfo[] = await db.query(
+      `SELECT id, fifa_id as fifaId, description, description_en, code FROM events_info`,
     );
     return rows;
   }
@@ -60,6 +66,33 @@ export class MatchService {
     );
 
     return row as undefined | { id: number; timestamp: number };
+  }
+
+  /**
+   * Update events in the database
+   */
+  async updateEvents(events: IEvent[]): Promise<void> {
+    if (events.length === 0) {
+      return;
+    }
+
+    const mappedEvents = events.map((event): (null | number | string)[] => [
+      event.matchId,
+      event.gametime,
+      event.player?.id ?? null,
+      event.playerAssist?.id ?? null,
+      event.event?.id ?? null,
+    ]);
+
+    logger.info({ events: JSON.stringify(mappedEvents) }, `Updating events in database`);
+
+    await db.query(
+      `INSERT INTO events (id_match, gametime, id_player, id_player_two, id_event_info)
+        VALUES ?
+        ON DUPLICATE KEY UPDATE id_player_two = VALUES(id_player_two)`,
+      [mappedEvents],
+    );
+    return;
   }
 
   /**

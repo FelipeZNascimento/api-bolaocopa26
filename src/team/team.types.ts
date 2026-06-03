@@ -39,6 +39,7 @@ export interface IPlayer {
     id: number;
   };
   team: ITeam | null;
+  weight: number;
 }
 
 export interface IPlayerRaw {
@@ -56,6 +57,7 @@ export interface IPlayerRaw {
   positionAbbreviationEn: string;
   positionDescription: string;
   positionDescriptionEn: string;
+  weight: number;
 }
 
 export interface ITeam {
