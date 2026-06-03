@@ -60,7 +60,7 @@ export class TeamController extends BaseController {
       const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
       const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, edition, teams);
       const filteredPlayers = players
-        .filter((player) => player.id !== 864)
+        .filter((player) => player.id !== 864 && player.position.id !== 1)
         .sort((a, b) => a.name.localeCompare(b.name));
       return filteredPlayers;
     });
