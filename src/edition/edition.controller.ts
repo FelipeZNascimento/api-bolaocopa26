@@ -59,7 +59,7 @@ export class EditionController extends BaseController {
       const response = await this.matchService.getEarliestMatchesForRounds(currentEdition);
       const returnObj = [
         { stageId: STAGE_ID.BEFORE_START, timestamp: editionStart.toString() },
-        { stageId: STAGE_ID.PLAYOFFS, timestamp: response.find((r) => r.round === 4)?.timestamp ?? null },
+        { stageId: STAGE_ID.GROUP_STAGE, timestamp: response.find((r) => r.round === 4)?.timestamp ?? null },
         { stageId: STAGE_ID.QUARTERFINALS, timestamp: response.find((r) => r.round === 5)?.timestamp ?? null },
       ];
 

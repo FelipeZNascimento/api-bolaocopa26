@@ -173,7 +173,8 @@ export class NewsScrapeService {
           const existing = await this.newsService.findByLink(item.link);
           if (existing) continue;
 
-          item.image = await this.fetchArticleImage(item.link);
+          const imageUrl = await this.fetchArticleImage(item.link);
+          item.image = imageUrl && imageUrl !== "None" ? imageUrl : "";
           await this.newsService.insert(item);
           inserted++;
           logger.debug({ image: item.image, link: item.link, title: item.title }, "Inserted new news item");

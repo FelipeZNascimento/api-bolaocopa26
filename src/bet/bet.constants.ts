@@ -12,6 +12,10 @@ export const EXTRA_TYPES: Record<number, string> = {
 
 export enum STAGE_ID {
   BEFORE_START = 1,
-  PLAYOFFS = 2,
-  QUARTERFINALS = 3,
+  GROUP_STAGE = 2,
+  BEFORE_QUARTERFINALS = 3,
+  QUARTERFINALS = 4,
+  SEMIFINALS = 5,
+  FINAL = 6,
+  WINNER = 7,
 }

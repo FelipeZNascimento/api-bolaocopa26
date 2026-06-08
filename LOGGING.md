@@ -445,7 +445,7 @@ cat api-bolaocopa26-out.log | jq -R 'fromjson? | select(type == "object") | sele
 cat api-bolaocopa26-out.log | jq -Rr 'fromjson? | select(type == "object") | select(.level >= 50) | .msg' | sort | uniq -c
 
 # Filter by a specific date
-cat api-bolaocopa26-out.log | jq -R 'fromjson? | select(type == "object") | select(.time != null and (.time | startswith("2026-05-19")))'
+cat api-bolaocopa26-out.log | jq -R 'fromjson? | select(type == "object") | select(.time != null and (.time | startswith("2026-06-07")))'
 
 ```
 

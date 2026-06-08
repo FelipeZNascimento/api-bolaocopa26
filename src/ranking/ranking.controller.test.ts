@@ -15,10 +15,10 @@ import { ICalculatedRankingLine } from "./ranking.types";
 import { calculateExtraBets, getEditionRanking, getRoundsRanking } from "./ranking.utils";
 
 const apiResponseSuccess = vi.hoisted(() => vi.fn());
-const checkEditionMock = vi.hoisted(() =>
+const getEditionInfoFromCacheOrFetch = vi.hoisted(() =>
   vi.fn(() => ({
     currentEdition: 2026,
-    edition: 2026,
+    currentRound: 1,
     editionStart: 2026,
   })),
 );
@@ -48,8 +48,8 @@ vi.mock("#team/team.util.js", () => ({
   getTeamsFromCacheOrFetch: vi.fn(() => Promise.resolve([])),
 }));
 
-vi.mock("#utils/checkEdition.js", () => ({
-  checkEdition: checkEditionMock,
+vi.mock("#edition/edition.util.js", () => ({
+  getEditionInfoFromCacheOrFetch: getEditionInfoFromCacheOrFetch,
 }));
 
 const createUser = (id: number, name: string, nickname?: string): IUser => ({
@@ -134,6 +134,7 @@ const createExtraBetResult = (teamId: number, playerId?: number): IExtraBetResul
   extraType: 1,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
   player: playerId ? ({ id: playerId, name: `Player ${String(playerId)}` } as any) : null,
+  stageId: 7,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
   team: { abbreviation: "TEM", id: teamId, name: `Team ${String(teamId)}` } as any,
 });
@@ -155,6 +156,7 @@ describe("RankingController", () => {
     getByEdition: vi.fn(),
   };
 
+  const mockEditionService = {};
   const mockTeamService = {};
 
   const mockBetService = {
@@ -167,6 +169,8 @@ describe("RankingController", () => {
 
   beforeEach(() => {
     controller = new RankingController(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+      mockEditionService as unknown as any,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       mockUserService as unknown as any,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
@@ -214,7 +218,7 @@ describe("RankingController", () => {
     });
 
     it("should call next with error when edition is missing", async () => {
-      checkEditionMock.mockImplementationOnce(() => {
+      getEditionInfoFromCacheOrFetch.mockImplementationOnce(() => {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       });
 

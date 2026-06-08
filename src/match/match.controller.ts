@@ -28,7 +28,6 @@ import { getPlayersFromCacheOrFetch, getTeamsFromCacheOrFetch } from "#team/team
 import { IUser } from "#user/user.types.js";
 import { isFulfilled, isRejected } from "#utils/apiResponse.js";
 import { AppError } from "#utils/appError.js";
-import { checkEdition } from "#utils/checkEdition.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { parseBody } from "#utils/parseBody.js";
 import { WEBSOCKET_EVENTS } from "#websocket/websocket.constants.js";
@@ -48,21 +47,25 @@ export class MatchController extends BaseController {
 
   getByEdition = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const { edition } = checkEdition(req.params.edition);
-      const round = parseInt(req.params.round) || 0;
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
 
-      if (!edition) {
-        throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
+      if (!currentEdition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
 
-      return this._getFormattedMatches(edition, round, req.session.user ?? null);
+      const round = parseInt(req.params.round) || 0;
+      return this._getFormattedMatches(currentEdition, round, req.session.user ?? null);
     });
   };
 
   getLiveMatches = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const { edition } = checkEdition(req.params.edition);
-      const allMatches = await this._getFormattedMatches(edition, 0, req.session.user ?? null);
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+
+      if (!currentEdition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+      const allMatches = await this._getFormattedMatches(currentEdition, 0, req.session.user ?? null);
 
       return allMatches
         .filter((match) => !STOPPED_GAME.includes(match.status))
@@ -73,8 +76,13 @@ export class MatchController extends BaseController {
 
   getNextMatches = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const { edition } = checkEdition(req.params.edition);
-      const allMatches = await this._getFormattedMatches(edition, 0, req.session.user ?? null);
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+
+      if (!currentEdition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+
+      const allMatches = await this._getFormattedMatches(currentEdition, 0, req.session.user ?? null);
 
       return allMatches
         .filter((match) => match.status === FOOTBALL_MATCH_STATUS.NOT_STARTED)
@@ -126,7 +134,7 @@ export class MatchController extends BaseController {
 
       // 2. Trigger all DB updates in parallel
       await Promise.all(matchUpdates.map((match) => this.matchService.updateMatch(match)));
-      logger.info(`Updated ${JSON.stringify(matchUpdates)} matches in database`);
+      logger.info(`Updated ${matchUpdates.length} matches in database`);
 
       // 3. Update cache
       const updatedById = new Map(matchUpdates.map((m) => [m.idFifa, m]));

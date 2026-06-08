@@ -2,16 +2,20 @@ import type { IPlayer, ITeam } from "#team/team.types.js";
 
 import { NextFunction, Request, Response } from "express";
 
+import { EditionService } from "#edition/edition.service.js";
+import { getEditionInfoFromCacheOrFetch } from "#edition/edition.util.js";
 import { BaseController } from "#shared/base.controller.js";
 import { TeamService } from "#team/team.service.js";
 import { AppError } from "#utils/appError.js";
-import { checkEdition } from "#utils/checkEdition.js";
 import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { getPlayersFromCacheOrFetch, getTeamsFromCacheOrFetch } from "./team.util.js";
 
 export class TeamController extends BaseController {
-  constructor(private teamService: TeamService) {
+  constructor(
+    private editionService: EditionService,
+    private teamService: TeamService,
+  ) {
     super();
   }
 
@@ -43,7 +47,11 @@ export class TeamController extends BaseController {
   getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
       const teamId = req.params.teamId;
-      const { currentEdition } = checkEdition(req.params.edition);
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+
+      if (!currentEdition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
 
       if (!teamId) {
         throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
@@ -56,9 +64,13 @@ export class TeamController extends BaseController {
 
   getPlayers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const { edition } = checkEdition(req.params.edition);
-      const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
-      const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, edition, teams);
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+
+      if (!currentEdition) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+      const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, currentEdition);
+      const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, currentEdition, teams);
       const filteredPlayers = players
         .filter((player) => player.id !== 864 && player.position.id !== 1)
         .sort((a, b) => a.name.localeCompare(b.name));

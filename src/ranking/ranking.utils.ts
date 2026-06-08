@@ -4,7 +4,13 @@ import { IMatch } from "#match/match.types.js";
 import { IUser } from "#user/user.types.js";
 import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
 
-import { AWARD_POINTS_2026, DEFAULT_ROUND_MULTIPLIER, EXTRAS_FACTORS, ROUND_MULTIPLIERS } from "./ranking.constants.js";
+import {
+  AWARD_POINTS_2026,
+  DEFAULT_ROUND_MULTIPLIER,
+  EXTRAS_FACTORS_ON_CHANGE,
+  EXTRAS_PROGRESSIVE_FACTORS,
+  ROUND_MULTIPLIERS,
+} from "./ranking.constants.js";
 import {
   ICalculatedRankingLine,
   IRankingScore,
@@ -92,17 +98,23 @@ export const calculateExtraBets = (
   const offenseBet = getLatestExtraBet(extraBets.offense, userId);
   const strikerBet = getLatestExtraBet(extraBets.striker, userId);
 
-  const hasChampionMatch =
-    championBet &&
-    extraBetsResults.champion.some((result) => championBet.team && result.team.id === championBet.team.id);
+  let championPoints = 0;
+  const championMatch = extraBetsResults.champion.find((result) => result.team.id === championBet?.team.id);
+
+  // The user has placed a bet, and there's a match with the results
+  if (championBet && championMatch !== undefined) {
+    championPoints =
+      AWARD_POINTS_2026.extraChampion *
+      EXTRAS_FACTORS_ON_CHANGE[championBet.stageId] *
+      EXTRAS_PROGRESSIVE_FACTORS[championMatch.stageId];
+  }
+
   const hasDefenseMatch =
     defenseBet && extraBetsResults.defense.some((result) => defenseBet.team && result.team.id === defenseBet.team.id);
   const hasOffenseMatch =
     offenseBet && extraBetsResults.offense.some((result) => offenseBet.team && result.team.id === offenseBet.team.id);
   const hasStrikerMatch =
     strikerBet && extraBetsResults.striker.some((result) => result.player?.id === strikerBet.player?.id);
-
-  const championPoints = hasChampionMatch ? AWARD_POINTS_2026.extraChampion * EXTRAS_FACTORS[championBet.stageId] : 0;
 
   return {
     champion: championPoints,

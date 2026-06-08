@@ -3,7 +3,6 @@ import type { IBetRaw, IExtraBetRaw, IExtraBetResultRaw } from "#bet/bet.types.j
 import { ResultSetHeader } from "mysql2/promise";
 
 import db from "#database/db.js";
-import { logger } from "#logger/logger.service.js";
 
 export class BetService {
   async getExtras(edition: number, editionStart: number) {
@@ -45,7 +44,7 @@ export class BetService {
   async getExtrasResults(edition: number, editionStart: number) {
     const rows: IExtraBetResultRaw[] = await db.query(
       `SELECT extra_bets_results.id_player as playerId, extra_bets_results.id_team as teamId,
-        extra_bets_results.id_type as extraType
+        extra_bets_results.id_type as extraType, extra_bets_results.stage_id as stageId
         FROM extra_bets_results
         LEFT JOIN players ON players.id = extra_bets_results.id_player
         WHERE extra_bets_results.id_edition = ? AND ? < UNIX_TIMESTAMP()`,
@@ -115,7 +114,6 @@ export class BetService {
     editionId: number,
     stageId: number,
   ) {
-    logger.debug({ editionId, extraType, playerId, stageId, teamId, userId }, "Updating extra bets");
     const rows: ResultSetHeader = await db.query(
       `INSERT
       INTO extra_bets (id_user, id_edition, id_extra_type, id_team, id_player, id_stage)

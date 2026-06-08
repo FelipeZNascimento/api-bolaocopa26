@@ -84,7 +84,7 @@ export class MatchService {
       event.event?.id ?? null,
     ]);
 
-    logger.info({ events: JSON.stringify(mappedEvents) }, `Updating events in database`);
+    logger.info(`Updating events in database`);
 
     await db.query(
       `INSERT INTO events (id_match, gametime, id_player, id_player_two, id_event_info)

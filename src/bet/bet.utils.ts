@@ -16,6 +16,7 @@ export const parseExtraBetResult = (extraBetResult: IExtraBetResultRaw, players:
   return {
     extraType: extraBetResult.extraType,
     player: player ?? null,
+    stageId: extraBetResult.stageId,
     team: team,
   };
 };
