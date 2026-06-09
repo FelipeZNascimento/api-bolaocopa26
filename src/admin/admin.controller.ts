@@ -3,12 +3,13 @@ import type { IUser } from "#user/user.types.js";
 import { NextFunction, Request, Response } from "express";
 
 import { deleteFromEditionSchema, updateActiveStatusSchema } from "#admin/admin.schemas.js";
+import { EditionService } from "#edition/edition.service.js";
+import { getEditionInfoFromCacheOrFetch } from "#edition/edition.util.js";
 import { MailerService } from "#mailer/mailer.service.js";
 import { BaseController } from "#shared/base.controller.js";
 import { UserService } from "#user/user.service.js";
 import { AppError } from "#utils/appError.js";
 import { cachedInfo } from "#utils/dataCache.js";
-import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { parseBody } from "#utils/parseBody.js";
 
@@ -23,22 +24,22 @@ export class AdminController extends BaseController {
   constructor(
     private userService: UserService,
     private mailerService: MailerService,
+    private editionService: EditionService,
   ) {
     super();
   }
 
   deleteFromEdition = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const edition = req.params.edition || process.env.EDITION;
-      if (!edition) {
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+      if (!currentEdition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
-      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
 
       const { userId } = parseBody(deleteFromEditionSchema, req.body);
 
-      await this.userService.deleteFromEdition(userId, editionId);
-      const response: IUser[] = await this.userService.getAllByEdition(editionId);
+      await this.userService.deleteFromEdition(userId, currentEdition);
+      const response: IUser[] = await this.userService.getAllByEdition(currentEdition);
       return response;
     });
   };
@@ -49,58 +50,49 @@ export class AdminController extends BaseController {
 
   getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const edition = req.params.edition || process.env.EDITION;
-      if (!edition) {
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+      if (!currentEdition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
-
-      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
-      const response: IUser[] = await this.userService.getAllByEdition(editionId);
+      const response: IUser[] = await this.userService.getAllByEdition(currentEdition);
       return response;
     });
   };
 
   getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const userId = req.params.userId;
-      const edition = req.params.edition || process.env.EDITION;
-
-      if (!edition) {
+      const userId = req.params.userId as string;
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+      if (!currentEdition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
-      }
-
-      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
-      if (editionId === 0) {
-        throw new AppError("Parâmetro inválido", 400, ErrorCode.INVALID_INPUT);
       }
 
       if (!userId) {
         throw new AppError("Campo obrigatório ausente", 400, ErrorCode.MISSING_REQUIRED_FIELD);
       } else {
-        const response = await this.userService.getById(parseInt(userId), editionId);
+        const response = await this.userService.getById(parseInt(userId), currentEdition);
         return response;
       }
     });
   };
   updateActiveStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const edition = req.params.edition || process.env.EDITION;
-      if (!edition) {
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+      if (!currentEdition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
-      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
 
       const { newStatus, userId } = parseBody(updateActiveStatusSchema, req.body);
 
-      await this.userService.updateActiveStatus(userId, editionId, newStatus);
+      await this.userService.updateActiveStatus(userId, currentEdition, newStatus);
       if (newStatus === true) {
-        const activatedUser = await this.userService.getById(userId, editionId);
+        const activatedUser = await this.userService.getById(userId, currentEdition);
         if (!activatedUser) {
           throw new AppError("Usuário não encontrado", 404, ErrorCode.NOT_FOUND);
         }
         await this.mailerService.sendActivationEmail(activatedUser.email, activatedUser.nickname);
       }
-      const response: IUser[] = await this.userService.getAllByEdition(editionId);
+      const response: IUser[] = await this.userService.getAllByEdition(currentEdition);
       return response;
     });
   };

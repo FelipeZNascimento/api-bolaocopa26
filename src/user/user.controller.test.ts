@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { EditionService } from "#edition/edition.service.js";
 import { MailerService } from "#mailer/mailer.service.js";
 import { AppError } from "#utils/appError.js";
 import { ErrorCode } from "#utils/errorCodes.js";
-
 import { UserController } from "./user.controller";
 import { UserService } from "./user.service";
 import { IUser } from "./user.types";
@@ -36,22 +36,23 @@ const mockCachedInfo = vi.hoisted(() => ({
   get: vi.fn(),
   set: vi.fn(),
 }));
+const getEditionInfoFromCacheOrFetch = vi.hoisted(() =>
+  vi.fn(() => ({
+    currentEdition: 2026,
+    currentRound: 1,
+    editionStart: 2026,
+  })),
+);
 
 const mockCheckExistingEntries = vi.hoisted(() => vi.fn());
 const mockGenerateVerificationToken = vi.hoisted(() => vi.fn(() => "token123"));
 const mockClearRankingCache = vi.hoisted(() => vi.fn());
-const mockEditionMapping = vi.hoisted(() =>
-  vi.fn((edition: number | string) => {
-    // Mock the edition mapping to return the edition as number for testing
-    const editionNum = typeof edition === "string" ? parseInt(edition) : edition;
-    if (editionNum === 2024) return 2024;
-    if (editionNum === 2026) return 3;
-    return 0;
-  }),
-);
 
 vi.mock("#user/user.service.js", () => ({ UserService: vi.fn(() => mockUserService) }));
 vi.mock("#mailer/mailer.service.js", () => ({ MailerService: vi.fn(() => mockMailerService) }));
+vi.mock("#edition/edition.util.js", () => ({
+  getEditionInfoFromCacheOrFetch: getEditionInfoFromCacheOrFetch,
+}));
 vi.mock("#utils/dataCache.js", () => ({
   cachedInfo: mockCachedInfo,
 }));
@@ -61,9 +62,6 @@ vi.mock("#user/user.utils.js", () => ({
 }));
 vi.mock("#ranking/ranking.utils.js", () => ({
   clearRankingCache: mockClearRankingCache,
-}));
-vi.mock("#utils/editionMapping.js", () => ({
-  editionMapping: mockEditionMapping,
 }));
 vi.mock("#utils/apiResponse.js", () => ({
   ApiResponse: {
@@ -76,7 +74,7 @@ vi.mock("#utils/apiResponse.js", () => ({
 
 const mockUser: IUser = {
   admin: false,
-  editionId: 2024,
+  editionId: 2026,
   email: "test@example.com",
   favorites: "[1, 2, 3]",
   id: 1,
@@ -114,14 +112,16 @@ function getMockReqResSession(user: IUser | null = null) {
 
 describe("UserController", () => {
   let controller: UserController;
+  const mockEditionService = {};
 
   beforeEach(() => {
     controller = new UserController(
       mockUserService as unknown as UserService,
       mockMailerService as unknown as MailerService,
+      mockEditionService as unknown as EditionService,
     );
     vi.clearAllMocks();
-    process.env.EDITION = "2024";
+    process.env.EDITION = "2026";
   });
 
   afterEach(() => {
@@ -143,29 +143,7 @@ describe("UserController", () => {
 
       await controller.getActiveProfile(req, res, next);
 
-      expect(mockUserService.getById).toHaveBeenCalledWith(1, 2024);
-    });
-
-    it("should throw error if edition is missing", async () => {
-      delete process.env.EDITION;
-      const { next, req, res } = getMockReqResSession(mockUser);
-
-      await controller.getActiveProfile(req, res, next);
-
-      expect(next).toHaveBeenCalledWith(expect.any(AppError));
-      const error = next.mock.calls[0][0] as AppError;
-      expect(error.statusCode).toBe(404);
-      expect(error.code).toBe(ErrorCode.INTERNAL_SERVER_ERROR);
-    });
-
-    it("should use edition from params if provided", async () => {
-      const { next, req, res } = getMockReqResSession(mockUser);
-      req.params = { edition: "2026" };
-      mockUserService.getById.mockResolvedValue(mockUser);
-
-      await controller.getActiveProfile(req, res, next);
-
-      expect(mockUserService.getById).toHaveBeenCalledWith(1, 3); // 2026 maps to 3
+      expect(mockUserService.getById).toHaveBeenCalledWith(1, 2026);
     });
   });
 
@@ -212,18 +190,8 @@ describe("UserController", () => {
       await controller.login(req, res, next);
 
       expect(mockUserService.login).toHaveBeenCalledWith("test@example.com", "password123");
-      expect(mockUserService.getFavoritesById).toHaveBeenCalledWith(1, 2024);
+      expect(mockUserService.getFavoritesById).toHaveBeenCalledWith(1, 2026);
       expect(req.session.user).toEqual(expect.objectContaining({ email: "test@example.com", id: 1 }));
-    });
-
-    it("should throw error if edition is missing", async () => {
-      delete process.env.EDITION;
-      const { next, req, res } = getMockReqResSession();
-      req.body = { email: "test@example.com", password: "password123" };
-
-      await controller.login(req, res, next);
-
-      expect(next).toHaveBeenCalledWith(expect.any(AppError));
     });
   });
 
@@ -295,9 +263,9 @@ describe("UserController", () => {
       await controller.register(req, res, next);
 
       expect(mockUserService.register).toHaveBeenCalledWith("new@example.com", "New User", "newuser", "password123");
-      expect(mockUserService.setOnCurrentEdition).toHaveBeenCalledWith(2024, 10);
+      expect(mockUserService.setOnCurrentEdition).toHaveBeenCalledWith(2026, 10);
       expect(mockUserService.login).toHaveBeenCalledWith("new@example.com", "password123");
-      expect(mockUserService.getFavoritesById).toHaveBeenCalledWith(1, 2024);
+      expect(mockUserService.getFavoritesById).toHaveBeenCalledWith(1, 2026);
       expect(req.session.user).toEqual(mockUser);
     });
 
@@ -465,7 +433,7 @@ describe("UserController", () => {
 
       await controller.updateProfile(req, res, next);
 
-      expect(mockUserService.getById).toHaveBeenCalledWith(1, 2024);
+      expect(mockUserService.getById).toHaveBeenCalledWith(1, 2026);
     });
   });
 

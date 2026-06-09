@@ -53,7 +53,7 @@ export class MatchController extends BaseController {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
 
-      const round = parseInt(req.params.round) || 0;
+      const round = parseInt(req.params.round as string) || 0;
       return this._getFormattedMatches(currentEdition, round, req.session.user ?? null);
     });
   };

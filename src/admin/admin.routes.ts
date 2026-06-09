@@ -1,5 +1,6 @@
 import express from "express";
 
+import { EditionService } from "#edition/edition.service.js";
 import { MailerService } from "#mailer/mailer.service.js";
 import { requireAdmin } from "#middlewares/middlewares.js";
 import { UserService } from "#user/user.service.js";
@@ -8,7 +9,8 @@ import { AdminController } from "./admin.controller.js";
 const router = express.Router();
 const userService = new UserService();
 const mailerService = new MailerService();
-const adminController = new AdminController(userService, mailerService);
+const editionService = new EditionService();
+const adminController = new AdminController(userService, mailerService, editionService);
 
 // All admin routes require an authenticated admin session
 router.use(requireAdmin);

@@ -136,22 +136,19 @@ export class BetController extends BaseController {
         throw new AppError("Não autorizado! A temporada já começou.", 401, ErrorCode.UNAUTHORIZED);
       }
 
-      let stageId: number = 1;
       if (maxStartedRound === null) {
         // No matches have started yet — edition hasn't begun
-        stageId = 1;
+        await this.betService.updateExtras(extraType, playerId ?? null, teamId, user!.id, currentEdition, 1);
       } else if (maxStartedRound < 4) {
         // Matches started, but none from round 4 onwards
-        stageId = 2;
+        await this.betService.updateExtras(extraType, playerId ?? null, teamId, user!.id, currentEdition, 2);
       } else if (maxStartedRound < 5) {
         // Matches started, but none from round 5 onwards
-        stageId = 3;
+        await this.betService.updateExtras(extraType, playerId ?? null, teamId, user!.id, currentEdition, 3);
       } else {
         // Round 5 matches started, no bet can be changed
         throw new AppError("Não autorizado! A fase de playoffs já começou.", 401, ErrorCode.UNAUTHORIZED);
       }
-
-      await this.betService.updateExtras(extraType, playerId ?? null, teamId, user!.id, currentEdition, stageId);
     });
   };
 }
