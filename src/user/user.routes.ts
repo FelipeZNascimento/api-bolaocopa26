@@ -1,6 +1,7 @@
 import express from "express";
 import { rateLimit } from "express-rate-limit";
 
+import { EditionService } from "#edition/edition.service.js";
 import { MailerService } from "#mailer/mailer.service.js";
 import { requireAuth } from "#middlewares/middlewares.js";
 import { UserController } from "#user/user.controller.js";
@@ -9,7 +10,8 @@ import { UserService } from "#user/user.service.js";
 const router = express.Router();
 const userService = new UserService();
 const mailerService = new MailerService();
-const userController = new UserController(userService, mailerService);
+const editionService = new EditionService();
+const userController = new UserController(userService, mailerService, editionService);
 
 // 10 attempts per 15 minutes per IP for auth endpoints
 const authLimiter = rateLimit({

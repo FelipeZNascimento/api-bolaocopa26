@@ -52,7 +52,9 @@ jobs:
     needs: [pprod-deployment]
     if: failure()
     steps:
+      - uses: actions/checkout@v4
       - name: Rerun failed jobs in the current workflow
+        working-directory: ${{ github.workspace }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run retry-workflow.yml -F run_id=${{ github.run_id }}

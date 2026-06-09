@@ -21,8 +21,8 @@ export class TeamController extends BaseController {
 
   getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const currentEdition = process.env.EDITION ? parseInt(process.env.EDITION) : null;
-      const edition = parseInt(req.params.edition) || currentEdition;
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+      const edition = parseInt(req.params.edition as string) || currentEdition;
 
       if (!currentEdition || !edition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
@@ -46,7 +46,7 @@ export class TeamController extends BaseController {
 
   getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const teamId = req.params.teamId;
+      const teamId = req.params.teamId as string;
       const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
 
       if (!currentEdition) {

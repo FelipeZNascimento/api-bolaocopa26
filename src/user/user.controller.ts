@@ -2,6 +2,8 @@ import type { IUser } from "#user/user.types.js";
 
 import { NextFunction, Request, Response } from "express";
 
+import { EditionService } from "#edition/edition.service.js";
+import { getEditionInfoFromCacheOrFetch } from "#edition/edition.util.js";
 import { MailerService } from "#mailer/mailer.service.js";
 import { clearRankingCache } from "#ranking/ranking.utils.js";
 import { BaseController } from "#shared/base.controller.js";
@@ -20,10 +22,8 @@ import { UserService } from "#user/user.service.js";
 import { checkExistingEntries } from "#user/user.utils.js";
 import { AppError } from "#utils/appError.js";
 import { cachedInfo } from "#utils/dataCache.js";
-import { editionMapping } from "#utils/editionMapping.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { parseBody } from "#utils/parseBody.js";
-
 import { generateVerificationToken } from "./user.utils.js";
 
 // Extend express-session types to include 'user' property
@@ -37,6 +37,7 @@ export class UserController extends BaseController {
   constructor(
     private userService: UserService,
     private mailerService: MailerService,
+    private editionService: EditionService,
   ) {
     super();
   }
@@ -66,18 +67,18 @@ export class UserController extends BaseController {
         return null;
       }
 
-      const edition = req.params.edition || process.env.EDITION;
-      if (!edition) {
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+      if (!currentEdition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
-      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
-      const userResponse = await this.userService.getById(user.id, editionId);
+
+      const userResponse = await this.userService.getById(user.id, currentEdition);
       if (!userResponse) {
         return null;
       }
 
       req.session.user = userResponse;
-      const favoritesResponse: string = await this.userService.getFavoritesById(user.id, editionId);
+      const favoritesResponse: string = await this.userService.getFavoritesById(user.id, currentEdition);
       const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
       return { ...userResponse, favorites: parsedFavorites };
     });
@@ -85,11 +86,10 @@ export class UserController extends BaseController {
 
   login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const edition = req.params.edition || process.env.EDITION;
-      if (!edition) {
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+      if (!currentEdition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
-      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
 
       if (req.session.user) {
         return req.session.user;
@@ -101,10 +101,10 @@ export class UserController extends BaseController {
         throw new AppError("Credenciais inválidas", 401, ErrorCode.UNAUTHORIZED);
       }
 
-      let user = userResponse.find((u) => u.editionId === editionId);
+      let user = userResponse.find((u) => u.editionId === currentEdition);
       // If the user exists but is not associated with the current edition, create the association
       if (user === undefined) {
-        await this.userService.setOnCurrentEdition(editionId, userResponse[0].id);
+        await this.userService.setOnCurrentEdition(currentEdition, userResponse[0].id);
         userResponse[0].isActive = false; // Set new edition users as inactive by default
       }
       user = userResponse[0];
@@ -112,7 +112,7 @@ export class UserController extends BaseController {
       user.timestamp = Date.now();
       req.session.user = user;
 
-      const favoritesResponse: string = await this.userService.getFavoritesById(user.id, editionId);
+      const favoritesResponse: string = await this.userService.getFavoritesById(user.id, currentEdition);
       const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
       return { ...user, favorites: parsedFavorites };
     });
@@ -137,11 +137,10 @@ export class UserController extends BaseController {
 
   register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const edition = req.params.edition || process.env.EDITION;
-      if (!edition) {
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+      if (!currentEdition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
-      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
 
       const { email, name, nickname, password } = parseBody(registerSchema, req.body);
 
@@ -156,7 +155,7 @@ export class UserController extends BaseController {
       }
 
       const { insertId } = registerResponse;
-      const setOnCurrentEditionResponse = await this.userService.setOnCurrentEdition(parseInt(edition), insertId);
+      const setOnCurrentEditionResponse = await this.userService.setOnCurrentEdition(currentEdition, insertId);
 
       if (setOnCurrentEditionResponse.affectedRows === 0) {
         throw new AppError("Registro falhou (edição)", 204, ErrorCode.DB_ERROR);
@@ -170,7 +169,7 @@ export class UserController extends BaseController {
       user.timestamp = Date.now();
       req.session.user = user;
 
-      const favoritesResponse: string = await this.userService.getFavoritesById(user.id, editionId);
+      const favoritesResponse: string = await this.userService.getFavoritesById(user.id, currentEdition);
       const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
       const locale = req.get("accept-language");
 
@@ -192,16 +191,14 @@ export class UserController extends BaseController {
     await this.handleRequest(req, res, next, async () => {
       const user = req.session.user;
 
-      const edition = req.params.edition || process.env.EDITION;
-      if (!edition) {
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+      if (!currentEdition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
-
-      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
       const { favorites } = parseBody(updateFavoritesSchema, req.body);
 
       const favoritesString = JSON.stringify(favorites);
-      const updateResponse = await this.userService.updateFavorites(user!.id, editionId, favoritesString);
+      const updateResponse = await this.userService.updateFavorites(user!.id, currentEdition, favoritesString);
       if (updateResponse.affectedRows > 0) {
         // update session data
         user!.favorites = favoritesString;
@@ -258,11 +255,10 @@ export class UserController extends BaseController {
   updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
       const user = req.session.user;
-      const edition = req.params.edition || process.env.EDITION;
-      if (!edition) {
+      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
+      if (!currentEdition) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
-      const editionId = parseInt(edition) < 2000 ? parseInt(edition) : editionMapping(edition);
 
       const { name, nickname } = parseBody(updateProfileSchema, req.body);
 
@@ -280,15 +276,15 @@ export class UserController extends BaseController {
 
         // clear cached rankings to reflect name change
         clearRankingCache();
-        const favoritesResponse: string = await this.userService.getFavoritesById(user!.id, editionId);
+        const favoritesResponse: string = await this.userService.getFavoritesById(user!.id, currentEdition);
         const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
 
         return { ...user, favorites: parsedFavorites };
       }
 
-      const favoritesResponse: string = await this.userService.getFavoritesById(user!.id, editionId);
+      const favoritesResponse: string = await this.userService.getFavoritesById(user!.id, currentEdition);
       const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
-      const userResponse = await this.userService.getById(user!.id, editionId);
+      const userResponse = await this.userService.getById(user!.id, currentEdition);
       if (!userResponse) {
         return null;
       }
