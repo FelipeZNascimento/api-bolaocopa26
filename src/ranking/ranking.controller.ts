@@ -1,6 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 
-import { EXTRA_TYPE_CHAMPION, EXTRA_TYPE_DEFENSE, EXTRA_TYPE_OFFENSE, EXTRA_TYPE_STRIKER } from "#bet/bet.constants.js";
+import {
+  EXTRA_TYPE_BEST_PLAYER,
+  EXTRA_TYPE_CHAMPION,
+  EXTRA_TYPE_DEFENSE,
+  EXTRA_TYPE_OFFENSE,
+  EXTRA_TYPE_TOP_SCORER,
+} from "#bet/bet.constants.js";
 import { BetService } from "#bet/bet.service.js";
 import { IExtraBet, IExtraBetRaw, IExtraBetResult, IExtraBetResultRaw } from "#bet/bet.types.js";
 import { groupExtraBetsByType, parseExtraBetResult, parseExtraBets, parseRawBets } from "#bet/bet.utils.js";
@@ -75,10 +81,11 @@ export class RankingController extends BaseController {
       const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, currentEdition);
       const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, currentEdition, teams);
       const extraBets = {
+        bestPlayer: [] as IExtraBet[],
         champion: [] as IExtraBet[],
         defense: [] as IExtraBet[],
         offense: [] as IExtraBet[],
-        striker: [] as IExtraBet[],
+        topScorer: [] as IExtraBet[],
       };
       // Parse extra bets, group by extra type and keep only valid bets
       if (isFulfilled(extrasResponse)) {
@@ -93,9 +100,12 @@ export class RankingController extends BaseController {
         extraBets.champion = (groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_CHAMPION)?.bets ?? []).filter(
           (bet): bet is IExtraBet => bet.team !== null,
         );
-        extraBets.striker = (groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_STRIKER)?.bets ?? []).filter(
-          (bet): bet is IExtraBet => bet.team !== null,
-        );
+        extraBets.bestPlayer = (
+          groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_BEST_PLAYER)?.bets ?? []
+        ).filter((bet): bet is IExtraBet => bet.team !== null);
+        extraBets.topScorer = (
+          groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_TOP_SCORER)?.bets ?? []
+        ).filter((bet): bet is IExtraBet => bet.team !== null);
         extraBets.offense = (groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_OFFENSE)?.bets ?? []).filter(
           (bet): bet is IExtraBet => bet.team !== null,
         );
@@ -105,10 +115,11 @@ export class RankingController extends BaseController {
       }
 
       const extraBetsResults = {
+        bestPlayer: [] as IExtraBetResult[],
         champion: [] as IExtraBetResult[],
         defense: [] as IExtraBetResult[],
         offense: [] as IExtraBetResult[],
-        striker: [] as IExtraBetResult[],
+        topScorer: [] as IExtraBetResult[],
       };
       // Parse extra bets results, group by extra type and keep only valid bets
       if (isFulfilled(extrasResultsResponse)) {
@@ -122,8 +133,10 @@ export class RankingController extends BaseController {
         );
         extraBetsResults.champion =
           groupedExtraBetsResults.find((eb) => eb.extraType === EXTRA_TYPE_CHAMPION)?.results ?? [];
-        extraBetsResults.striker =
-          groupedExtraBetsResults.find((eb) => eb.extraType === EXTRA_TYPE_STRIKER)?.results ?? [];
+        extraBetsResults.bestPlayer =
+          groupedExtraBetsResults.find((eb) => eb.extraType === EXTRA_TYPE_BEST_PLAYER)?.results ?? [];
+        extraBetsResults.topScorer =
+          groupedExtraBetsResults.find((eb) => eb.extraType === EXTRA_TYPE_TOP_SCORER)?.results ?? [];
         extraBetsResults.offense =
           groupedExtraBetsResults.find((eb) => eb.extraType === EXTRA_TYPE_OFFENSE)?.results ?? [];
         extraBetsResults.defense =
@@ -148,8 +161,8 @@ export class RankingController extends BaseController {
       const editionRankingWithoutExtras = getEditionRanking(
         roundsRanking,
         baseComparisonRound,
-        { champion: [], defense: [], offense: [], striker: [] },
-        { champion: [], defense: [], offense: [], striker: [] },
+        { bestPlayer: [], champion: [], defense: [], offense: [], topScorer: [] },
+        { bestPlayer: [], champion: [], defense: [], offense: [], topScorer: [] },
       );
 
       return {

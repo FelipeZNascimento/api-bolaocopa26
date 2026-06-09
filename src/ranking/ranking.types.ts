@@ -29,11 +29,12 @@ export interface IRankingScore {
   winnersOnly: number;
 }
 export interface IRankingScoreExtras {
+  bestPlayer: number;
   champion: number;
   defense: number;
   offense: number;
   points: number;
-  striker: number;
+  topScorer: number;
 }
 
 export interface IRawExtras {

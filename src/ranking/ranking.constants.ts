@@ -6,7 +6,7 @@ export const AWARD_POINTS = {
   extraChampion: 40,
   extraDefense: 10,
   extraOffense: 10,
-  extraStriker: 10,
+  extraTopSorer: 10,
   oneScore: 3,
   winnerOnly: 2,
 };
@@ -17,7 +17,7 @@ export const AWARD_POINTS_2026 = {
   extraChampion: 50,
   extraDefense: 10,
   extraOffense: 10,
-  extraStriker: 15,
+  extraTopScorer: 15,
   oneScore: 6,
   winnerOnly: 4,
 };

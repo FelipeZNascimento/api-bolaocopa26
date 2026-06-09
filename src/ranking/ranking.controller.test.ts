@@ -520,17 +520,19 @@ describe("RankingController", () => {
       ];
 
       const extraBets = {
+        bestPlayer: [createExtraBet(1, 40, 100)],
         champion: [createExtraBet(1, 10)],
         defense: [createExtraBet(1, 20)],
         offense: [createExtraBet(1, 30)],
-        striker: [createExtraBet(1, 40, 100)],
+        topScorer: [createExtraBet(1, 40, 100)],
       };
 
       const extraBetsResults = {
+        bestPlayer: [createExtraBetResult(40, 100)],
         champion: [createExtraBetResult(10)],
         defense: [createExtraBetResult(20)],
         offense: [createExtraBetResult(30)],
-        striker: [createExtraBetResult(40, 100)],
+        topScorer: [createExtraBetResult(40, 100)],
       };
 
       const editionRanking = getEditionRanking([{ ranking: roundRanking, round: 1 }], 1, extraBets, extraBetsResults);
@@ -538,13 +540,14 @@ describe("RankingController", () => {
       expect(editionRanking[0].score.extras?.champion).toBe(AWARD_POINTS_2026.extraChampion);
       expect(editionRanking[0].score.extras?.defense).toBe(AWARD_POINTS_2026.extraDefense);
       expect(editionRanking[0].score.extras?.offense).toBe(AWARD_POINTS_2026.extraOffense);
-      expect(editionRanking[0].score.extras?.striker).toBe(AWARD_POINTS_2026.extraStriker);
+      expect(editionRanking[0].score.extras?.topScorer).toBe(AWARD_POINTS_2026.extraTopScorer);
       expect(editionRanking[0].score.points).toBe(
         5 +
           AWARD_POINTS_2026.extraChampion +
           AWARD_POINTS_2026.extraDefense +
           AWARD_POINTS_2026.extraOffense +
-          AWARD_POINTS_2026.extraStriker,
+          AWARD_POINTS_2026.extraTopScorer +
+          AWARD_POINTS_2026.extraBestPlayer,
       );
     });
 
@@ -583,17 +586,19 @@ describe("RankingController", () => {
       ];
 
       const extraBets = {
+        bestPlayer: [],
         champion: [createExtraBet(1, 10)], // User bet on team 10
         defense: [],
         offense: [],
-        striker: [],
+        topScorer: [],
       };
 
       const extraBetsResults = {
+        bestPlayer: [],
         champion: [createExtraBetResult(99)], // But team 99 won
         defense: [],
         offense: [],
-        striker: [],
+        topScorer: [],
       };
 
       const editionRanking = getEditionRanking([{ ranking: roundRanking, round: 1 }], 1, extraBets, extraBetsResults);
@@ -640,16 +645,18 @@ describe("RankingController", () => {
         [{ ranking: roundRanking, round: 1 }],
         1,
         {
+          bestPlayer: [],
           champion: [],
           defense: [],
           offense: [],
-          striker: [],
+          topScorer: [],
         },
         {
+          bestPlayer: [],
           champion: [],
           defense: [],
           offense: [],
-          striker: [],
+          topScorer: [],
         },
       );
 
@@ -661,45 +668,45 @@ describe("RankingController", () => {
     it("should return zero points when user has no extra bets", () => {
       const extras = calculateExtraBets(
         1,
-        { champion: [], defense: [], offense: [], striker: [] },
-        { champion: [], defense: [], offense: [], striker: [] },
+        { bestPlayer: [], champion: [], defense: [], offense: [], topScorer: [] },
+        { bestPlayer: [], champion: [], defense: [], offense: [], topScorer: [] },
       );
 
       expect(extras.champion).toBe(0);
       expect(extras.defense).toBe(0);
       expect(extras.offense).toBe(0);
-      expect(extras.striker).toBe(0);
+      expect(extras.topScorer).toBe(0);
       expect(extras.points).toBe(0);
     });
 
     it("should award points for correct champion bet", () => {
       const extras = calculateExtraBets(
         1,
-        { champion: [createExtraBet(1, 10)], defense: [], offense: [], striker: [] },
-        { champion: [createExtraBetResult(10)], defense: [], offense: [], striker: [] },
+        { bestPlayer: [], champion: [createExtraBet(1, 10)], defense: [], offense: [], topScorer: [] },
+        { bestPlayer: [], champion: [createExtraBetResult(10)], defense: [], offense: [], topScorer: [] },
       );
 
       expect(extras.champion).toBe(AWARD_POINTS_2026.extraChampion);
     });
 
-    it("should award points for correct striker bet", () => {
+    it("should award points for correct topScorer bet", () => {
       const extras = calculateExtraBets(
         1,
-        { champion: [], defense: [], offense: [], striker: [createExtraBet(1, 10, 100)] },
-        { champion: [], defense: [], offense: [], striker: [createExtraBetResult(10, 100)] },
+        { bestPlayer: [], champion: [], defense: [], offense: [], topScorer: [createExtraBet(1, 10, 100)] },
+        { bestPlayer: [], champion: [], defense: [], offense: [], topScorer: [createExtraBetResult(10, 100)] },
       );
 
-      expect(extras.striker).toBe(AWARD_POINTS_2026.extraStriker);
+      expect(extras.topScorer).toBe(AWARD_POINTS_2026.extraTopScorer);
     });
 
-    it("should not award points when player ID doesn't match for striker", () => {
+    it("should not award points when player ID doesn't match for topScorer", () => {
       const extras = calculateExtraBets(
         1,
-        { champion: [], defense: [], offense: [], striker: [createExtraBet(1, 10, 100)] },
-        { champion: [], defense: [], offense: [], striker: [createExtraBetResult(10, 999)] },
+        { bestPlayer: [], champion: [], defense: [], offense: [], topScorer: [createExtraBet(1, 10, 100)] },
+        { bestPlayer: [], champion: [], defense: [], offense: [], topScorer: [createExtraBetResult(10, 999)] },
       );
 
-      expect(extras.striker).toBe(0);
+      expect(extras.topScorer).toBe(0);
     });
 
     describe("Champion Bet Penalty System (EXTRAS_FACTORS)", () => {
@@ -707,8 +714,8 @@ describe("RankingController", () => {
         const extras = calculateExtraBets(
           // stageId: 1 = EDITION
           1,
-          { champion: [createExtraBet(1, 10, undefined, 1)], defense: [], offense: [], striker: [] },
-          { champion: [createExtraBetResult(10)], defense: [], offense: [], striker: [] },
+          { bestPlayer: [], champion: [createExtraBet(1, 10, undefined, 1)], defense: [], offense: [], topScorer: [] },
+          { bestPlayer: [], champion: [createExtraBetResult(10)], defense: [], offense: [], topScorer: [] },
         );
 
         expect(extras.champion).toBe(AWARD_POINTS_2026.extraChampion * 1); // 50 * 1 = 50
@@ -719,8 +726,8 @@ describe("RankingController", () => {
         const extras = calculateExtraBets(
           // stageId: 2 = PLAYOFFS
           1,
-          { champion: [createExtraBet(1, 10, undefined, 2)], defense: [], offense: [], striker: [] },
-          { champion: [createExtraBetResult(10)], defense: [], offense: [], striker: [] },
+          { bestPlayer: [], champion: [createExtraBet(1, 10, undefined, 2)], defense: [], offense: [], topScorer: [] },
+          { bestPlayer: [], champion: [createExtraBetResult(10)], defense: [], offense: [], topScorer: [] },
         );
 
         expect(extras.champion).toBe(AWARD_POINTS_2026.extraChampion * 0.6); // 50 * 0.6 = 30
@@ -731,8 +738,8 @@ describe("RankingController", () => {
         const extras = calculateExtraBets(
           // stageId: 3 = QUARTERFINALS
           1,
-          { champion: [createExtraBet(1, 10, undefined, 3)], defense: [], offense: [], striker: [] },
-          { champion: [createExtraBetResult(10)], defense: [], offense: [], striker: [] },
+          { bestPlayer: [], champion: [createExtraBet(1, 10, undefined, 3)], defense: [], offense: [], topScorer: [] },
+          { bestPlayer: [], champion: [createExtraBetResult(10)], defense: [], offense: [], topScorer: [] },
         );
 
         expect(extras.champion).toBe(AWARD_POINTS_2026.extraChampion * 0.3); // 50 * 0.3 = 15
@@ -743,15 +750,16 @@ describe("RankingController", () => {
         const extras = calculateExtraBets(
           1,
           {
+            bestPlayer: [],
             champion: [
               createExtraBet(1, 5, undefined, 1, new Date("2026-01-01")), // First bet: team 5 during EDITION
               createExtraBet(1, 10, undefined, 2, new Date("2026-02-01")), // Changed to team 10 during PLAYOFFS
             ],
             defense: [],
             offense: [],
-            striker: [],
+            topScorer: [],
           },
-          { champion: [createExtraBetResult(10)], defense: [], offense: [], striker: [] },
+          { bestPlayer: [], champion: [createExtraBetResult(10)], defense: [], offense: [], topScorer: [] },
         );
 
         // Should use the latest bet (team 10 with PLAYOFFS penalty)
@@ -763,15 +771,17 @@ describe("RankingController", () => {
         const extras = calculateExtraBets(
           1,
           {
+            bestPlayer: [],
             champion: [
               createExtraBet(1, 10, undefined, 1, new Date("2026-01-01")), // First bet: team 10 pre EDITION (correct)
               createExtraBet(1, 99, undefined, 2, new Date("2026-02-01")), // Changed to team 99 during PLAYOFFS (wrong)
             ],
             defense: [],
             offense: [],
-            striker: [],
+            topScorer: [],
           },
-          { champion: [createExtraBetResult(10)], defense: [], offense: [], striker: [] }, // Team 10 won
+          // Team 10 won
+          { bestPlayer: [], champion: [createExtraBetResult(10)], defense: [], offense: [], topScorer: [] },
         );
 
         // Should use the latest bet (team 99) which is wrong
@@ -782,15 +792,16 @@ describe("RankingController", () => {
         const extras = calculateExtraBets(
           1,
           {
+            bestPlayer: [],
             champion: [
               createExtraBet(1, 99, undefined, 1, new Date("2026-01-01")), // First bet: team 99 (wrong)
               createExtraBet(1, 10, undefined, 1, new Date("2026-01-15")), // Changed to team 10 BEFORE_START (correct)
             ],
             defense: [],
             offense: [],
-            striker: [],
+            topScorer: [],
           },
-          { champion: [createExtraBetResult(10)], defense: [], offense: [], striker: [] },
+          { bestPlayer: [], champion: [createExtraBetResult(10)], defense: [], offense: [], topScorer: [] },
         );
 
         // Note: getLatestExtraBet sorts by stageId, not timestamp, so when multiple bets have same stageId,
@@ -803,6 +814,7 @@ describe("RankingController", () => {
         const extras = calculateExtraBets(
           1,
           {
+            bestPlayer: [],
             champion: [
               createExtraBet(1, 10, undefined, 1, new Date("2026-01-01")), // EDITION: team 10 (100% if kept)
               createExtraBet(1, 15, undefined, 2, new Date("2026-02-01")), // PLAYOFFS: team 15 (60% if kept)
@@ -810,36 +822,38 @@ describe("RankingController", () => {
             ],
             defense: [],
             offense: [],
-            striker: [],
+            topScorer: [],
           },
-          { champion: [createExtraBetResult(10)], defense: [], offense: [], striker: [] },
+          { bestPlayer: [], champion: [createExtraBetResult(10)], defense: [], offense: [], topScorer: [] },
         );
 
         // Should use the latest bet with QUARTERFINALS penalty
         expect(extras.champion).toBe(AWARD_POINTS_2026.extraChampion * 0.3); // 50 * 0.3 = 15
       });
 
-      it("should not apply penalties to striker, defense, or offense bets", () => {
+      it("should not apply penalties to topScorer, defense, or offense bets", () => {
         const extras = calculateExtraBets(
           1,
           {
+            bestPlayer: [],
             champion: [],
             defense: [createExtraBet(1, 20, undefined, 3)], // QUARTERFINALS stage
             offense: [createExtraBet(1, 30, undefined, 3)], // QUARTERFINALS stage
-            striker: [createExtraBet(1, 40, 100, 3)], // QUARTERFINALS stage
+            topScorer: [createExtraBet(1, 40, 100, 3)], // QUARTERFINALS stage
           },
           {
+            bestPlayer: [],
             champion: [],
             defense: [createExtraBetResult(20)],
             offense: [createExtraBetResult(30)],
-            striker: [createExtraBetResult(40, 100)],
+            topScorer: [createExtraBetResult(40, 100)],
           },
         );
 
         // These should all get full points regardless of stage
         expect(extras.defense).toBe(AWARD_POINTS_2026.extraDefense); // 10
         expect(extras.offense).toBe(AWARD_POINTS_2026.extraOffense); // 10
-        expect(extras.striker).toBe(AWARD_POINTS_2026.extraStriker); // 15
+        expect(extras.topScorer).toBe(AWARD_POINTS_2026.extraTopScorer); // 15
       });
     });
 
@@ -847,14 +861,14 @@ describe("RankingController", () => {
       it("should handle user with no bets at all", () => {
         const extras = calculateExtraBets(
           999, // User ID that has no bets
-          { champion: [], defense: [], offense: [], striker: [] },
-          { champion: [], defense: [], offense: [], striker: [] },
+          { bestPlayer: [], champion: [], defense: [], offense: [], topScorer: [] },
+          { bestPlayer: [], champion: [], defense: [], offense: [], topScorer: [] },
         );
 
         expect(extras.champion).toBe(0);
         expect(extras.defense).toBe(0);
         expect(extras.offense).toBe(0);
-        expect(extras.striker).toBe(0);
+        expect(extras.topScorer).toBe(0);
         expect(extras.points).toBe(0);
       });
 
@@ -862,48 +876,52 @@ describe("RankingController", () => {
         const extras = calculateExtraBets(
           1,
           {
+            bestPlayer: [],
             champion: [createExtraBet(1, 10)],
             defense: [createExtraBet(1, 20)],
             offense: [createExtraBet(1, 30)],
-            striker: [createExtraBet(1, 40, 100)],
+            topScorer: [createExtraBet(1, 40, 100)],
           },
-          { champion: [], defense: [], offense: [], striker: [] }, // No winners announced yet
+          { bestPlayer: [], champion: [], defense: [], offense: [], topScorer: [] }, // No winners announced yet
         );
 
         expect(extras.champion).toBe(0);
         expect(extras.defense).toBe(0);
         expect(extras.offense).toBe(0);
-        expect(extras.striker).toBe(0);
+        expect(extras.topScorer).toBe(0);
       });
 
       it("should handle bet on team that exists but didn't win", () => {
         const extras = calculateExtraBets(
           1,
-          { champion: [createExtraBet(1, 10)], defense: [], offense: [], striker: [] },
-          { champion: [createExtraBetResult(20)], defense: [], offense: [], striker: [] }, // Different team won
+          { bestPlayer: [], champion: [createExtraBet(1, 10)], defense: [], offense: [], topScorer: [] },
+          // Different team won
+          { bestPlayer: [], champion: [createExtraBetResult(20)], defense: [], offense: [], topScorer: [] },
         );
 
         expect(extras.champion).toBe(0);
       });
 
-      it("should correctly match striker by player ID, not just team", () => {
+      it("should correctly match topScorer by player ID, not just team", () => {
         const extras = calculateExtraBets(
           1,
           {
+            bestPlayer: [],
             champion: [],
             defense: [],
             offense: [],
-            striker: [createExtraBet(1, 10, 100)], // Team 10, Player 100
+            topScorer: [createExtraBet(1, 10, 100)], // Team 10, Player 100
           },
           {
+            bestPlayer: [],
             champion: [],
             defense: [],
             offense: [],
-            striker: [createExtraBetResult(10, 200)], // Team 10, Player 200 (different player)
+            topScorer: [createExtraBetResult(10, 200)], // Team 10, Player 200 (different player)
           },
         );
 
-        expect(extras.striker).toBe(0); // Wrong player
+        expect(extras.topScorer).toBe(0); // Wrong player
       });
     });
   });
@@ -1140,25 +1158,27 @@ describe("RankingController", () => {
       ];
 
       const extraBets = {
+        bestPlayer: [],
         champion: [createExtraBet(1, 10, undefined, 1)], // 50 points (EDITION)
         defense: [],
         offense: [],
-        striker: [createExtraBet(1, 40, 100)], // 15 points
+        topScorer: [createExtraBet(1, 40, 100)], // 15 points
       };
 
       const extraBetsResults = {
+        bestPlayer: [],
         champion: [createExtraBetResult(10)],
         defense: [],
         offense: [],
-        striker: [createExtraBetResult(40, 100)],
+        topScorer: [createExtraBetResult(40, 100)],
       };
 
       const editionRanking = getEditionRanking([{ ranking: roundRanking, round: 1 }], 1, extraBets, extraBetsResults);
 
-      // Total: 10 (match) + 50 (champion) + 15 (striker) = 75
+      // Total: 10 (match) + 50 (champion) + 15 (topScorer) = 75
       expect(editionRanking[0].score.points).toBe(75);
       expect(editionRanking[0].score.extras?.champion).toBe(50);
-      expect(editionRanking[0].score.extras?.striker).toBe(15);
+      expect(editionRanking[0].score.extras?.topScorer).toBe(15);
     });
   });
 });
