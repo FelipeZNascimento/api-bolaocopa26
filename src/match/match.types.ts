@@ -83,6 +83,7 @@ export interface IFifaTeam {
 export interface IFifaWeather {
   Humidity: string;
   Temperature: string;
+  TypeLocalized: { Description: string; Locale: string }[];
   WindSpeed: string;
 }
 
@@ -136,6 +137,7 @@ export interface IScore {
 }
 
 export interface IWeather {
+  description?: string;
   humidity: string;
   temperature: string;
   windSpeed: string;

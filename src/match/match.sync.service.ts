@@ -15,7 +15,7 @@ import { AppError } from "#utils/appError.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { WEBSOCKET_EVENTS } from "#websocket/websocket.constants.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
-import { MATCH_STATUS } from "./match.constants.js";
+import { FINISHED_GAME, MATCH_STATUS } from "./match.constants.js";
 
 export interface IMatchSyncStats {
   duration: number;
@@ -153,9 +153,9 @@ export class MatchSyncService {
       closeMatches.forEach((m) => this.matchesToBeFetched.includes(m) || this.matchesToBeFetched.push(m));
       let matchesToBeSaved: IMatch[] = [];
 
-      // Remove matches that are more than 4 hours old from the fetch list, add to the save list
+      // Remove matches that started more than 4 hours ago and are finished from the fetch list, add to the save list
       this.matchesToBeFetched.forEach((m) => {
-        if (m.timestamp < nowTimeOnStart - 60 * 60 * 4) {
+        if (m.timestamp < nowTimeOnStart - 60 * 60 * 4 && FINISHED_GAME.includes(m.status)) {
           logger.info(
             { matchId: m.id, matchTimestamp: m.timestamp, now: nowTimeOnStart },
             "Found match that started 4h+ ago, will save on DB and remove from fetch list",
@@ -197,6 +197,7 @@ export class MatchSyncService {
 
         const parsedEvents = this.parseEvents(external, match, players, eventsInfo);
         const weather = {
+          description: external.Weather.TypeLocalized.find((type) => type.Locale === "pt-BR")?.Description,
           humidity: external.Weather.Humidity,
           temperature: external.Weather.Temperature,
           windSpeed: external.Weather.WindSpeed,
