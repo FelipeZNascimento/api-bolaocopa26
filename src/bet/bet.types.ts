@@ -46,6 +46,7 @@ export interface IExtraBetRaw {
 export interface IExtraBetResult {
   extraType: number;
   player: IPlayer | null;
+  stageId: TStageId;
   team: ITeam;
 }
 
@@ -60,6 +61,14 @@ export interface IExtraBetResultRaw {
   positionAbbreviation: null;
   positionDescription: null | string;
   positionId: null | number;
+  stageId: number;
   teamId: number;
 }
-export type TStageId = STAGE_ID.BEFORE_START | STAGE_ID.PLAYOFFS | STAGE_ID.QUARTERFINALS;
+export type TStageId =
+  | STAGE_ID.BEFORE_QUARTERFINALS
+  | STAGE_ID.BEFORE_START
+  | STAGE_ID.FINAL
+  | STAGE_ID.GROUP_STAGE
+  | STAGE_ID.QUARTERFINALS
+  | STAGE_ID.SEMIFINALS
+  | STAGE_ID.WINNER;

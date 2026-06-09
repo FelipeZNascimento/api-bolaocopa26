@@ -6,7 +6,7 @@ export const AWARD_POINTS = {
   extraChampion: 40,
   extraDefense: 10,
   extraOffense: 10,
-  extraStriker: 10,
+  extraTopSorer: 10,
   oneScore: 3,
   winnerOnly: 2,
 };
@@ -17,15 +17,29 @@ export const AWARD_POINTS_2026 = {
   extraChampion: 50,
   extraDefense: 10,
   extraOffense: 10,
-  extraStriker: 15,
+  extraTopScorer: 15,
   oneScore: 6,
   winnerOnly: 4,
 };
 
-export const EXTRAS_FACTORS: Record<TStageId, number> = {
+export const EXTRAS_FACTORS_ON_CHANGE: Record<TStageId, number> = {
+  [STAGE_ID.BEFORE_QUARTERFINALS]: 0.3,
   [STAGE_ID.BEFORE_START]: 1,
-  [STAGE_ID.PLAYOFFS]: 0.6,
-  [STAGE_ID.QUARTERFINALS]: 0.3,
+  [STAGE_ID.FINAL]: 0,
+  [STAGE_ID.GROUP_STAGE]: 0.6,
+  [STAGE_ID.QUARTERFINALS]: 0,
+  [STAGE_ID.SEMIFINALS]: 0,
+  [STAGE_ID.WINNER]: 0,
+};
+
+export const EXTRAS_PROGRESSIVE_FACTORS: Record<TStageId, number> = {
+  [STAGE_ID.BEFORE_QUARTERFINALS]: 0,
+  [STAGE_ID.BEFORE_START]: 0,
+  [STAGE_ID.FINAL]: 0.6,
+  [STAGE_ID.GROUP_STAGE]: 0,
+  [STAGE_ID.QUARTERFINALS]: 0.2,
+  [STAGE_ID.SEMIFINALS]: 0.4,
+  [STAGE_ID.WINNER]: 1,
 };
 
 export const ROUND_MULTIPLIERS: Record<number, number> = {

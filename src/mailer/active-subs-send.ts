@@ -1,11 +1,11 @@
 /**
  * Hello Stranger mailer script
  *
- * Fetches all users who have NOT joined edition 3 (Copa 2026) and sends
- * them the hello_stranger invitation email.
+ * Fetches all users who have joined edition 3 (Copa 2026) but haven't paid yet
+ * and sends them a reminder email.
  *
  * Usage:
- * - node --env-file .env dist/mailer/send-hello-stranger.js
+ * - node --env-file .env dist/mailer/active-subs-send.js
  */
 
 import type { RowDataPacket } from "mysql2";
@@ -15,7 +15,7 @@ import { createTransport } from "nodemailer";
 import { connection } from "#database/db.js";
 import { logger } from "#logger/logger.service.js";
 import { ENV } from "#utils/envParser.js";
-import { getActivationTemplate as getHelloStrangerTemplate } from "./hello-stranger.template";
+import { getAvailableExtrasTemplate } from "./extra-bets-available.template.js";
 
 const EDITION_ID = 3;
 
@@ -25,7 +25,7 @@ interface IUserRow extends RowDataPacket {
   nickname: string;
 }
 
-async function sendHelloStrangerEmails(): Promise<void> {
+async function sendActiveSubsEmail(): Promise<void> {
   if (!ENV.SMTP_HOST || !ENV.SMTP_USER || !ENV.SMTP_PASSWORD) {
     throw new Error("SMTP is not configured. Set SMTP_HOST, SMTP_USER and SMTP_PASSWORD in your .env file.");
   }
@@ -49,24 +49,35 @@ async function sendHelloStrangerEmails(): Promise<void> {
     `SELECT users.id, users.email, users.nickname
        FROM users
        LEFT JOIN users_edition ON users.id = users_edition.id_user AND users_edition.id_edition = ?
-       WHERE users_edition.id_user IS NULL`,
+       WHERE users_edition.is_active = 1`,
     [EDITION_ID],
   );
 
-  logger.info(
-    { total: selectedUsers.length },
-    `Found ${selectedUsers.length} users not enrolled in edition ${EDITION_ID}`,
-  );
+  logger.info({ total: selectedUsers.length }, `Found ${selectedUsers.length} users active in edition ${EDITION_ID}`);
 
   let sent = 0;
   let failed = 0;
+
+  // await transporter.sendMail({
+  //   from: fromAddress,
+  //   html: getAvailableExtrasTemplate("Felipera"),
+  //   subject: "[BolaoCopa2026] Extra! Extra!",
+  //   to: "sharpion.k@gmail.com",
+  // });
+
+  // await transporter.sendMail({
+  //   from: fromAddress,
+  //   html: getAvailableExtrasTemplate("Mottoca"),
+  //   subject: "[BolaoCopa2026] Extra! Extra!",
+  //   to: "ngm.motta@gmail.com",
+  // });
 
   for (const user of selectedUsers) {
     try {
       await transporter.sendMail({
         from: fromAddress,
-        html: getHelloStrangerTemplate(user.nickname),
-        subject: "[BolaoCopa2026] Você foi convidado!",
+        html: getAvailableExtrasTemplate(user.nickname),
+        subject: "[BolaoCopa2026] Extra! Extra!",
         to: user.email,
       });
 
@@ -81,13 +92,13 @@ async function sendHelloStrangerEmails(): Promise<void> {
     }
   }
 
-  logger.info({ failed, sent, total: selectedUsers.length }, "Hello stranger email campaign finished");
+  logger.info({ failed, sent, total: selectedUsers.length }, "Active subs Extra Bets campaign finished");
 }
 
 // Run if executed directly
 const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
 if (isMainModule) {
-  sendHelloStrangerEmails()
+  sendActiveSubsEmail()
     .then(() => {
       logger.info("Script finished successfully");
       process.exit(0);

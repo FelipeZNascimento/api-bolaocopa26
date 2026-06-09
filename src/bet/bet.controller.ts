@@ -14,7 +14,6 @@ import { getPlayersFromCacheOrFetch, getTeamsFromCacheOrFetch } from "#team/team
 import { UserService } from "#user/user.service.js";
 import { IUser } from "#user/user.types.js";
 import { AppError } from "#utils/appError.js";
-import { checkEdition } from "#utils/checkEdition.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { parseBody } from "#utils/parseBody.js";
 import { EXTRA_TYPE_CHAMPION } from "./bet.constants.js";
@@ -39,7 +38,6 @@ export class BetController extends BaseController {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
 
-      // const { edition, editionStart } = checkEdition(req.params.edition);
       let activeProfileExtraBets: IExtraBetRaw[] = [];
       if (user) {
         activeProfileExtraBets = await this.betService.getExtrasFromUserId(currentEdition, user.id);
@@ -77,11 +75,19 @@ export class BetController extends BaseController {
 
   getExtrasResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const { edition, editionStart } = checkEdition(req.params.edition);
-      const extraBetsResults: IExtraBetResultRaw[] = await this.betService.getExtrasResults(edition, editionStart);
-      const users: IUser[] = await this.userService.getByEdition(edition);
-      const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
-      const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, edition, teams);
+      const { currentEdition, editionStart } = await getEditionInfoFromCacheOrFetch(this.editionService);
+
+      if (!currentEdition || !editionStart) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+
+      const extraBetsResults: IExtraBetResultRaw[] = await this.betService.getExtrasResults(
+        currentEdition,
+        editionStart,
+      );
+      const users: IUser[] = await this.userService.getByEdition(currentEdition);
+      const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, currentEdition);
+      const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, currentEdition, teams);
 
       return groupExtraBetsByType(extraBetsResults, parseExtraBetResult, players, teams, users, "results");
     });
@@ -116,14 +122,15 @@ export class BetController extends BaseController {
         throw new AppError("Usuário inativo", 403, ErrorCode.FORBIDDEN);
       }
 
-      const nowTimestamp = Math.floor(new Date().getTime() / 1000);
-      const { edition, editionStart } = checkEdition(req.params.edition);
-      const { extraType, playerId, teamId } = parseBody(updateExtraBetSchema, req.body);
-      const maxStartedRound = await this.editionService.getMaxStartedRound(edition);
+      const { currentEdition, editionStart } = await getEditionInfoFromCacheOrFetch(this.editionService);
 
-      if (!editionStart || !edition) {
+      if (!currentEdition || !editionStart) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
+
+      const nowTimestamp = Math.floor(new Date().getTime() / 1000);
+      const { extraType, playerId, teamId } = parseBody(updateExtraBetSchema, req.body);
+      const maxStartedRound = await this.editionService.getMaxStartedRound(currentEdition);
 
       if (extraType !== EXTRA_TYPE_CHAMPION && nowTimestamp >= editionStart) {
         throw new AppError("Não autorizado! A temporada já começou.", 401, ErrorCode.UNAUTHORIZED);
@@ -144,7 +151,7 @@ export class BetController extends BaseController {
         throw new AppError("Não autorizado! A fase de playoffs já começou.", 401, ErrorCode.UNAUTHORIZED);
       }
 
-      await this.betService.updateExtras(extraType, playerId ?? null, teamId, user!.id, edition, stageId);
+      await this.betService.updateExtras(extraType, playerId ?? null, teamId, user!.id, currentEdition, stageId);
     });
   };
 }

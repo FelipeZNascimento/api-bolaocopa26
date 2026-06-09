@@ -196,6 +196,11 @@ export class MatchSyncService {
         if (!external) return match;
 
         const parsedEvents = this.parseEvents(external, match, players, eventsInfo);
+        const weather = {
+          humidity: external.Weather.Humidity,
+          temperature: external.Weather.Temperature,
+          windSpeed: external.Weather.WindSpeed,
+        };
 
         return {
           ...match,
@@ -208,6 +213,7 @@ export class MatchSyncService {
             homePenalties: external.HomeTeamPenaltyScore,
           },
           status: this.convertPeriodToStatus(external.Period),
+          weather: weather,
         };
       });
 

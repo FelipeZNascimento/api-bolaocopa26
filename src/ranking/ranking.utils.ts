@@ -4,7 +4,13 @@ import { IMatch } from "#match/match.types.js";
 import { IUser } from "#user/user.types.js";
 import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
 
-import { AWARD_POINTS_2026, DEFAULT_ROUND_MULTIPLIER, EXTRAS_FACTORS, ROUND_MULTIPLIERS } from "./ranking.constants.js";
+import {
+  AWARD_POINTS_2026,
+  DEFAULT_ROUND_MULTIPLIER,
+  EXTRAS_FACTORS_ON_CHANGE,
+  EXTRAS_PROGRESSIVE_FACTORS,
+  ROUND_MULTIPLIERS,
+} from "./ranking.constants.js";
 import {
   ICalculatedRankingLine,
   IRankingScore,
@@ -18,16 +24,18 @@ export const getEditionRanking = (
   roundsRanking: IRoundRanking[],
   baseComparisonRoundNumber: number,
   extraBets: {
+    bestPlayer: IExtraBet[];
     champion: IExtraBet[];
     defense: IExtraBet[];
     offense: IExtraBet[];
-    striker: IExtraBet[];
+    topScorer: IExtraBet[];
   },
   extraBetsResults: {
+    bestPlayer: IExtraBetResult[];
     champion: IExtraBetResult[];
     defense: IExtraBetResult[];
     offense: IExtraBetResult[];
-    striker: IExtraBetResult[];
+    topScorer: IExtraBetResult[];
   },
 ) => {
   const lastRound = Math.max(...roundsRanking.map((r) => r.round));
@@ -42,7 +50,8 @@ export const getEditionRanking = (
         calculatedExtraBets.champion +
         calculatedExtraBets.defense +
         calculatedExtraBets.offense +
-        calculatedExtraBets.striker;
+        calculatedExtraBets.bestPlayer +
+        calculatedExtraBets.topScorer;
       calculatedExtraBets.points = extrasTotal;
 
       return {
@@ -75,41 +84,53 @@ const getLatestExtraBet = (bets: IExtraBet[], userId: number): IExtraBet | undef
 export const calculateExtraBets = (
   userId: number,
   extraBets: {
+    bestPlayer: IExtraBet[];
     champion: IExtraBet[];
     defense: IExtraBet[];
     offense: IExtraBet[];
-    striker: IExtraBet[];
+    topScorer: IExtraBet[];
   },
   extraBetsResults: {
+    bestPlayer: IExtraBetResult[];
     champion: IExtraBetResult[];
     defense: IExtraBetResult[];
     offense: IExtraBetResult[];
-    striker: IExtraBetResult[];
+    topScorer: IExtraBetResult[];
   },
 ): IRankingScoreExtras => {
   const championBet = getLatestExtraBet(extraBets.champion, userId);
   const defenseBet = getLatestExtraBet(extraBets.defense, userId);
   const offenseBet = getLatestExtraBet(extraBets.offense, userId);
-  const strikerBet = getLatestExtraBet(extraBets.striker, userId);
+  const topScorerBet = getLatestExtraBet(extraBets.topScorer, userId);
+  const bestPlayerBet = getLatestExtraBet(extraBets.bestPlayer, userId);
 
-  const hasChampionMatch =
-    championBet &&
-    extraBetsResults.champion.some((result) => championBet.team && result.team.id === championBet.team.id);
+  let championPoints = 0;
+  const championMatch = extraBetsResults.champion.find((result) => result.team.id === championBet?.team.id);
+
+  // The user has placed a bet, and there's a match with the results
+  if (championBet && championMatch !== undefined) {
+    championPoints =
+      AWARD_POINTS_2026.extraChampion *
+      EXTRAS_FACTORS_ON_CHANGE[championBet.stageId] *
+      EXTRAS_PROGRESSIVE_FACTORS[championMatch.stageId];
+  }
+
   const hasDefenseMatch =
     defenseBet && extraBetsResults.defense.some((result) => defenseBet.team && result.team.id === defenseBet.team.id);
   const hasOffenseMatch =
     offenseBet && extraBetsResults.offense.some((result) => offenseBet.team && result.team.id === offenseBet.team.id);
-  const hasStrikerMatch =
-    strikerBet && extraBetsResults.striker.some((result) => result.player?.id === strikerBet.player?.id);
-
-  const championPoints = hasChampionMatch ? AWARD_POINTS_2026.extraChampion * EXTRAS_FACTORS[championBet.stageId] : 0;
+  const hasTopScorerMatch =
+    topScorerBet && extraBetsResults.topScorer.some((result) => result.player?.id === topScorerBet.player?.id);
+  const hasBestPlayerMatch =
+    bestPlayerBet && extraBetsResults.bestPlayer.some((result) => result.player?.id === bestPlayerBet.player?.id);
 
   return {
+    bestPlayer: hasBestPlayerMatch ? AWARD_POINTS_2026.extraBestPlayer : 0,
     champion: championPoints,
     defense: hasDefenseMatch ? AWARD_POINTS_2026.extraDefense : 0,
     offense: hasOffenseMatch ? AWARD_POINTS_2026.extraOffense : 0,
     points: 0,
-    striker: hasStrikerMatch ? AWARD_POINTS_2026.extraStriker : 0,
+    topScorer: hasTopScorerMatch ? AWARD_POINTS_2026.extraTopScorer : 0,
   };
 };
 

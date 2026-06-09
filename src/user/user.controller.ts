@@ -75,6 +75,8 @@ export class UserController extends BaseController {
       if (!userResponse) {
         return null;
       }
+
+      req.session.user = userResponse;
       const favoritesResponse: string = await this.userService.getFavoritesById(user.id, editionId);
       const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
       return { ...userResponse, favorites: parsedFavorites };

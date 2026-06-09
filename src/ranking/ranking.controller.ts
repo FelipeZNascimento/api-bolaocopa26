@@ -1,9 +1,17 @@
 import { NextFunction, Request, Response } from "express";
 
-import { EXTRA_TYPE_CHAMPION, EXTRA_TYPE_DEFENSE, EXTRA_TYPE_OFFENSE, EXTRA_TYPE_STRIKER } from "#bet/bet.constants.js";
+import {
+  EXTRA_TYPE_BEST_PLAYER,
+  EXTRA_TYPE_CHAMPION,
+  EXTRA_TYPE_DEFENSE,
+  EXTRA_TYPE_OFFENSE,
+  EXTRA_TYPE_TOP_SCORER,
+} from "#bet/bet.constants.js";
 import { BetService } from "#bet/bet.service.js";
 import { IExtraBet, IExtraBetRaw, IExtraBetResult, IExtraBetResultRaw } from "#bet/bet.types.js";
 import { groupExtraBetsByType, parseExtraBetResult, parseExtraBets, parseRawBets } from "#bet/bet.utils.js";
+import { EditionService } from "#edition/edition.service.js";
+import { getEditionInfoFromCacheOrFetch } from "#edition/edition.util.js";
 import { MATCH_STATUS } from "#match/match.constants.js";
 import { MatchService } from "#match/match.service.js";
 import { IMatch, IMatchRaw } from "#match/match.types.js";
@@ -16,12 +24,11 @@ import { UserService } from "#user/user.service.js";
 import { IUser } from "#user/user.types.js";
 import { isFulfilled, isRejected } from "#utils/apiResponse.js";
 import { AppError } from "#utils/appError.js";
-import { checkEdition } from "#utils/checkEdition.js";
 import { ErrorCode } from "#utils/errorCodes.js";
-
 import { getEditionRanking, getRoundsRanking } from "./ranking.utils.js";
 export class RankingController extends BaseController {
   constructor(
+    private editionService: EditionService,
     private userService: UserService,
     private matchService: MatchService,
     private teamService: TeamService,
@@ -32,13 +39,17 @@ export class RankingController extends BaseController {
 
   getRanking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const { edition, editionStart } = checkEdition(req.params.edition);
+      const { currentEdition, editionStart } = await getEditionInfoFromCacheOrFetch(this.editionService);
+
+      if (!currentEdition || !editionStart) {
+        throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
 
       const queries = [
-        this.userService.getByEdition(edition),
-        this.matchService.getByEdition(edition),
-        this.betService.getExtras(edition, editionStart),
-        this.betService.getExtrasResults(edition, editionStart),
+        this.userService.getByEdition(currentEdition),
+        this.matchService.getByEdition(currentEdition),
+        this.betService.getExtras(currentEdition, editionStart),
+        this.betService.getExtrasResults(currentEdition, editionStart),
       ];
       const [usersResponse, matchesResponse, extrasResponse, extrasResultsResponse] = (await Promise.allSettled(
         queries,
@@ -67,14 +78,16 @@ export class RankingController extends BaseController {
         matches = matchesResponse.value.map((match) => parseRawMatch(match, [], [], []));
       }
 
-      const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, edition);
-      const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, edition, teams);
+      const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, currentEdition);
+      const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, currentEdition, teams);
       const extraBets = {
+        bestPlayer: [] as IExtraBet[],
         champion: [] as IExtraBet[],
         defense: [] as IExtraBet[],
         offense: [] as IExtraBet[],
-        striker: [] as IExtraBet[],
+        topScorer: [] as IExtraBet[],
       };
+      // Parse extra bets, group by extra type and keep only valid bets
       if (isFulfilled(extrasResponse)) {
         const groupedExtraBets = groupExtraBetsByType(
           extrasResponse.value,
@@ -87,9 +100,12 @@ export class RankingController extends BaseController {
         extraBets.champion = (groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_CHAMPION)?.bets ?? []).filter(
           (bet): bet is IExtraBet => bet.team !== null,
         );
-        extraBets.striker = (groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_STRIKER)?.bets ?? []).filter(
-          (bet): bet is IExtraBet => bet.team !== null,
-        );
+        extraBets.bestPlayer = (
+          groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_BEST_PLAYER)?.bets ?? []
+        ).filter((bet): bet is IExtraBet => bet.team !== null);
+        extraBets.topScorer = (
+          groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_TOP_SCORER)?.bets ?? []
+        ).filter((bet): bet is IExtraBet => bet.team !== null);
         extraBets.offense = (groupedExtraBets.find((eb) => eb.extraType === EXTRA_TYPE_OFFENSE)?.bets ?? []).filter(
           (bet): bet is IExtraBet => bet.team !== null,
         );
@@ -99,11 +115,13 @@ export class RankingController extends BaseController {
       }
 
       const extraBetsResults = {
+        bestPlayer: [] as IExtraBetResult[],
         champion: [] as IExtraBetResult[],
         defense: [] as IExtraBetResult[],
         offense: [] as IExtraBetResult[],
-        striker: [] as IExtraBetResult[],
+        topScorer: [] as IExtraBetResult[],
       };
+      // Parse extra bets results, group by extra type and keep only valid bets
       if (isFulfilled(extrasResultsResponse)) {
         const groupedExtraBetsResults = groupExtraBetsByType(
           extrasResultsResponse.value,
@@ -115,8 +133,10 @@ export class RankingController extends BaseController {
         );
         extraBetsResults.champion =
           groupedExtraBetsResults.find((eb) => eb.extraType === EXTRA_TYPE_CHAMPION)?.results ?? [];
-        extraBetsResults.striker =
-          groupedExtraBetsResults.find((eb) => eb.extraType === EXTRA_TYPE_STRIKER)?.results ?? [];
+        extraBetsResults.bestPlayer =
+          groupedExtraBetsResults.find((eb) => eb.extraType === EXTRA_TYPE_BEST_PLAYER)?.results ?? [];
+        extraBetsResults.topScorer =
+          groupedExtraBetsResults.find((eb) => eb.extraType === EXTRA_TYPE_TOP_SCORER)?.results ?? [];
         extraBetsResults.offense =
           groupedExtraBetsResults.find((eb) => eb.extraType === EXTRA_TYPE_OFFENSE)?.results ?? [];
         extraBetsResults.defense =
@@ -136,13 +156,13 @@ export class RankingController extends BaseController {
       const betsResponse = await this.betService.getStartedMatchesBetsByMatchIds(startedMatches.map((m) => m.id));
       const bets = parseRawBets(betsResponse);
 
-      const roundsRanking = getRoundsRanking(edition, users, matches, startedMatches, bets);
+      const roundsRanking = getRoundsRanking(currentEdition, users, matches, startedMatches, bets);
       const editionRanking = getEditionRanking(roundsRanking, baseComparisonRound, extraBets, extraBetsResults);
       const editionRankingWithoutExtras = getEditionRanking(
         roundsRanking,
         baseComparisonRound,
-        { champion: [], defense: [], offense: [], striker: [] },
-        { champion: [], defense: [], offense: [], striker: [] },
+        { bestPlayer: [], champion: [], defense: [], offense: [], topScorer: [] },
+        { bestPlayer: [], champion: [], defense: [], offense: [], topScorer: [] },
       );
 
       return {
