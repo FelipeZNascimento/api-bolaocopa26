@@ -45,10 +45,21 @@ export class RankingController extends BaseController {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
       }
 
+      const maxStartedRound = await this.editionService.getMaxStartedRound(currentEdition);
+      let maxStageId;
+
+      if (maxStartedRound === null || maxStartedRound < 4) {
+        maxStageId = 1;
+      } else if (maxStartedRound < 5) {
+        maxStageId = 2;
+      } else {
+        maxStageId = 3;
+      }
+
       const queries = [
         this.userService.getByEdition(currentEdition),
         this.matchService.getByEdition(currentEdition),
-        this.betService.getExtras(currentEdition, editionStart),
+        this.betService.getExtras(currentEdition, editionStart, maxStageId),
         this.betService.getExtrasResults(currentEdition, editionStart),
       ];
       const [usersResponse, matchesResponse, extrasResponse, extrasResultsResponse] = (await Promise.allSettled(

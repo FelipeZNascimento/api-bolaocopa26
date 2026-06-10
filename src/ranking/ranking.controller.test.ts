@@ -156,7 +156,9 @@ describe("RankingController", () => {
     getByEdition: vi.fn(),
   };
 
-  const mockEditionService = {};
+  const mockEditionService = {
+    getMaxStartedRound: vi.fn(),
+  };
   const mockTeamService = {};
 
   const mockBetService = {

@@ -63,7 +63,18 @@ export class BetController extends BaseController {
         };
       }
 
-      const extraBets: IExtraBetRaw[] = await this.betService.getExtras(currentEdition, editionStart);
+      const maxStartedRound = await this.editionService.getMaxStartedRound(currentEdition);
+      let maxStageId;
+
+      if (maxStartedRound === null || maxStartedRound < 4) {
+        maxStageId = 1;
+      } else if (maxStartedRound < 5) {
+        maxStageId = 2;
+      } else {
+        maxStageId = 3;
+      }
+
+      const extraBets: IExtraBetRaw[] = await this.betService.getExtras(currentEdition, editionStart, maxStageId);
       const bets = groupExtraBetsByType(extraBets, parseExtraBets, players, teams, users, "bets");
 
       return {
