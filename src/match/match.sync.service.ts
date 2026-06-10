@@ -15,7 +15,7 @@ import { AppError } from "#utils/appError.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { WEBSOCKET_EVENTS } from "#websocket/websocket.constants.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
-import { MATCH_STATUS } from "./match.constants.js";
+import { FINISHED_GAME, MATCH_STATUS } from "./match.constants.js";
 
 export interface IMatchSyncStats {
   duration: number;
@@ -145,17 +145,16 @@ export class MatchSyncService {
       const teams = await getTeamsFromCacheOrFetch(this.teamService, currentEdition);
       const players = await getPlayersFromCacheOrFetch(this.teamService, currentEdition, teams);
       const closeMatches = matches.filter(
-        // Only consider matches within 2 hours before AND 4h after
-        (m) => m.timestamp >= nowTimeOnStart - 60 * 60 * 2 && m.timestamp <= nowTimeOnStart + 60 * 60 * 4,
+        (m) => m.timestamp - 60 * 60 * 24 < nowTimeOnStart && m.timestamp + 60 * 60 * 24 > nowTimeOnStart,
+        // Only consider matches within 24 hours before AND 24h after
       );
-
       // Include close matches to the fetch list
       closeMatches.forEach((m) => this.matchesToBeFetched.includes(m) || this.matchesToBeFetched.push(m));
       let matchesToBeSaved: IMatch[] = [];
 
-      // Remove matches that are more than 4 hours old from the fetch list, add to the save list
+      // Remove matches that started more than 4 hours ago and are finished from the fetch list, add to the save list
       this.matchesToBeFetched.forEach((m) => {
-        if (m.timestamp < nowTimeOnStart - 60 * 60 * 4) {
+        if (m.timestamp < nowTimeOnStart - 60 * 60 * 24 && FINISHED_GAME.includes(m.status)) {
           logger.info(
             { matchId: m.id, matchTimestamp: m.timestamp, now: nowTimeOnStart },
             "Found match that started 4h+ ago, will save on DB and remove from fetch list",
@@ -176,8 +175,6 @@ export class MatchSyncService {
         matchesToBeSaved = [];
       }
 
-      // For testing, only fetch one match from JSON file
-
       // Fetch matches from external API in parallel for all close matches
       const externalAPIMatchResponse = await Promise.allSettled(
         this.matchesToBeFetched.map((m) => this.externalAPI.fetchMatch(m.idFifa)),
@@ -185,6 +182,7 @@ export class MatchSyncService {
       const externalAPIMatches = externalAPIMatchResponse.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
 
       // [TESTING] Read from local file instead of external API
+      // For testing, only fetch one match from JSON file
       // this.matchesToBeFetched = matches.filter((m) => m.idFifa === 400021443);
       // const externalAPIMatches = [
       //   JSON.parse(readFileSync(new URL("./fifaApiResponse.json", import.meta.url), "utf-8")) as IFifaMatch,
@@ -192,11 +190,12 @@ export class MatchSyncService {
 
       // Parse external match to select wanted fields and convert to internal format
       const parsedMatches: IMatch[] = this.matchesToBeFetched.map((match) => {
-        const external = externalAPIMatches.find((m) => parseInt(m.IdMatch, 10) === match.idFifa);
+        const external = externalAPIMatches.find((m) => m && parseInt(m.IdMatch, 10) === match.idFifa);
         if (!external) return match;
 
         const parsedEvents = this.parseEvents(external, match, players, eventsInfo);
         const weather = {
+          description: external.Weather.TypeLocalized.find((type) => type.Locale === "pt-BR")?.Description,
           humidity: external.Weather.Humidity,
           temperature: external.Weather.Temperature,
           windSpeed: external.Weather.WindSpeed,
@@ -325,7 +324,11 @@ export class MatchSyncService {
       oldMatch.score.away !== newMatch.score.away ||
       oldMatch.score.homePenalties !== newMatch.score.homePenalties ||
       oldMatch.score.awayPenalties !== newMatch.score.awayPenalties ||
-      oldMatch.gametime !== newMatch.gametime
+      oldMatch.gametime !== newMatch.gametime ||
+      oldMatch.weather?.temperature !== newMatch.weather?.temperature ||
+      oldMatch.weather?.humidity !== newMatch.weather?.humidity ||
+      oldMatch.weather?.windSpeed !== newMatch.weather?.windSpeed ||
+      oldMatch.weather?.description !== newMatch.weather?.description
     );
   }
 

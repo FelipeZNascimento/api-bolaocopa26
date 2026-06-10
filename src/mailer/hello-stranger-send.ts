@@ -5,7 +5,7 @@
  * them the hello_stranger invitation email.
  *
  * Usage:
- * - node --env-file .env dist/mailer/send-hello-stranger.js
+ * - node --env-file .env dist/mailer/hello-stranger-send.js
  */
 
 import type { RowDataPacket } from "mysql2";
@@ -15,7 +15,8 @@ import { createTransport } from "nodemailer";
 import { connection } from "#database/db.js";
 import { logger } from "#logger/logger.service.js";
 import { ENV } from "#utils/envParser.js";
-import { getActivationTemplate as getHelloStrangerTemplate } from "./hello-stranger.template";
+import { getHelloStrangerFinalTemplate } from "./hello-stranger-final.template.js";
+// import { getHelloStrangerTemplate } from "./hello-stranger.template.js";
 
 const EDITION_ID = 3;
 
@@ -61,23 +62,39 @@ async function sendHelloStrangerEmails(): Promise<void> {
   let sent = 0;
   let failed = 0;
 
+  // await transporter.sendMail({
+  //   from: fromAddress,
+  //   html: getHelloStrangerFinalTemplate("Felipera"),
+  //   subject: "[BolaoCopa2026] Última chance!",
+  //   to: "sharpion.k@gmail.com",
+  // });
+
+  // await transporter.sendMail({
+  //   from: fromAddress,
+  //   html: getHelloStrangerFinalTemplate("Mottoca"),
+  //   subject: "[BolaoCopa2026] Última chance!",
+  //   to: "ngm.motta@gmail.com",
+  // });
+
   for (const user of selectedUsers) {
     try {
       await transporter.sendMail({
         from: fromAddress,
-        html: getHelloStrangerTemplate(user.nickname),
-        subject: "[BolaoCopa2026] Você foi convidado!",
+        html: getHelloStrangerFinalTemplate(user.nickname),
+        subject: "[BolaoCopa2026] Última chance!",
         to: user.email,
       });
 
+      // logger.info({ email: user.email, userId: user.id }, "Email sent");
       setTimeout(function () {
-        logger.info({ email: user.email, userId: user.id }, "Email sent");
+        logger.info({ email: user.email }, "Email sent");
       }, 500);
 
       sent++;
     } catch (error) {
       failed++;
-      logger.error({ email: user.email, err: error, userId: user.id }, "Failed to send email");
+      // logger.error({ email: user.email, err: error, userId: user.id }, "Failed to send email");
+      logger.error({ email: user.email, err: error }, "Failed to send email");
     }
   }
 

@@ -23,7 +23,7 @@ export class MatchExternalAPI {
    * @param matchId - The match ID to fetch
    * @returns The match data from the external API
    */
-  async fetchMatch(matchId: number): Promise<IFifaMatch> {
+  async fetchMatch(matchId: number): Promise<IFifaMatch | null> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
@@ -47,7 +47,7 @@ export class MatchExternalAPI {
         );
       }
 
-      const data = (await response.json()) as IFifaMatch;
+      const data = (await response.json()) as IFifaMatch | null;
 
       logger.info({ matchId }, "Successfully fetched match from external API");
       return data;

@@ -1,4 +1,4 @@
-export const getHelloStrangerTemplate = (user: string) => `
+export const getHelloStrangerFinalTemplate = (user: string) => `
 <!doctype html>
 <html>
   <body>
@@ -73,9 +73,10 @@ export const getHelloStrangerTemplate = (user: string) => `
                 Olá ${user},
               </h3>
               <div style="font-weight:normal;padding:16px 24px 16px 24px">
-                A Copa do Mundo está chegando – e o Bolão da Copa 2026 também!
-                Como você já participou de edições anteriores, não poderíamos
-                deixar de te convidar para mais essa edição.
+                O tempo está acabando! Hoje é o último dia para participar do
+                melhor Bolão da Copa 2026! Como você já participou de edições
+                anteriores, não poderíamos deixar de te convidar para mais essa
+                edição.
               </div>
               <div style="font-weight:normal;padding:16px 24px 16px 24px">
                 A maior Copa da história merece o nosso maior bolão, com a
@@ -91,7 +92,7 @@ export const getHelloStrangerTemplate = (user: string) => `
               <div style="font-weight:normal;padding:16px 24px 16px 24px">
                 ⚠️ Importante: Para garantir sua vaga e começar a dar seus
                 palpites, você deve efetuar o pagamento da inscrição no valor de
-                R$100,00 até o dia 10/06, às 23h59.
+                R$100,00 até as 23h59 de hoje.
               </div>
               <div style="font-weight:normal;padding:16px 24px 16px 24px">
                 Você pode utilizar seu login já existente e, se necessário, pode
@@ -349,10 +350,10 @@ export const getHelloStrangerTemplate = (user: string) => `
                 Hello ${user},
               </h3>
               <div style="font-weight:normal;padding:16px 24px 16px 24px">
-                The World Cup is around the corner - just as our Pick&#x27;em
-                Pool Bolão! As you already was part of our previous editions, we
-                couldn&#x27;t help but invite you to join us on this edition
-                too.
+                Time is running out! Today is the last day to join the best
+                World Cup pool! As you already was part of our previous
+                editions, we couldn&#x27;t help but invite you to join us on
+                this edition too.
               </div>
               <div style="font-weight:normal;padding:16px 24px 16px 24px">
                 The biggest World Cup in history deserves the best Bolão, the
@@ -856,7 +857,7 @@ export const getHelloStrangerTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "A Copa do Mundo está chegando – e o Bolão da Copa 2026 também! Como você já participou de edições anteriores, não poderíamos deixar de te convidar para mais essa edição."
+        "text": "O tempo está acabando! Hoje é o último dia para participar do melhor Bolão da Copa 2026! Como você já participou de edições anteriores, não poderíamos deixar de te convidar para mais essa edição."
       }
     }
   },
@@ -1294,7 +1295,7 @@ export const getHelloStrangerTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "The World Cup is around the corner - just as our Pick'em Pool Bolão! As you already was part of our previous editions, we couldn't help but invite you to join us on this edition too."
+        "text": "Time is running out! Today is the last day to join the best World Cup pool! As you already was part of our previous editions, we couldn't help but invite you to join us on this edition too."
       }
     }
   },
@@ -1599,7 +1600,7 @@ export const getHelloStrangerTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "⚠️ Importante: Para garantir sua vaga e começar a dar seus palpites, você deve efetuar o pagamento da inscrição no valor de R$100,00 até o dia 10/06, às 23h59."
+        "text": "⚠️ Importante: Para garantir sua vaga e começar a dar seus palpites, você deve efetuar o pagamento da inscrição no valor de R$100,00 até as 23h59 de hoje."
       }
     }
   },

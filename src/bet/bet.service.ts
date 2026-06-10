@@ -5,7 +5,7 @@ import { ResultSetHeader } from "mysql2/promise";
 import db from "#database/db.js";
 
 export class BetService {
-  async getExtras(edition: number, editionStart: number) {
+  async getExtras(edition: number, editionStart: number, maxStageId: number) {
     const rows = await db.query(
       `SELECT extra_bets.id, extra_bets.id_user as userId, extra_bets.id_extra_type as extraType,
         extra_bets.id_team as teamId,
@@ -16,8 +16,11 @@ export class BetService {
         LEFT JOIN users ON extra_bets.id_user = users.id
         LEFT JOIN users_edition ON extra_bets.id_user = users_edition.id_user AND users_edition.id_edition = ?
         LEFT JOIN players ON players.id = extra_bets.id_player
-        WHERE extra_bets.id_edition = ? AND users_edition.is_active = 1 AND ? < UNIX_TIMESTAMP()`,
-      [edition, edition, editionStart],
+        WHERE extra_bets.id_edition = ?
+          AND users_edition.is_active = 1
+          AND ? < UNIX_TIMESTAMP()
+          AND extra_bets.id_stage <= ?`,
+      [edition, edition, editionStart, maxStageId],
     );
 
     return rows as IExtraBetRaw[];

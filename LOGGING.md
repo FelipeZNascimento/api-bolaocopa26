@@ -447,6 +447,8 @@ cat api-bolaocopa26-out.log | jq -Rr 'fromjson? | select(type == "object") | sel
 # Filter by a specific date
 cat api-bolaocopa26-out.log | jq -R 'fromjson? | select(type == "object") | select(.time != null and (.time | startswith("2026-06-07")))'
 
+# Filter by request and specific date
+ cat api-bolaocopa26-out.log | jq -R 'fromjson? | select(type == "object") | select(.req.url != null and (.req.url | startswith("/bet/extra/"))) | select(.time != null and (.time | startswith("2026-06-09")))'
 ```
 
 **Using `tail` (real-time monitoring):**
