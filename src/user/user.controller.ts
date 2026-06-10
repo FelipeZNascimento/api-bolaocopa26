@@ -137,9 +137,16 @@ export class UserController extends BaseController {
 
   register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
-      const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
-      if (!currentEdition) {
+      const { currentEdition, editionStart } = await getEditionInfoFromCacheOrFetch(this.editionService);
+
+      if (!currentEdition || !editionStart) {
         throw new AppError("Erro de inicialização", 404, ErrorCode.INTERNAL_SERVER_ERROR);
+      }
+
+      // Check to prevent registering new members if edition has already started
+      const nowTimestamp = Math.floor(new Date().getTime() / 1000);
+      if (nowTimestamp > editionStart) {
+        throw new AppError("Registros encerrados", 403, ErrorCode.FORBIDDEN);
       }
 
       const { email, name, nickname, password } = parseBody(registerSchema, req.body);
