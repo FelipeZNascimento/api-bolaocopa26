@@ -46,100 +46,13 @@ async function sendHelloStrangerEmails(): Promise<void> {
 
   const fromAddress = process.env.SMTP_FROM ?? "bolao@omegafox.me";
 
-  // const [selectedUsers] = await connection.query<IUserRow[]>(
-  //   `SELECT users.id, users.email, users.nickname
-  //      FROM users
-  //      LEFT JOIN users_edition ON users.id = users_edition.id_user AND users_edition.id_edition = ?
-  //      WHERE users_edition.id_user IS NULL`,
-  //   [EDITION_ID],
-  // );
-
-  const selectedUsers = [
-    {
-      email: "birodrigues1988@icloud.com",
-      nickname: "Bene",
-    },
-    {
-      email: "thibotana@gmail.com",
-      nickname: "Botana",
-    },
-    {
-      email: "alan1eu@yahoo.com.br",
-      nickname: "Alan",
-    },
-    {
-      email: "reider.arnaud@gmail.com",
-      nickname: "Reider",
-    },
-    {
-      email: "carolina.borques@gmail.com",
-      nickname: "CarolBorques",
-    },
-    {
-      email: "luiz.guerra@autbank.com.br",
-      nickname: "Luiz Guerra",
-    },
-    {
-      email: "sara_r.santos@hotmail.com",
-      nickname: "Sarinha",
-    },
-    {
-      email: "b_of_the_boing@hotmail.co.uk",
-      nickname: "England's No. 1",
-    },
-    {
-      email: "carlosfbremer@gmail.com",
-      nickname: "Bremer",
-    },
-    {
-      email: "NUNESEDUARDO@LIVE.COM",
-      nickname: "EDUARDO",
-    },
-    {
-      email: "carlosjuliano@gmail.com",
-      nickname: "Carlos Juliano",
-    },
-    {
-      email: "kjimoto@hotmail.com",
-      nickname: "Mick Jagger",
-    },
-    {
-      email: "godoi.lucas@hotmail.com",
-      nickname: "Lucas Godoi",
-    },
-    {
-      email: "danielnogueirafisio@gmail.com",
-      nickname: "Danieltoko",
-    },
-    {
-      email: "delmaroliveirasantos@gmail.com",
-      nickname: "Del",
-    },
-    {
-      email: "carlosatila90@gmail.com",
-      nickname: "Pagode90",
-    },
-    {
-      email: "ingridverissimo102@hotmail.com",
-      nickname: "ingridverissimo",
-    },
-    {
-      email: "pepe.sp@terra.com.br",
-      nickname: "Pepê Lima",
-    },
-    {
-      email: "nociano@gmail.com",
-      nickname: "Luciano Guaxupé",
-    },
-    {
-      email: "rlmarfurt@hotmail.com",
-      nickname: "Marf",
-    },
-    {
-      email: "acauacarvalho6@gmail.com",
-      nickname: "Acauã",
-    },
-  ];
+  const [selectedUsers] = await connection.query<IUserRow[]>(
+    `SELECT users.id, users.email, users.nickname
+       FROM users
+       LEFT JOIN users_edition ON users.id = users_edition.id_user AND users_edition.id_edition = ?
+       WHERE users_edition.id_user IS NULL`,
+    [EDITION_ID],
+  );
 
   logger.info(
     { total: selectedUsers.length },
