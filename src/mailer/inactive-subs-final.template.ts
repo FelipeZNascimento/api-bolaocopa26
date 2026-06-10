@@ -1,4 +1,4 @@
-export const getHelloStrangerTemplate = (user: string) => `
+export const getInactiveSubsFinalTemplate = (user: string) => `
 <!doctype html>
 <html>
   <body>
@@ -73,32 +73,27 @@ export const getHelloStrangerTemplate = (user: string) => `
                 Olá ${user},
               </h3>
               <div style="font-weight:normal;padding:16px 24px 16px 24px">
-                A Copa do Mundo está chegando – e o Bolão da Copa 2026 também!
-                Como você já participou de edições anteriores, não poderíamos
-                deixar de te convidar para mais essa edição.
+                O tempo está acabando! Hoje é o último dia para participar do
+                melhor Bolão da Copa. Percebemos que você se cadastrou, mas
+                ainda não ativou seu cadastro!
               </div>
               <div style="font-weight:normal;padding:16px 24px 16px 24px">
-                A maior Copa da história merece o nosso maior bolão, com a
-                plataforma que você já conhece e confia, mas totalmente
-                renovada!
+                ⚠️ Para garantir sua vaga e começar a dar seus palpites, você
+                deve efetuar o pagamento da inscrição no valor de R$100,00 até
+                as 23h59 de hoje.
+              </div>
+              <div style="font-size:16px;padding:16px 24px 16px 24px">
+                Os detalhes para o pagamento estão na seção "Inscrições" das
+                <a
+                  href="https://bolaocopa.omegafox.me/regras?section=inscricoes"
+                  >Regras</a
+                >!
               </div>
               <div style="font-weight:normal;padding:16px 24px 16px 24px">
-                Este ano temos novidades: além de apostar em todos os 104 jogos,
-                você pode escolher uma seleção para campeã e trocar sua aposta
-                ao longo do torneio conforme o cenário muda. Quanto mais cedo
-                você apostar, mais pontos vale – mas a decisão é sua.
-              </div>
-              <div style="font-weight:normal;padding:16px 24px 16px 24px">
-                ⚠️ Importante: Para garantir sua vaga e começar a dar seus
-                palpites, você deve efetuar o pagamento da inscrição no valor de
-                R$100,00 até o dia 10/06, às 23h59.
-              </div>
-              <div style="font-weight:normal;padding:16px 24px 16px 24px">
-                Você pode utilizar seu login já existente e, se necessário, pode
-                recuperar sua senha pelo site.
+                Venha se divertir com a gente!
               </div>
               <div
-                style="font-size:20px;text-align:center;padding:16px 24px 0px 24px"
+                style="font-size:20px;text-align:center;padding:4px 24px 4px 24px"
               >
                 <a href="https://bolaocopa.omegafox.me/"
                   >Acesse o Bolão agora!</a
@@ -114,12 +109,6 @@ export const getHelloStrangerTemplate = (user: string) => `
                     src="https://pprod-bolaocopa.omegafox.me/logo-desktop.png"
                     style="outline:none;border:none;text-decoration:none;vertical-align:middle;display:inline-block;max-width:100%"
                 /></a>
-              </div>
-              <div
-                style="font-weight:normal;text-align:center;padding:16px 24px 16px 24px"
-              >
-                Venha se divertir com a gente. Que vença o melhor (ou mais
-                sortudo)!
               </div>
               <div style="padding:0px 24px 0px 24px">
                 <table
@@ -349,35 +338,32 @@ export const getHelloStrangerTemplate = (user: string) => `
                 Hello ${user},
               </h3>
               <div style="font-weight:normal;padding:16px 24px 16px 24px">
-                The World Cup is around the corner - just as our Pick&#x27;em
-                Pool Bolão! As you already was part of our previous editions, we
-                couldn&#x27;t help but invite you to join us on this edition
-                too.
+                Time is running out! Today is the last day to join the best
+                World Cup pool. We noticed that you registered, but you haven’t
+                activated your account yet!
               </div>
               <div style="font-weight:normal;padding:16px 24px 16px 24px">
-                The biggest World Cup in history deserves the best Bolão, the
-                platform you already know and trust but entirely renewed!
+                ⚠️ To ensure your participation and start betting, you must pay
+                the registration fee (€20.00 or US$25.00) until 11/06/2026 at
+                03:59 AM (GMT+1).
+              </div>
+              <div style="font-size:16px;padding:16px 24px 16px 24px">
+                The payment details are available in the “Registration" section
+                of the
+                <a
+                  href="https://bolaocopa.omegafox.me/regras?section=inscricoes"
+                  >Rules</a
+                >!
               </div>
               <div style="font-weight:normal;padding:16px 24px 16px 24px">
-                This year, we have some news: not only you&#x27;ll be able to
-                bet on all 104 matches but you&#x27;ll also have the chance to
-                chose a squad as your champion - and change it throughout the
-                competition. But there&#x27;s a catch: the longer you stick with
-                your bet, higher the reward - but the coice is yours.
-              </div>
-              <div style="font-weight:normal;padding:16px 24px 16px 24px">
-                ⚠️ Important: To ensure your participation and start betting,
-                you must pay the registration fee (€20.00 or US$25.00) until
-                11/06/2026 at 03:59 AM (GMT+1).
-              </div>
-              <div style="font-weight:normal;padding:16px 24px 16px 24px">
-                You may login with your existing account. If necessary, you can
-                reset your password through our website.
+                Come have fun with us!
               </div>
               <div
-                style="font-size:20px;text-align:center;padding:16px 24px 0px 24px"
+                style="font-size:20px;text-align:center;padding:4px 24px 4px 24px"
               >
-                <a href="https://bolaocopa.omegafox.me/">Enter Bolão now!</a>
+                <a href="https://bolaocopa.omegafox.me/"
+                  >Access the Bolão now!</a
+                >
               </div>
               <div style="padding:0px 24px 16px 24px">
                 <a
@@ -389,11 +375,6 @@ export const getHelloStrangerTemplate = (user: string) => `
                     src="https://pprod-bolaocopa.omegafox.me/logo-desktop.png"
                     style="outline:none;border:none;text-decoration:none;vertical-align:middle;display:inline-block;max-width:100%"
                 /></a>
-              </div>
-              <div
-                style="font-weight:normal;text-align:center;padding:16px 24px 16px 24px"
-              >
-                Come have fun with us and let the best (or luckiest) one win!
               </div>
               <div style="padding:0px 24px 0px 24px">
                 <table
@@ -626,8 +607,9 @@ export const getHelloStrangerTemplate = (user: string) => `
   </body>
 </html>
 `;
+
 // JSON TEMPLATE - Built with https://usewaypoint.github.io/email-builder-js/
-/*
+/* 
 {
   "root": {
     "type": "EmailLayout",
@@ -644,13 +626,11 @@ export const getHelloStrangerTemplate = (user: string) => `
         "block-1778752479575",
         "block-1778749724759",
         "block-1778750403549",
-        "block-1779054468619",
-        "block-1779811752446-592",
         "block-1779811753218-986",
-        "block-1779811790262-477",
+        "block-1780773494001",
+        "block-1779054468619",
         "block-1779811959171",
         "block-1779811847150",
-        "block-1779812025218",
         "block-1779054204940",
         "block-1778750399396",
         "block-1779054178282",
@@ -660,13 +640,11 @@ export const getHelloStrangerTemplate = (user: string) => `
         "block-en-separator",
         "block-en-heading",
         "block-en-para1",
-        "block-1779812211122-487",
-        "block-1779812256521-949",
         "block-1779812373901-621",
-        "block-en-para2",
+        "block-1780773745876",
+        "block-1780773893919",
         "block-1779812512399-223",
         "block-1779812539812",
-        "block-1779812604096",
         "block-en-buttons-row1",
         "block-en-buttons-row2",
         "block-en-divider1",
@@ -856,7 +834,7 @@ export const getHelloStrangerTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "A Copa do Mundo está chegando – e o Bolão da Copa 2026 também! Como você já participou de edições anteriores, não poderíamos deixar de te convidar para mais essa edição."
+        "text": "O tempo está acabando! Hoje é o último dia para participar do melhor Bolão da Copa. Percebemos que você se cadastrou, mas ainda não ativou seu cadastro!"
       }
     }
   },
@@ -1131,7 +1109,7 @@ export const getHelloStrangerTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "A maior Copa da história merece o nosso maior bolão, com a plataforma que você já conhece e confia, mas totalmente renovada!"
+        "text": "Venha se divertir com a gente!"
       }
     }
   },
@@ -1294,24 +1272,7 @@ export const getHelloStrangerTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "The World Cup is around the corner - just as our Pick'em Pool Bolão! As you already was part of our previous editions, we couldn't help but invite you to join us on this edition too."
-      }
-    }
-  },
-  "block-en-para2": {
-    "type": "Text",
-    "data": {
-      "style": {
-        "fontWeight": "normal",
-        "padding": {
-          "top": 16,
-          "bottom": 16,
-          "right": 24,
-          "left": 24
-        }
-      },
-      "props": {
-        "text": "You may login with your existing account. If necessary, you can reset your password through our website."
+        "text": "Time is running out! Today is the last day to join the best World Cup pool. We noticed that you registered, but you haven’t activated your account yet!"
       }
     }
   },
@@ -1569,23 +1530,6 @@ export const getHelloStrangerTemplate = (user: string) => `
       }
     }
   },
-  "block-1779811752446-592": {
-    "type": "Text",
-    "data": {
-      "style": {
-        "fontWeight": "normal",
-        "padding": {
-          "top": 16,
-          "bottom": 16,
-          "right": 24,
-          "left": 24
-        }
-      },
-      "props": {
-        "text": "Este ano temos novidades: além de apostar em todos os 104 jogos, você pode escolher uma seleção para campeã e trocar sua aposta ao longo do torneio conforme o cenário muda. Quanto mais cedo você apostar, mais pontos vale – mas a decisão é sua."
-      }
-    }
-  },
   "block-1779811753218-986": {
     "type": "Text",
     "data": {
@@ -1599,24 +1543,7 @@ export const getHelloStrangerTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "⚠️ Importante: Para garantir sua vaga e começar a dar seus palpites, você deve efetuar o pagamento da inscrição no valor de R$100,00 até o dia 10/06, às 23h59."
-      }
-    }
-  },
-  "block-1779811790262-477": {
-    "type": "Text",
-    "data": {
-      "style": {
-        "fontWeight": "normal",
-        "padding": {
-          "top": 16,
-          "bottom": 16,
-          "right": 24,
-          "left": 24
-        }
-      },
-      "props": {
-        "text": "Você pode utilizar seu login já existente e, se necessário, pode recuperar sua senha pelo site."
+        "text": "⚠️ Para garantir sua vaga e começar a dar seus palpites, você deve efetuar o pagamento da inscrição no valor de R$100,00 até as 23h59 de hoje."
       }
     }
   },
@@ -1646,66 +1573,14 @@ export const getHelloStrangerTemplate = (user: string) => `
         "fontSize": 20,
         "textAlign": "center",
         "padding": {
-          "top": 16,
-          "bottom": 0,
+          "top": 4,
+          "bottom": 4,
           "right": 24,
           "left": 24
         }
       },
       "props": {
         "contents": "<a href=\"https://bolaocopa.omegafox.me/\">Acesse o Bolão agora!</a>"
-      }
-    }
-  },
-  "block-1779812025218": {
-    "type": "Text",
-    "data": {
-      "style": {
-        "fontWeight": "normal",
-        "textAlign": "center",
-        "padding": {
-          "top": 16,
-          "bottom": 16,
-          "right": 24,
-          "left": 24
-        }
-      },
-      "props": {
-        "text": "Venha se divertir com a gente. Que vença o melhor (ou mais sortudo)!"
-      }
-    }
-  },
-  "block-1779812211122-487": {
-    "type": "Text",
-    "data": {
-      "style": {
-        "fontWeight": "normal",
-        "padding": {
-          "top": 16,
-          "bottom": 16,
-          "right": 24,
-          "left": 24
-        }
-      },
-      "props": {
-        "text": "The biggest World Cup in history deserves the best Bolão, the platform you already know and trust but entirely renewed!"
-      }
-    }
-  },
-  "block-1779812256521-949": {
-    "type": "Text",
-    "data": {
-      "style": {
-        "fontWeight": "normal",
-        "padding": {
-          "top": 16,
-          "bottom": 16,
-          "right": 24,
-          "left": 24
-        }
-      },
-      "props": {
-        "text": "This year, we have some news: not only you'll be able to bet on all 104 matches but you'll also have the chance to chose a squad as your champion - and change it throughout the competition. But there's a catch: the longer you stick with your bet, higher the reward - but the coice is yours."
       }
     }
   },
@@ -1722,7 +1597,7 @@ export const getHelloStrangerTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "⚠️ Important: To ensure your participation and start betting, you must pay the registration fee (€20.00 or US$25.00) until 11/06/2026 at 03:59 AM (GMT+1)."
+        "text": "⚠️ To ensure your participation and start betting, you must pay the registration fee (€20.00 or US$25.00) until 11/06/2026 at 03:59 AM (GMT+1)."
       }
     }
   },
@@ -1733,14 +1608,14 @@ export const getHelloStrangerTemplate = (user: string) => `
         "fontSize": 20,
         "textAlign": "center",
         "padding": {
-          "top": 16,
-          "bottom": 0,
+          "top": 4,
+          "bottom": 4,
           "right": 24,
           "left": 24
         }
       },
       "props": {
-        "contents": "<a href=\"https://bolaocopa.omegafox.me/\">Enter Bolão now!</a>"
+        "contents": "<a href=\"https://bolaocopa.omegafox.me/\">Access the Bolão now!</a>"
       }
     }
   },
@@ -1763,12 +1638,12 @@ export const getHelloStrangerTemplate = (user: string) => `
       }
     }
   },
-  "block-1779812604096": {
-    "type": "Text",
+  "block-1780773494001": {
+    "type": "Html",
     "data": {
       "style": {
-        "fontWeight": "normal",
-        "textAlign": "center",
+        "fontSize": 16,
+        "textAlign": null,
         "padding": {
           "top": 16,
           "bottom": 16,
@@ -1777,9 +1652,45 @@ export const getHelloStrangerTemplate = (user: string) => `
         }
       },
       "props": {
-        "text": "Come have fun with us and let the best (or luckiest) one win!"
+        "contents": "Os detalhes para o pagamento estão na seção \"Inscrições\" das <a href=\"https://bolaocopa.omegafox.me/regras?section=inscricoes\">Regras</a>!"
+      }
+    }
+  },
+  "block-1780773745876": {
+    "type": "Html",
+    "data": {
+      "style": {
+        "fontSize": 16,
+        "textAlign": null,
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        }
+      },
+      "props": {
+        "contents": "The payment details are available in the “Registration\" section of the <a href=\"https://bolaocopa.omegafox.me/regras?section=inscricoes\">Rules</a>!"
+      }
+    }
+  },
+  "block-1780773893919": {
+    "type": "Text",
+    "data": {
+      "style": {
+        "fontWeight": "normal",
+        "padding": {
+          "top": 16,
+          "bottom": 16,
+          "right": 24,
+          "left": 24
+        }
+      },
+      "props": {
+        "text": "Come have fun with us!"
       }
     }
   }
 }
+
 */

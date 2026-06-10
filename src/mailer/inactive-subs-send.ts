@@ -15,7 +15,8 @@ import { createTransport } from "nodemailer";
 import { connection } from "#database/db.js";
 import { logger } from "#logger/logger.service.js";
 import { ENV } from "#utils/envParser.js";
-import { getInactiveSubsTemplate } from "./inactive-subs.template.js";
+import { getInactiveSubsFinalTemplate } from "./inactive-subs-final.template.js";
+// import { getInactiveSubsTemplate } from "./inactive-subs.template.js";
 
 const EDITION_ID = 3;
 
@@ -63,15 +64,15 @@ async function sendInactiveSubsEmail(): Promise<void> {
 
   await transporter.sendMail({
     from: fromAddress,
-    html: getInactiveSubsTemplate("Felipera"),
-    subject: "[BolaoCopa2026] Lembrete | Reminder",
+    html: getInactiveSubsFinalTemplate("Felipera"),
+    subject: "[BolaoCopa2026] Última Chance | Last Chance",
     to: "sharpion.k@gmail.com",
   });
 
   await transporter.sendMail({
     from: fromAddress,
-    html: getInactiveSubsTemplate("Mottoca"),
-    subject: "[BolaoCopa2026] Lembrete | Reminder",
+    html: getInactiveSubsFinalTemplate("Mottoca"),
+    subject: "[BolaoCopa2026] Última Chance | Last Chance",
     to: "ngm.motta@gmail.com",
   });
 
@@ -79,8 +80,8 @@ async function sendInactiveSubsEmail(): Promise<void> {
     try {
       await transporter.sendMail({
         from: fromAddress,
-        html: getInactiveSubsTemplate(user.nickname),
-        subject: "[BolaoCopa2026] Lembrete | Reminder",
+        html: getInactiveSubsFinalTemplate(user.nickname),
+        subject: "[BolaoCopa2026] Última Chance | Last Chance",
         to: user.email,
       });
 
