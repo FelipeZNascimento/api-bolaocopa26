@@ -115,7 +115,7 @@ export class BetController extends BaseController {
 
       const matchResponse = await this.matchService.getTimestampByMatchId(matchId);
       const nowTimestamp = Math.floor(new Date().getTime() / 1000);
-      if (matchResponse && matchResponse.timestamp < nowTimestamp) {
+      if (matchResponse && parseInt(matchResponse.timestamp, 10) < nowTimestamp) {
         throw new AppError("Não autorizado a fazer apostas nesta partida", 401, ErrorCode.UNAUTHORIZED);
       }
 

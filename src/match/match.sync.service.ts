@@ -149,7 +149,13 @@ export class MatchSyncService {
         // Only consider matches within 24 hours before AND 24h after
       );
       // Include close matches to the fetch list
-      closeMatches.forEach((m) => this.matchesToBeFetched.includes(m) || this.matchesToBeFetched.push(m));
+      closeMatches.forEach((m) => {
+        if (!this.matchesToBeFetched.some((existing) => existing.id === m.id)) {
+          this.matchesToBeFetched.push(m);
+        }
+      });
+      logger.info({ matchesToBeFetchedLength: this.matchesToBeFetched.length }, "Matches to be fetched");
+
       let matchesToBeSaved: IMatch[] = [];
 
       // Remove matches that started more than 4 hours ago and are finished from the fetch list, add to the save list
@@ -195,7 +201,7 @@ export class MatchSyncService {
 
         const parsedEvents = this.parseEvents(external, match, players, eventsInfo);
         const weather = {
-          description: external.Weather.TypeLocalized.find((type) => type.Locale === "pt-BR")?.Description,
+          description: external.Weather.TypeLocalized.find((type) => type.Locale === "pt-BR")?.Description || null,
           humidity: external.Weather.Humidity,
           temperature: external.Weather.Temperature,
           windSpeed: external.Weather.WindSpeed,
@@ -206,10 +212,10 @@ export class MatchSyncService {
           events: parsedEvents,
           gametime: external.MatchTime,
           score: {
-            away: external.AwayTeam.Score,
-            awayPenalties: external.AwayTeamPenaltyScore,
-            home: external.HomeTeam.Score,
-            homePenalties: external.HomeTeamPenaltyScore,
+            away: external.AwayTeam.Score === null ? 0 : external.AwayTeam.Score,
+            awayPenalties: external.AwayTeamPenaltyScore === null ? 0 : external.AwayTeamPenaltyScore,
+            home: external.HomeTeam.Score === null ? 0 : external.HomeTeam.Score,
+            homePenalties: external.HomeTeamPenaltyScore === null ? 0 : external.HomeTeamPenaltyScore,
           },
           status: this.convertPeriodToStatus(external.Period),
           weather: weather,
@@ -218,6 +224,15 @@ export class MatchSyncService {
 
       // Detect changes
       const changedMatches = this.detectChanges(this.matchesToBeFetched, parsedMatches);
+      changedMatches.forEach((m) => {
+        //If a match has changed, update it on the iterator array so it compares with the
+        // updated match next time around
+        const index = this.matchesToBeFetched.findIndex((tbf) => tbf.id === m.id);
+        if (index !== -1) {
+          this.matchesToBeFetched[index] = m;
+        }
+      });
+
       this.stats.updated = changedMatches.length;
 
       if (changedMatches.length > 0) {
@@ -269,6 +284,8 @@ export class MatchSyncService {
    */
   private convertPeriodToStatus(period: number): number {
     switch (period) {
+      case 0:
+        return MATCH_STATUS.NOT_STARTED;
       case 2:
         return MATCH_STATUS.NOT_STARTED;
       case 3:
@@ -318,6 +335,50 @@ export class MatchSyncService {
    * Check if a match has changed by comparing relevant fields
    */
   private hasMatchChanged(oldMatch: IMatch, newMatch: IMatch): boolean {
+    if (oldMatch.gametime !== newMatch.gametime) {
+      logger.info({ new: newMatch.gametime, old: oldMatch.gametime }, "Changed gametime");
+    }
+
+    if (oldMatch.status !== newMatch.status) {
+      logger.info({ new: newMatch.status, old: oldMatch.status }, "Changed status");
+    }
+
+    if (oldMatch.events.length !== newMatch.events.length) {
+      logger.info({ new: newMatch.events.length, old: oldMatch.events.length }, "Changed events length");
+    }
+
+    if (oldMatch.score.home !== newMatch.score.home) {
+      logger.info({ new: newMatch.score.home, old: oldMatch.score.home }, "Changed home score");
+    }
+
+    if (oldMatch.score.away !== newMatch.score.away) {
+      logger.info({ new: newMatch.score.away, old: oldMatch.score.away }, "Changed away score");
+    }
+
+    if (oldMatch.score.homePenalties !== newMatch.score.homePenalties) {
+      logger.info({ new: newMatch.score.homePenalties, old: oldMatch.score.homePenalties }, "Changed home penalties");
+    }
+
+    if (oldMatch.score.awayPenalties !== newMatch.score.awayPenalties) {
+      logger.info({ new: newMatch.score.awayPenalties, old: oldMatch.score.awayPenalties }, "Changed away penalties");
+    }
+
+    if (oldMatch.weather.temperature !== newMatch.weather?.temperature) {
+      logger.info({ new: newMatch.weather?.temperature, old: oldMatch.weather?.temperature }, "Changed temperature");
+    }
+
+    if (oldMatch.weather.humidity !== newMatch.weather?.humidity) {
+      logger.info({ new: newMatch.weather?.humidity, old: oldMatch.weather?.humidity }, "Changed humidity");
+    }
+
+    if (oldMatch.weather.windSpeed !== newMatch.weather?.windSpeed) {
+      logger.info({ new: newMatch.weather?.windSpeed, old: oldMatch.weather?.windSpeed }, "Changed windSpeed");
+    }
+
+    if (oldMatch.weather.description !== newMatch.weather?.description) {
+      logger.info({ new: newMatch.weather?.humidity, old: oldMatch.weather?.humidity }, "Changed weather description");
+    }
+
     return (
       oldMatch.status !== newMatch.status ||
       oldMatch.score.home !== newMatch.score.home ||

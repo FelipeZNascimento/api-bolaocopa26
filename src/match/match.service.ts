@@ -58,14 +58,14 @@ export class MatchService {
   }
 
   async getTimestampByMatchId(matchId: number) {
-    const row = await db.query(
+    const row: { id: number; timestamp: string }[] = await db.query(
       `SELECT matches.id, matches.timestamp
         FROM matches
         WHERE matches.id = ?`,
       [matchId],
     );
 
-    return row as undefined | { id: number; timestamp: number };
+    return row && row.length > 0 ? row[0] : null;
   }
 
   /**
