@@ -93,6 +93,12 @@ const createMatch = (
   stadium: null,
   status,
   timestamp: 1,
+  weather: {
+    description: "",
+    humidity: "",
+    temperature: "",
+    windSpeed: "",
+  },
 });
 
 const createBet = (id: number, userId: number, matchId: number, scoreHome: number, scoreAway: number): IBet => ({

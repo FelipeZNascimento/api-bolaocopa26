@@ -109,7 +109,7 @@ export interface IMatch {
   stadium: IStadium | null;
   status: number;
   timestamp: number;
-  weather?: IWeather;
+  weather: IWeather;
 }
 
 export interface IMatchRaw {
@@ -137,10 +137,10 @@ export interface IScore {
 }
 
 export interface IWeather {
-  description?: string;
-  humidity: string;
-  temperature: string;
-  windSpeed: string;
+  description: null | string;
+  humidity: null | string;
+  temperature: null | string;
+  windSpeed: null | string;
 }
 
 export interface IWeek {
