@@ -40,7 +40,7 @@ const getEditionInfoFromCacheOrFetch = vi.hoisted(() =>
   vi.fn(() => ({
     currentEdition: 2026,
     currentRound: 1,
-    editionStart: 1781204400,
+    editionStart: 9781204400, // In the far future so registration is open
   })),
 );
 

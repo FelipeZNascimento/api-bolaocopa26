@@ -14,8 +14,7 @@ import { EditionService } from "#edition/edition.service.js";
 import { getEditionInfoFromCacheOrFetch } from "#edition/edition.util.js";
 import { MATCH_STATUS } from "#match/match.constants.js";
 import { MatchService } from "#match/match.service.js";
-import { IMatch, IMatchRaw } from "#match/match.types.js";
-import { parseRawMatch } from "#match/match.utils.js";
+import { getMatchesFromCacheOrFetch } from "#match/match.utils.js";
 import { BaseController } from "#shared/base.controller.js";
 import { TeamService } from "#team/team.service.js";
 import { IPlayer, ITeam } from "#team/team.types.js";
@@ -62,20 +61,12 @@ export class RankingController extends BaseController {
         this.betService.getExtras(currentEdition, editionStart, maxStageId),
         this.betService.getExtrasResults(currentEdition, editionStart),
       ];
-      const [usersResponse, matchesResponse, extrasResponse, extrasResultsResponse] = (await Promise.allSettled(
-        queries,
-      )) as [
+      const [usersResponse, extrasResponse, extrasResultsResponse] = (await Promise.allSettled(queries)) as [
         PromiseSettledResult<IUser[]>,
-        PromiseSettledResult<IMatchRaw[]>,
         PromiseSettledResult<IExtraBetRaw[]>,
         PromiseSettledResult<IExtraBetResultRaw[]>,
       ];
-      if (
-        isRejected(usersResponse) ||
-        isRejected(matchesResponse) ||
-        isRejected(extrasResponse) ||
-        isRejected(extrasResultsResponse)
-      ) {
+      if (isRejected(usersResponse) || isRejected(extrasResponse) || isRejected(extrasResultsResponse)) {
         throw new AppError("Base de dados inacessível", 204, ErrorCode.DB_ERROR);
       }
 
@@ -84,12 +75,8 @@ export class RankingController extends BaseController {
         users = usersResponse.value;
       }
 
-      let matches: IMatch[] = [];
-      if (isFulfilled(matchesResponse)) {
-        matches = matchesResponse.value.map((match) => parseRawMatch(match, [], [], []));
-      }
-
       const teams: ITeam[] = await getTeamsFromCacheOrFetch(this.teamService, currentEdition);
+      const matches = await getMatchesFromCacheOrFetch(this.matchService, currentEdition, currentEdition, teams);
       const players: IPlayer[] = await getPlayersFromCacheOrFetch(this.teamService, currentEdition, teams);
       const extraBets = {
         bestPlayer: [] as IExtraBet[],

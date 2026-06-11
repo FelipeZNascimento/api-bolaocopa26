@@ -8,20 +8,11 @@
  * - node --env-file .env.development dist/push/send-test-notification.js --user=<userId>
  */
 
-import type { RowDataPacket } from "mysql2";
 import type { PushSubscription } from "web-push";
 import { fileURLToPath } from "url";
 import { connection } from "#database/db.js";
 import { logger } from "#logger/logger.service.js";
-import { initPushNotifications, sendPushNotification } from "#push/push.service.js";
-
-interface IPushSubscriptionRow extends RowDataPacket {
-  auth: string;
-  endpoint: string;
-  locale: null | string;
-  p256dh: string;
-  user_id: number;
-}
+import { initPushNotifications, ISubscriptionRow, sendPushNotification } from "#push/push.service.js";
 
 async function sendTestNotification(): Promise<void> {
   initPushNotifications();
@@ -30,14 +21,14 @@ async function sendTestNotification(): Promise<void> {
   const userId = userArg ? parseInt(userArg.split("=")[1], 10) : null;
 
   const [rows] = userId
-    ? await connection.query<IPushSubscriptionRow[]>(
+    ? await connection.query<ISubscriptionRow[]>(
         `SELECT ps.user_id, ps.endpoint, ps.p256dh, ps.auth, u.locale
          FROM push_subscriptions ps
          INNER JOIN users u ON ps.user_id = u.id
          WHERE ps.user_id = ?`,
         [userId],
       )
-    : await connection.query<IPushSubscriptionRow[]>(
+    : await connection.query<ISubscriptionRow[]>(
         `SELECT ps.user_id, ps.endpoint, ps.p256dh, ps.auth, u.locale
          FROM push_subscriptions ps
          INNER JOIN users u ON ps.user_id = u.id`,
