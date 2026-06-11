@@ -145,8 +145,8 @@ export class MatchSyncService {
       const teams = await getTeamsFromCacheOrFetch(this.teamService, currentEdition);
       const players = await getPlayersFromCacheOrFetch(this.teamService, currentEdition, teams);
       const closeMatches = matches.filter(
-        (m) => m.timestamp - 60 * 60 * 24 < nowTimeOnStart && m.timestamp + 60 * 60 * 24 > nowTimeOnStart,
-        // Only consider matches within 24 hours before AND 24h after
+        (m) => m.timestamp - 60 * 60 * 24 < nowTimeOnStart && m.timestamp + 60 * 60 * 12 > nowTimeOnStart,
+        // Only consider matches within 24h before AND 12h
       );
       // Include close matches to the fetch list
       closeMatches.forEach((m) => {
@@ -158,9 +158,9 @@ export class MatchSyncService {
 
       let matchesToBeSaved: IMatch[] = [];
 
-      // Remove matches that started more than 4 hours ago and are finished from the fetch list, add to the save list
+      // Remove matches that started more than 12h ago and are finished from the fetch list, add to the save list
       this.matchesToBeFetched.forEach((m) => {
-        if (m.timestamp < nowTimeOnStart - 60 * 60 * 24 && FINISHED_GAME.includes(m.status)) {
+        if (m.timestamp < nowTimeOnStart - 60 * 60 * 12 && FINISHED_GAME.includes(m.status)) {
           logger.info(
             { matchId: m.id, matchTimestamp: m.timestamp, now: nowTimeOnStart },
             "Found match that started 4h+ ago, will save on DB and remove from fetch list",
