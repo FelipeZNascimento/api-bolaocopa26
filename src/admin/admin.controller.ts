@@ -9,7 +9,7 @@ import { MailerService } from "#mailer/mailer.service.js";
 import { BaseController } from "#shared/base.controller.js";
 import { UserService } from "#user/user.service.js";
 import { AppError } from "#utils/appError.js";
-import { cachedInfo } from "#utils/dataCache.js";
+import { cachedInfo, warmUpCache } from "#utils/dataCache.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { parseBody } from "#utils/parseBody.js";
 
@@ -45,7 +45,10 @@ export class AdminController extends BaseController {
   };
 
   flushAll = (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    return this.handleRequest(req, res, next, () => cachedInfo.flushAll());
+    return this.handleRequest(req, res, next, () => {
+      cachedInfo.flushAll();
+      return warmUpCache();
+    });
   };
 
   getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
