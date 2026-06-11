@@ -335,8 +335,16 @@ export class MatchSyncService {
    * Check if a match has changed by comparing relevant fields
    */
   private hasMatchChanged(oldMatch: IMatch, newMatch: IMatch): boolean {
+    if (oldMatch.gametime !== newMatch.gametime) {
+      logger.info({ new: newMatch.gametime, old: oldMatch.gametime }, "Changed gametime");
+    }
+
     if (oldMatch.status !== newMatch.status) {
       logger.info({ new: newMatch.status, old: oldMatch.status }, "Changed status");
+    }
+
+    if (oldMatch.events.length !== newMatch.events.length) {
+      logger.info({ new: newMatch.events.length, old: oldMatch.events.length }, "Changed events length");
     }
 
     if (oldMatch.score.home !== newMatch.score.home) {
@@ -353,10 +361,6 @@ export class MatchSyncService {
 
     if (oldMatch.score.awayPenalties !== newMatch.score.awayPenalties) {
       logger.info({ new: newMatch.score.awayPenalties, old: oldMatch.score.awayPenalties }, "Changed away penalties");
-    }
-
-    if (oldMatch.gametime !== newMatch.gametime) {
-      logger.info({ new: newMatch.gametime, old: oldMatch.gametime }, "Changed gametime");
     }
 
     if (oldMatch.weather.temperature !== newMatch.weather?.temperature) {
