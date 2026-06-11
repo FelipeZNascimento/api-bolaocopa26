@@ -22,6 +22,7 @@ const getEditionInfoFromCacheOrFetch = vi.hoisted(() =>
     editionStart: 2026,
   })),
 );
+const getMatchesFromCacheOrFetch = vi.hoisted(() => vi.fn(() => {}));
 
 vi.mock("#utils/apiResponse.js", () => ({
   ApiResponse: {
@@ -46,6 +47,10 @@ vi.mock("#bet/bet.utils.js", () => ({
 vi.mock("#team/team.util.js", () => ({
   getPlayersFromCacheOrFetch: vi.fn(() => Promise.resolve([])),
   getTeamsFromCacheOrFetch: vi.fn(() => Promise.resolve([])),
+}));
+
+vi.mock("#match/match.utils.js", () => ({
+  getMatchesFromCacheOrFetch: getMatchesFromCacheOrFetch,
 }));
 
 vi.mock("#edition/edition.util.js", () => ({
@@ -201,6 +206,10 @@ describe("RankingController", () => {
       const matches = [createMatch(100, 2, 1, FOOTBALL_MATCH_STATUS.FINAL, 1)];
       const bets = [createBet(1, 1, 100, 2, 1)];
 
+      getMatchesFromCacheOrFetch.mockImplementationOnce(() => {
+        return matches;
+      });
+
       mockUserService.getByEdition.mockResolvedValue(users);
       mockMatchService.getByEdition.mockResolvedValue(matches);
       mockBetService.getExtras.mockResolvedValue([]);
@@ -214,8 +223,7 @@ describe("RankingController", () => {
       await controller.getRanking(req, res, next);
 
       expect(mockUserService.getByEdition).toHaveBeenCalledWith(2026);
-      expect(mockMatchService.getByEdition).toHaveBeenCalledWith(2026);
-      expect(mockBetService.getStartedMatchesBetsByMatchIds).toHaveBeenCalledWith([100]);
+      expect(getMatchesFromCacheOrFetch).toHaveBeenCalledTimes(1);
       expect(apiResponseSuccess).toHaveBeenCalledTimes(1);
       expect(next).not.toHaveBeenCalled();
 
@@ -260,7 +268,7 @@ describe("RankingController", () => {
       const { next, req, res } = getMockReqRes("2026");
       await controller.getRanking(req, res, next);
 
-      expect(mockBetService.getStartedMatchesBetsByMatchIds).toHaveBeenCalledWith([100]);
+      expect(getMatchesFromCacheOrFetch).toHaveBeenCalledTimes(1);
     });
 
     it("should determine current round correctly", async () => {
@@ -271,8 +279,11 @@ describe("RankingController", () => {
         createMatch(102, 0, 0, MATCH_STATUS.NOT_STARTED, 3),
       ];
 
+      getMatchesFromCacheOrFetch.mockImplementationOnce(() => {
+        return matches;
+      });
+
       mockUserService.getByEdition.mockResolvedValue(users);
-      mockMatchService.getByEdition.mockResolvedValue(matches);
       mockBetService.getExtras.mockResolvedValue([]);
       mockBetService.getExtrasResults.mockResolvedValue([]);
       mockBetService.getStartedMatchesBetsByMatchIds.mockResolvedValue([]);
