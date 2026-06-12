@@ -41,7 +41,20 @@ jobs:
       - name: 📦 Prepare dist for deployment
         run: cp package.json package-lock.json dist/
 
-      - name: 📂 Sync files to PPROD folder
+      - id: deployPreprod
+        name: 📂 Sync files to PPROD folder
+        continue-on-error: true
+        uses: Dylan700/sftp-upload-action@latest
+        with:
+          server: ${{ secrets.server }}
+          username: ${{ secrets.username_pprod }}
+          password: ${{secrets.password_pprod}}
+          port: 22
+          uploads: |
+            ./dist/ => ./
+
+      - name: 🔁 Retry PPROD upload if handshake failed
+        if: steps.deployPreprod.outcome == 'failure'
         uses: Dylan700/sftp-upload-action@latest
         with:
           server: ${{ secrets.server }}

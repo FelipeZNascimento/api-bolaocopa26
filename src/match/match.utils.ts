@@ -114,7 +114,7 @@ export const formatMatches = (
         }))[0];
     }
 
-    match.events = events.filter((e) => e.matchId === match.id);
+    match.events = match.events ?? events.filter((e) => e.matchId === match.id);
     match.bets = matchBets;
     match.loggedUserBets = loggedUserMatchBets;
     match.pointsAwarded = {
