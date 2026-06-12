@@ -57,7 +57,6 @@ export class RankingController extends BaseController {
 
       const queries = [
         this.userService.getByEdition(currentEdition),
-        this.matchService.getByEdition(currentEdition),
         this.betService.getExtras(currentEdition, editionStart, maxStageId),
         this.betService.getExtrasResults(currentEdition, editionStart),
       ];
