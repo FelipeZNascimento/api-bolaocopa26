@@ -34,7 +34,20 @@ jobs:
       - name: 📦 Prepare dist for deployment
         run: cp package.json package-lock.json dist/
 
-      - name: 📂 Sync files to prod folder (NEW)
+      - id: deployProd
+        name: 📂 Sync files to prod folder (NEW)
+        continue-on-error: true
+        uses: Dylan700/sftp-upload-action@latest
+        with:
+          server: ${{ secrets.server }}
+          username: ${{ secrets.username }}
+          password: ${{secrets.password}}
+          port: 22
+          uploads: |
+            ./dist/ => ./
+
+      - name: 🔁 Retry PROD upload if handshake failed
+        if: steps.deployProd.outcome == 'failure'
         uses: Dylan700/sftp-upload-action@latest
         with:
           server: ${{ secrets.server }}

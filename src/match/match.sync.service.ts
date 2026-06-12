@@ -247,7 +247,7 @@ export class MatchSyncService {
 
       if (changedMatches.length > 0) {
         // Merge updated close matches back into the full match list before caching
-        const updatedById = new Map(parsedMatches.map((m) => [m.id, m]));
+        const updatedById = new Map(changedMatches.map((m) => [m.id, m]));
         const updatedAllMatches: IMatch[] = matches.map((m) => updatedById.get(m.id) ?? m);
         setMatchesCache(updatedAllMatches);
 
@@ -396,7 +396,8 @@ export class MatchSyncService {
       oldMatch.weather?.temperature !== newMatch.weather?.temperature ||
       oldMatch.weather?.humidity !== newMatch.weather?.humidity ||
       oldMatch.weather?.windSpeed !== newMatch.weather?.windSpeed ||
-      oldMatch.weather?.description !== newMatch.weather?.description
+      oldMatch.weather?.description !== newMatch.weather?.description ||
+      oldMatch.events.length !== newMatch.events.length
     );
   }
 
