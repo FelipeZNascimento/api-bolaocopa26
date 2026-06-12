@@ -30,8 +30,6 @@ export class MatchExternalAPI {
     }, API_CONFIG.timeout);
 
     try {
-      logger.debug({ matchId }, "Fetching match from external API");
-
       const url = `${API_CONFIG.baseUrl}/${matchId}?language=pt-BR`;
       const response = await fetch(url, {
         headers: API_CONFIG.headers,

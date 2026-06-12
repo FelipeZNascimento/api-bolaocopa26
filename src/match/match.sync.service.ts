@@ -145,7 +145,7 @@ export class MatchSyncService {
       const teams = await getTeamsFromCacheOrFetch(this.teamService, currentEdition);
       const players = await getPlayersFromCacheOrFetch(this.teamService, currentEdition, teams);
       const closeMatches = matches.filter(
-        (m) => m.timestamp - 60 * 60 * 24 < nowTimeOnStart && m.timestamp + 60 * 60 * 12 > nowTimeOnStart,
+        (m) => m.timestamp - 60 * 60 * 48 < nowTimeOnStart && nowTimeOnStart < m.timestamp + 60 * 60 * 48,
         // Only consider matches within 24h before AND 12h
       );
       // Include close matches to the fetch list
@@ -158,30 +158,8 @@ export class MatchSyncService {
 
       let matchesToBeSaved: IMatch[] = [];
 
-      // Remove matches that started more than 12h ago and are finished from the fetch list, add to the save list
-      this.matchesToBeFetched.forEach((m) => {
-        if (m.timestamp < nowTimeOnStart - 60 * 60 * 12 && FINISHED_GAME.includes(m.status)) {
-          logger.info(
-            { matchId: m.id, matchTimestamp: m.timestamp, now: nowTimeOnStart },
-            "Found match that started 4h+ ago, will save on DB and remove from fetch list",
-          );
-
-          matchesToBeSaved.push(m);
-          this.matchesToBeFetched.splice(
-            this.matchesToBeFetched.findIndex((match) => match.id === m.id),
-            1,
-          );
-        }
-      });
-
-      // If there are matches to be saved, update them in the database before fetching new data
-      if (matchesToBeSaved.length > 0) {
-        logger.info({ matchesToBeSavedCount: matchesToBeSaved.length }, "Saving old matches to database");
-        await this.updateDatabase(matchesToBeSaved);
-        matchesToBeSaved = [];
-      }
-
       // Fetch matches from external API in parallel for all close matches
+      logger.debug({ matchIds: this.matchesToBeFetched.map((m) => m.idFifa) }, "Fetching match from external API");
       const externalAPIMatchResponse = await Promise.allSettled(
         this.matchesToBeFetched.map((m) => this.externalAPI.fetchMatch(m.idFifa)),
       );
@@ -207,7 +185,7 @@ export class MatchSyncService {
           windSpeed: external.Weather.WindSpeed,
         };
 
-        return {
+        const parsedMatch = {
           ...match,
           events: parsedEvents,
           gametime: external.MatchTime,
@@ -220,7 +198,39 @@ export class MatchSyncService {
           status: this.convertPeriodToStatus(external.Period),
           weather: weather,
         };
+
+        // Remove matches that started more than 12h ago and are finished from the fetch list, add to the save list
+        if (parsedMatch.timestamp < nowTimeOnStart - 60 * 60 * 48 && FINISHED_GAME.includes(parsedMatch.status)) {
+          logger.info(
+            {
+              matchFifaId: parsedMatch.idFifa,
+              matchId: parsedMatch.id,
+              matchTimestamp: parsedMatch.timestamp,
+              now: nowTimeOnStart,
+            },
+            "Found match that started 4h+ ago, will save on DB and remove from fetch list",
+          );
+
+          matchesToBeSaved.push({ ...parsedMatch });
+        }
+
+        return parsedMatch;
       });
+
+      // Matches that are going to be saved don't need to be fetched on the next iteration
+      matchesToBeSaved.forEach((match) => {
+        this.matchesToBeFetched.splice(
+          this.matchesToBeFetched.findIndex((m) => match.id === m.id),
+          1,
+        );
+      });
+
+      // If there are matches to be saved, update them in the database before fetching new data
+      if (matchesToBeSaved.length > 0) {
+        logger.info({ matchesToBeSavedCount: matchesToBeSaved.length }, "Saving old matches to database");
+        await this.updateDatabase(matchesToBeSaved);
+        matchesToBeSaved = [];
+      }
 
       // Detect changes
       const changedMatches = this.detectChanges(this.matchesToBeFetched, parsedMatches);
@@ -238,9 +248,6 @@ export class MatchSyncService {
       if (changedMatches.length > 0) {
         // Merge updated close matches back into the full match list before caching
         const updatedById = new Map(parsedMatches.map((m) => [m.id, m]));
-        parsedMatches.forEach((m) =>
-          logger.debug({ eventsLength: m.events.length, matchId: m.id }, "Parsed match details"),
-        );
         const updatedAllMatches: IMatch[] = matches.map((m) => updatedById.get(m.id) ?? m);
         setMatchesCache(updatedAllMatches);
 
@@ -255,7 +262,7 @@ export class MatchSyncService {
 
       this.stats.lastSync = Math.floor(Date.now() / 1000);
       this.stats.duration = Math.floor(Date.now() / 1000) - nowTimeOnStart;
-      logger.info({ duration: this.stats.duration, updated: this.stats.updated }, "Match sync completed");
+      logger.info({ duration: `${this.stats.duration}ms`, updated: this.stats.updated }, "Match sync completed");
     } catch (error) {
       this.stats.errors++;
       logger.error({ err: error }, "Error during match sync");
@@ -319,14 +326,14 @@ export class MatchSyncService {
   private detectChanges(cachedMatches: IMatch[], newMatches: IMatch[]): IMatch[] {
     const changedMatches: IMatch[] = [];
 
-    for (const newMatch of newMatches) {
+    newMatches.forEach((newMatch) => {
       const cachedMatch = cachedMatches.find((m) => m.id === newMatch.id);
 
       // If match doesn't exist in cache or has changed, mark it as changed
       if (!cachedMatch || this.hasMatchChanged(cachedMatch, newMatch)) {
         changedMatches.push(newMatch);
       }
-    }
+    });
 
     return changedMatches;
   }
@@ -414,7 +421,7 @@ export class MatchSyncService {
         gametime: goal.Minute,
         matchId: match.id,
         player: players.find((p) => p.fifa.id === parseInt(goal.IdPlayer, 10)) ?? undefinedPlayer!,
-        playerAssist: players.find((p) => p.fifa.id === parseInt(goal.IdPlayer, 10)) ?? null,
+        playerAssist: players.find((p) => p.fifa.id === parseInt(goal.IdAssistPlayer, 10)) ?? null,
         teamId: match.homeTeam!.id,
       };
     });
@@ -430,7 +437,7 @@ export class MatchSyncService {
         gametime: goal.Minute,
         matchId: match.id,
         player: players.find((p) => p.fifa.id === parseInt(goal.IdPlayer, 10)) ?? undefinedPlayer!,
-        playerAssist: players.find((p) => p.fifa.id === parseInt(goal.IdPlayer, 10)) ?? null,
+        playerAssist: players.find((p) => p.fifa.id === parseInt(goal.IdAssistPlayer, 10)) ?? null,
         teamId: match.awayTeam!.id,
       };
     });
@@ -474,6 +481,7 @@ export class MatchSyncService {
   private async updateDatabase(matches: IMatch[]): Promise<void> {
     const updatePromises = matches.map(async (match) => {
       try {
+        logger.debug({ matchId: match.id }, "Match ID being saved");
         await this.matchService.updateMatch(match);
         await this.matchService.updateEvents(match.events);
         logger.debug({ matchId: match.id }, "Updated match in database");
