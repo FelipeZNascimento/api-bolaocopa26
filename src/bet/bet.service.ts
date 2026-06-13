@@ -77,7 +77,7 @@ export class BetService {
     return rows as IBetRaw[];
   }
 
-  async getUserMatchesBetsByMatchIds(matchIds: number[], userId: number) {
+  async getUserBetsByMatchIds(matchIds: number[], userId: number) {
     if (matchIds.length === 0) {
       return [];
     }

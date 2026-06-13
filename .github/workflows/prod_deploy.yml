@@ -35,7 +35,7 @@ jobs:
         run: cp package.json package-lock.json dist/
 
       - id: deployProd
-        name: 📂 Sync files to prod folder (NEW)
+        name: 📂 Sync files to prod folder
         continue-on-error: true
         uses: Dylan700/sftp-upload-action@latest
         with:

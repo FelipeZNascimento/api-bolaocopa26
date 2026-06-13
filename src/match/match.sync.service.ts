@@ -2,21 +2,24 @@ import type { IEvent, IEventInfo, IFifaMatch, IMatch } from "#match/match.types.
 
 // import { readFileSync } from "fs";
 
+import { BetService } from "#bet/bet.service.js";
 import { EditionService } from "#edition/edition.service.js";
 import { getEditionInfoFromCacheOrFetch } from "#edition/edition.util.js";
 import { logger } from "#logger/logger.service.js";
 import { MatchExternalAPI } from "#match/match.external-api.js";
 import { MatchService } from "#match/match.service.js";
-import { getEventsInfoFromCacheOrFetch, getMatchesFromCacheOrFetch, setMatchesCache } from "#match/match.utils.js";
+import { getEventsInfoFromCacheOrFetch, getFormattedMatches, setMatchesCache } from "#match/match.utils.js";
 import { TeamService } from "#team/team.service.js";
 import { IPlayer } from "#team/team.types.js";
-import { getPlayersFromCacheOrFetch, getTeamsFromCacheOrFetch } from "#team/team.util.js";
+import { getPlayersFromCacheOrFetch } from "#team/team.util.js";
+import { IUser } from "#user/user.types.js";
 import { AppError } from "#utils/appError.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { WEBSOCKET_EVENTS } from "#websocket/websocket.constants.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
-import { FINISHED_GAME, MATCH_STATUS } from "./match.constants.js";
+import { FINISHED_GAME, FOOTBALL_MATCH_STATUS, MATCH_STATUS, STOPPED_GAME } from "./match.constants.js";
 
+const TIME_SPAN = 48;
 export interface IMatchSyncStats {
   duration: number;
   errors: number;
@@ -42,6 +45,8 @@ const SYNC_CONFIG = {
  */
 export class MatchSyncService {
   private static instance: MatchSyncService;
+  private activeProfile: IUser | null = null;
+  private betService: BetService;
   private editionService: EditionService;
   private externalAPI: MatchExternalAPI;
   private intervalId: NodeJS.Timeout | null = null;
@@ -62,9 +67,11 @@ export class MatchSyncService {
     this.externalAPI = new MatchExternalAPI();
     this.matchService = new MatchService();
     this.teamService = new TeamService();
+    this.betService = new BetService();
     this.editionService = new EditionService();
     this.websocketService = WebSocketService.getInstance();
     this.matchesToBeFetched = [];
+    this.activeProfile = null;
   }
 
   public static getInstance(): MatchSyncService {
@@ -79,6 +86,13 @@ export class MatchSyncService {
    */
   public getStats(): IMatchSyncStats {
     return { ...this.stats };
+  }
+
+  /**
+   * Set active profile
+   */
+  public setActiveProfile(user: IUser | null) {
+    this.activeProfile = user;
   }
 
   /**
@@ -141,11 +155,18 @@ export class MatchSyncService {
       }
 
       // Fetch matches from cache/db
-      const matches = await getMatchesFromCacheOrFetch(this.matchService, currentEdition, currentEdition);
-      const teams = await getTeamsFromCacheOrFetch(this.teamService, currentEdition);
-      const players = await getPlayersFromCacheOrFetch(this.teamService, currentEdition, teams);
+      const matches = await getFormattedMatches(
+        this.matchService,
+        this.teamService,
+        this.editionService,
+        this.betService,
+        currentEdition,
+        this.activeProfile,
+      );
+
+      const players = await getPlayersFromCacheOrFetch(this.teamService, currentEdition);
       const closeMatches = matches.filter(
-        (m) => m.timestamp - 60 * 60 * 48 < nowTimeOnStart && nowTimeOnStart < m.timestamp + 60 * 60 * 48,
+        (m) => m.timestamp - 60 * 60 * TIME_SPAN < nowTimeOnStart && nowTimeOnStart < m.timestamp + 60 * 60 * TIME_SPAN,
         // Only consider matches within 24h before AND 12h
       );
       // Include close matches to the fetch list
@@ -200,7 +221,10 @@ export class MatchSyncService {
         };
 
         // Remove matches that started more than 12h ago and are finished from the fetch list, add to the save list
-        if (parsedMatch.timestamp < nowTimeOnStart - 60 * 60 * 48 && FINISHED_GAME.includes(parsedMatch.status)) {
+        if (
+          parsedMatch.timestamp < nowTimeOnStart - 60 * 60 * TIME_SPAN &&
+          FINISHED_GAME.includes(parsedMatch.status)
+        ) {
           logger.info(
             {
               matchFifaId: parsedMatch.idFifa,
@@ -252,7 +276,7 @@ export class MatchSyncService {
         setMatchesCache(updatedAllMatches);
 
         // Broadcast to all connected clients
-        this.broadcastMatches(changedMatches.length);
+        this.broadcastMatches(updatedAllMatches);
       } else {
         // Still update cache to refresh TTL
         if (matches.length > 0) {
@@ -276,10 +300,20 @@ export class MatchSyncService {
   /**
    * Broadcast matches to all connected WebSocket clients
    */
-  private broadcastMatches(updatedCount: number): void {
+  private broadcastMatches(obj: IMatch[]): void {
+    const allMatches = obj;
+    const nextMatches = allMatches
+      .filter((match) => match.status === FOOTBALL_MATCH_STATUS.NOT_STARTED)
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .slice(0, 3);
+    const liveMatches = allMatches
+      .filter((match) => !STOPPED_GAME.includes(match.status))
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .slice(0, 3);
+
     try {
-      this.websocketService.broadcast(WEBSOCKET_EVENTS.MATCHES_UPDATED);
-      logger.info({ updatedCount }, "Broadcasted matches update to WebSocket clients");
+      this.websocketService.broadcast(WEBSOCKET_EVENTS.MATCHES_UPDATED, { allMatches, liveMatches, nextMatches });
+      logger.info({ obj: obj.length }, "Broadcasted matches update to WebSocket clients");
     } catch (error) {
       logger.error({ err: error }, "Error broadcasting matches to WebSocket");
     }
