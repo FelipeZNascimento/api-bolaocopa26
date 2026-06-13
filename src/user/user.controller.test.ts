@@ -31,6 +31,10 @@ const mockMailerService = {
   sendPasswordResetEmail: vi.fn(),
 };
 
+const mockSyncService = vi.hoisted(() => ({
+  setActiveProfile: vi.fn(),
+}));
+
 const mockCachedInfo = vi.hoisted(() => ({
   del: vi.fn(),
   get: vi.fn(),
@@ -50,6 +54,11 @@ const mockClearRankingCache = vi.hoisted(() => vi.fn());
 
 vi.mock("#user/user.service.js", () => ({ UserService: vi.fn(() => mockUserService) }));
 vi.mock("#mailer/mailer.service.js", () => ({ MailerService: vi.fn(() => mockMailerService) }));
+vi.mock("#match/match.sync.service.js", () => ({
+  MatchSyncService: {
+    getInstance: vi.fn(() => mockSyncService),
+  },
+}));
 vi.mock("#edition/edition.util.js", () => ({
   getEditionInfoFromCacheOrFetch: getEditionInfoFromCacheOrFetch,
 }));
