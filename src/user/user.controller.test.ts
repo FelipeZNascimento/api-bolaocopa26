@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EditionService } from "#edition/edition.service.js";
 import { MailerService } from "#mailer/mailer.service.js";
-import { MatchSyncService } from "#match/match.sync.service.js";
 import { AppError } from "#utils/appError.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 import { UserController } from "./user.controller";
