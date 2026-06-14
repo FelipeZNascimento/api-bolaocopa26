@@ -1,13 +1,23 @@
 import type { IEvent, IEventInfo, IEventRaw, IMatch, IMatchRaw } from "#match/match.types.js";
 import type { IPlayer, ITeam } from "#team/team.types.js";
 
+import { BetService } from "#bet/bet.service.js";
 import { IBet } from "#bet/bet.types.js";
+import { parseRawBets } from "#bet/bet.utils.js";
+import { EditionService } from "#edition/edition.service.js";
 import { IReferee, IStadium } from "#edition/edition.types.js";
+import { getRefereesFromCacheOrFetch, getStadiumsFromCacheOrFetch } from "#edition/edition.util.js";
 import { logger } from "#logger/logger.service.js";
 import { MATCH_STATUS, TMatchStatus } from "#match/match.constants.js";
 import { AWARD_POINTS_2026 } from "#ranking/ranking.constants.js";
 import { getRoundMultiplier } from "#ranking/ranking.utils.js";
+import { TeamService } from "#team/team.service.js";
+import { getPlayersFromCacheOrFetch, getTeamsFromCacheOrFetch } from "#team/team.util.js";
+import { IUser } from "#user/user.types.js";
+import { isFulfilled, isRejected } from "#utils/apiResponse.js";
+import { AppError } from "#utils/appError.js";
 import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
+import { ErrorCode } from "#utils/errorCodes.js";
 import { MatchService } from "./match.service.js";
 
 export const isMatchEnded = (status: TMatchStatus) => {
@@ -186,12 +196,56 @@ export const getMatchesFromCacheOrFetch = async (
   }
 
   const matchesRaw: IMatchRaw[] = await matchService.getByEdition(requestedEdition);
-  const filteredMatches: IMatch[] = matchesRaw.map((match) => parseRawMatch(match, teams, stadiums, referees));
+  const parsedMatches: IMatch[] = matchesRaw.map((match) => parseRawMatch(match, teams, stadiums, referees));
 
   if (requestedEdition === currentEdition) {
-    setMatchesCache(filteredMatches);
+    setMatchesCache(parsedMatches);
   }
-  return [...filteredMatches];
+  return [...parsedMatches];
+};
+
+export const getFormattedMatches = async (
+  matchService: MatchService,
+  teamService: TeamService,
+  editionService: EditionService,
+  betService: BetService,
+  edition: number,
+  user: IUser | null,
+): Promise<IMatch[]> => {
+  const teams: ITeam[] = await getTeamsFromCacheOrFetch(teamService, edition);
+  const stadiums: IStadium[] = await getStadiumsFromCacheOrFetch(editionService, edition, edition);
+  const referees: IReferee[] = await getRefereesFromCacheOrFetch(editionService, edition, edition);
+  const players: IPlayer[] = await getPlayersFromCacheOrFetch(teamService, edition, teams);
+  const events: IEvent[] = await getEventsFromCacheOrFetch(matchService, edition, players);
+  const matches: IMatch[] = await getMatchesFromCacheOrFetch(matchService, edition, edition, teams, stadiums, referees);
+
+  const matchesIds = matches.map((match) => match.id);
+  const queries = [betService.getStartedMatchesBetsByMatchIds(matchesIds)];
+
+  if (user) {
+    queries.push(betService.getUserBetsByMatchIds(matchesIds, user.id));
+  }
+  const [startedMatchesBetsResponse, userBetsResponse] = await Promise.allSettled(queries);
+  if (isRejected(startedMatchesBetsResponse) || (user && isRejected(userBetsResponse))) {
+    throw new AppError("Base de dados inacessível", 204, ErrorCode.DB_ERROR);
+  }
+
+  let startedMatchesBets: IBet[] = [];
+  if (isFulfilled(startedMatchesBetsResponse)) {
+    startedMatchesBets = parseRawBets(startedMatchesBetsResponse.value);
+  }
+
+  let userBets: IBet[] = [];
+  if (user && isFulfilled(userBetsResponse)) {
+    userBets = parseRawBets(userBetsResponse.value);
+  }
+
+  try {
+    return formatMatches(matches, startedMatchesBets, userBets, events, user?.id);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+    throw new AppError(`Erro ao formatar as partidas: ${errorMessage}`, 500, ErrorCode.INTERNAL_SERVER_ERROR);
+  }
 };
 
 export const setMatchesCache = (matches: IMatch[]): void => {

@@ -5,6 +5,7 @@ import { NextFunction, Request, Response } from "express";
 import { EditionService } from "#edition/edition.service.js";
 import { getEditionInfoFromCacheOrFetch } from "#edition/edition.util.js";
 import { MailerService } from "#mailer/mailer.service.js";
+import { MatchSyncService } from "#match/match.sync.service.js";
 import { clearRankingCache } from "#ranking/ranking.utils.js";
 import { BaseController } from "#shared/base.controller.js";
 import {
@@ -64,6 +65,8 @@ export class UserController extends BaseController {
       const user = req.session.user;
 
       if (!user) {
+        const matchSyncService = MatchSyncService.getInstance();
+        void matchSyncService.setActiveProfile(null);
         return null;
       }
 
@@ -78,6 +81,9 @@ export class UserController extends BaseController {
       }
 
       req.session.user = userResponse;
+      const matchSyncService = MatchSyncService.getInstance();
+      void matchSyncService.setActiveProfile(userResponse);
+
       const favoritesResponse: string = await this.userService.getFavoritesById(user.id, currentEdition);
       const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
       return { ...userResponse, favorites: parsedFavorites };
@@ -111,6 +117,8 @@ export class UserController extends BaseController {
 
       user.timestamp = Date.now();
       req.session.user = user;
+      const matchSyncService = MatchSyncService.getInstance();
+      void matchSyncService.setActiveProfile(user);
 
       const favoritesResponse: string = await this.userService.getFavoritesById(user.id, currentEdition);
       const parsedFavorites: number[] = favoritesResponse ? (JSON.parse(favoritesResponse) as number[]) : [];
@@ -121,6 +129,9 @@ export class UserController extends BaseController {
   logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await this.handleRequest(req, res, next, async () => {
       req.session.user = null;
+      const matchSyncService = MatchSyncService.getInstance();
+      void matchSyncService.setActiveProfile(null);
+
       await new Promise<void>((resolve, reject) => {
         req.session.destroy((err) => {
           if (err) return reject(err instanceof Error ? err : new Error(String(err)));

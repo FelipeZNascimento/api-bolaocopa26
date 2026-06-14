@@ -26,10 +26,16 @@ export class WebSocketService {
     return WebSocketService.instance;
   }
 
-  public broadcast(message: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public broadcast(message: string, data?: any) {
     const openClients = [...this.wss.clients].filter((c) => c.readyState === WebSocket.OPEN);
     logger.info(`Broadcasting "${message}" to ${openClients.length} open client(s)`);
-    openClients.forEach((client) => client.send(message));
+    const wsContent = {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      data,
+      message,
+    };
+    openClients.forEach((client) => client.send(JSON.stringify(wsContent)));
   }
 
   private initialize(server: Server): void {

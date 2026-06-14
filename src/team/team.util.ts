@@ -58,13 +58,18 @@ export const getClubsFromCacheOrFetch = async (teamService: TeamService, clubIds
 export const getPlayersFromCacheOrFetch = async (
   teamService: TeamService,
   requestedEdition: number,
-  teams: ITeam[],
+  teams?: ITeam[],
 ): Promise<IPlayer[]> => {
   const cachedPlayers: IPlayer[] | undefined = cachedInfo.get(CACHE_KEYS.PLAYERS);
 
   if (cachedPlayers) {
     logger.debug("Returning players from cache");
     return cachedPlayers;
+  }
+
+  if (!teams) {
+    logger.debug("Returning empty since teams is necessary to fetch players when they're not in cache");
+    return [];
   }
 
   const playersRaw = await teamService.getPlayers(requestedEdition);
