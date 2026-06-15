@@ -48,12 +48,11 @@ export const warmUpCache = async (): Promise<void> => {
     getStadiumsFromCacheOrFetch(editionService, currentEdition, currentEdition),
     getRefereesFromCacheOrFetch(editionService, currentEdition, currentEdition),
   ]);
-
   const players = await getPlayersFromCacheOrFetch(teamService, currentEdition, teams);
+  const events = await getEventsFromCacheOrFetch(matchService, currentEdition, players);
 
   await Promise.all([
-    getMatchesFromCacheOrFetch(matchService, currentEdition, currentEdition, teams, stadiums, referees),
-    getEventsFromCacheOrFetch(matchService, currentEdition, players),
+    getMatchesFromCacheOrFetch(matchService, currentEdition, currentEdition, teams, stadiums, referees, events),
     getEventsInfoFromCacheOrFetch(matchService),
   ]);
 

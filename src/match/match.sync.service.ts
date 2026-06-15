@@ -276,7 +276,7 @@ export class MatchSyncService {
         setMatchesCache(updatedAllMatches);
 
         // Broadcast to all connected clients
-        this.broadcastMatches(updatedAllMatches);
+        this.broadcastMatches(updatedAllMatches, changedMatches);
       } else {
         // Still update cache to refresh TTL
         if (matches.length > 0) {
@@ -300,8 +300,7 @@ export class MatchSyncService {
   /**
    * Broadcast matches to all connected WebSocket clients
    */
-  private broadcastMatches(obj: IMatch[]): void {
-    const allMatches = obj;
+  private broadcastMatches(allMatches: IMatch[], updatedMatches: IMatch[]): void {
     const nextMatches = allMatches
       .filter((match) => match.status === FOOTBALL_MATCH_STATUS.NOT_STARTED)
       .sort((a, b) => a.timestamp - b.timestamp)
@@ -312,8 +311,16 @@ export class MatchSyncService {
       .slice(0, 3);
 
     try {
-      this.websocketService.broadcast(WEBSOCKET_EVENTS.MATCHES_UPDATED, { allMatches, liveMatches, nextMatches });
-      logger.info({ obj: obj.length }, "Broadcasted matches update to WebSocket clients");
+      this.websocketService.broadcast(WEBSOCKET_EVENTS.MATCHES_UPDATED, {
+        allMatches,
+        liveMatches,
+        nextMatches,
+        updatedMatches,
+      });
+      logger.info(
+        { allMatches: allMatches.length, updatedMatches: updatedMatches.length },
+        "Broadcasted matches update to WebSocket clients",
+      );
     } catch (error) {
       logger.error({ err: error }, "Error broadcasting matches to WebSocket");
     }
@@ -376,50 +383,6 @@ export class MatchSyncService {
    * Check if a match has changed by comparing relevant fields
    */
   private hasMatchChanged(oldMatch: IMatch, newMatch: IMatch): boolean {
-    if (oldMatch.gametime !== newMatch.gametime) {
-      logger.info({ new: newMatch.gametime, old: oldMatch.gametime }, "Changed gametime");
-    }
-
-    if (oldMatch.status !== newMatch.status) {
-      logger.info({ new: newMatch.status, old: oldMatch.status }, "Changed status");
-    }
-
-    if (oldMatch.events.length !== newMatch.events.length) {
-      logger.info({ new: newMatch.events.length, old: oldMatch.events.length }, "Changed events length");
-    }
-
-    if (oldMatch.score.home !== newMatch.score.home) {
-      logger.info({ new: newMatch.score.home, old: oldMatch.score.home }, "Changed home score");
-    }
-
-    if (oldMatch.score.away !== newMatch.score.away) {
-      logger.info({ new: newMatch.score.away, old: oldMatch.score.away }, "Changed away score");
-    }
-
-    if (oldMatch.score.homePenalties !== newMatch.score.homePenalties) {
-      logger.info({ new: newMatch.score.homePenalties, old: oldMatch.score.homePenalties }, "Changed home penalties");
-    }
-
-    if (oldMatch.score.awayPenalties !== newMatch.score.awayPenalties) {
-      logger.info({ new: newMatch.score.awayPenalties, old: oldMatch.score.awayPenalties }, "Changed away penalties");
-    }
-
-    if (oldMatch.weather.temperature !== newMatch.weather?.temperature) {
-      logger.info({ new: newMatch.weather?.temperature, old: oldMatch.weather?.temperature }, "Changed temperature");
-    }
-
-    if (oldMatch.weather.humidity !== newMatch.weather?.humidity) {
-      logger.info({ new: newMatch.weather?.humidity, old: oldMatch.weather?.humidity }, "Changed humidity");
-    }
-
-    if (oldMatch.weather.windSpeed !== newMatch.weather?.windSpeed) {
-      logger.info({ new: newMatch.weather?.windSpeed, old: oldMatch.weather?.windSpeed }, "Changed windSpeed");
-    }
-
-    if (oldMatch.weather.description !== newMatch.weather?.description) {
-      logger.info({ new: newMatch.weather?.humidity, old: oldMatch.weather?.humidity }, "Changed weather description");
-    }
-
     return (
       oldMatch.status !== newMatch.status ||
       oldMatch.score.home !== newMatch.score.home ||
