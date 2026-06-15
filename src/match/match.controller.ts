@@ -5,7 +5,7 @@ import { BetService } from "#bet/bet.service.js";
 import { EditionService } from "#edition/edition.service.js";
 import { getEditionInfoFromCacheOrFetch } from "#edition/edition.util.js";
 import { logger } from "#logger/logger.service.js";
-import { FOOTBALL_MATCH_STATUS, STOPPED_GAME } from "#match/match.constants.js";
+import { FINISHED_GAME, FOOTBALL_MATCH_STATUS, MATCH_STATUS } from "#match/match.constants.js";
 import { updateMatchesSchema } from "#match/match.schemas.js";
 import { MatchService } from "#match/match.service.js";
 import { getFormattedMatches, getMatchesFromCacheOrFetch, setMatchesCache } from "#match/match.utils.js";
@@ -65,7 +65,7 @@ export class MatchController extends BaseController {
       );
 
       return allMatches
-        .filter((match) => !STOPPED_GAME.includes(match.status))
+        .filter((match) => match.status !== MATCH_STATUS.NOT_STARTED && !FINISHED_GAME.includes(match.status))
         .sort((a, b) => a.timestamp - b.timestamp)
         .slice(0, 3);
     });

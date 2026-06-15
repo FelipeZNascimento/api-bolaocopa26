@@ -180,6 +180,7 @@ export const getMatchesFromCacheOrFetch = async (
   teams?: ITeam[],
   stadiums?: IStadium[],
   referees?: IReferee[],
+  events?: IEvent[],
 ): Promise<IMatch[]> => {
   const cachedMatches: IMatch[] | undefined = cachedInfo.get(CACHE_KEYS.MATCHES);
 
@@ -197,6 +198,10 @@ export const getMatchesFromCacheOrFetch = async (
 
   const matchesRaw: IMatchRaw[] = await matchService.getByEdition(requestedEdition);
   const parsedMatches: IMatch[] = matchesRaw.map((match) => parseRawMatch(match, teams, stadiums, referees));
+
+  if (events) {
+    parsedMatches.forEach((m) => (m.events = events.filter((e) => e.matchId === m.id)));
+  }
 
   if (requestedEdition === currentEdition) {
     setMatchesCache(parsedMatches);
