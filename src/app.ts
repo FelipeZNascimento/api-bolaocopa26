@@ -120,7 +120,7 @@ app.use(httpLogger);
 const userService = new UserService();
 app.use(updateUserActivity(userService));
 
-app.use("/admin", cache(), adminRoutes);
+app.use("/admin", adminRoutes);
 app.use("/team", cache(), teamRoutes);
 app.use("/match", matchRoutes);
 app.use("/bet", betRoutes);
@@ -128,15 +128,6 @@ app.use("/user", userRoutes);
 app.use("/edition", editionRoutes);
 app.use("/ranking", rankingRoutes);
 app.use("/news", newsRoutes);
-
-app.get("/health", async (_req, res) => {
-  try {
-    await connection.query("SELECT 1");
-    res.status(200).json({ db: "ok", status: "ok" });
-  } catch {
-    res.status(503).json({ db: "unreachable", status: "error" });
-  }
-});
 
 // Error Handler should be last
 const errorMiddleware: ErrorRequestHandler = (err, req, res, next) => {

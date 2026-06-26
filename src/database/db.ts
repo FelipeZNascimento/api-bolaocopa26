@@ -10,6 +10,21 @@ import { ErrorCode } from "#utils/errorCodes.js";
 const poolOptions = config.db as unknown as PoolOptions;
 export const connection = mysql.createPool(poolOptions);
 
+logger.info({ connectionLimit: poolOptions.connectionLimit }, "Database pool created");
+
+const poolDebug = connection as unknown as {
+  _allConnections?: unknown[];
+  _connectionQueue?: unknown[];
+  _freeConnections?: unknown[];
+};
+
+export const getPoolStats = () => ({
+  allConnections: poolDebug._allConnections?.length ?? 0,
+  connectionLimit: poolOptions.connectionLimit,
+  freeConnections: poolDebug._freeConnections?.length ?? 0,
+  queueLength: poolDebug._connectionQueue?.length ?? 0,
+});
+
 // Log new connections at debug level
 connection.on("connection", function (connection) {
   logger.debug({ threadId: connection.threadId }, "Database connection established");
@@ -18,7 +33,12 @@ connection.on("connection", function (connection) {
 // Warn when connection pool is exhausted
 connection.on("enqueue", function () {
   logger.warn(
-    { connectionLimit: poolOptions.connectionLimit },
+    {
+      allConnections: poolDebug._allConnections?.length ?? "unknown",
+      connectionLimit: poolOptions.connectionLimit,
+      freeConnections: poolDebug._freeConnections?.length ?? "unknown",
+      queueLength: poolDebug._connectionQueue?.length ?? "unknown",
+    },
     "Connection pool exhausted - request queued. Consider increasing SQL_CONNECTION_LIMIT.",
   );
 });
@@ -93,8 +113,24 @@ const toDbAppError = (error: unknown): AppError => {
 };
 
 async function query<T = unknown>(sql: string, params: QueryParams = []): Promise<T> {
+  const startTime = Date.now();
   try {
     const [results] = await connection.query(sql, params as unknown[]);
+    const duration = Date.now() - startTime;
+    if (duration > 500) {
+      logger.warn(
+        {
+          allConnections: poolDebug._allConnections?.length ?? "unknown",
+          connectionLimit: poolOptions.connectionLimit,
+          duration,
+          freeConnections: poolDebug._freeConnections?.length ?? "unknown",
+          params,
+          queueLength: poolDebug._connectionQueue?.length ?? "unknown",
+          sql,
+        },
+        "Slow database query",
+      );
+    }
     return results as T;
   } catch (error) {
     throw toDbAppError(error);
