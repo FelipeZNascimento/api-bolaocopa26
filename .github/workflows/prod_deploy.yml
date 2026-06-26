@@ -40,8 +40,8 @@ jobs:
         uses: wangyucode/sftp-upload-action@v3
         with:
           host: ${{ secrets.server }}
-          username: ${{ secrets.username_pprod }}
-          password: ${{secrets.password_pprod}}
+          username: ${{ secrets.username }}
+          password: ${{secrets.password}}
           localDir: "./dist/"
           remoteDir: "./"
           port: 22
@@ -51,8 +51,8 @@ jobs:
         uses: wangyucode/sftp-upload-action@v3
         with:
           host: ${{ secrets.server }}
-          username: ${{ secrets.username_pprod }}
-          password: ${{secrets.password_pprod}}
+          username: ${{ secrets.username }}
+          password: ${{secrets.password}}
           localDir: "./dist/"
           remoteDir: "./"
           port: 22
