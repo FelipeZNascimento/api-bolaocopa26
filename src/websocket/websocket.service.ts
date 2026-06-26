@@ -35,7 +35,14 @@ export class WebSocketService {
       data,
       message,
     };
-    openClients.forEach((client) => client.send(JSON.stringify(wsContent)));
+    const payload = JSON.stringify(wsContent);
+    openClients.forEach((client) => {
+      client.send(payload, (err) => {
+        if (err) {
+          logger.warn({ err }, "WebSocket send failed for one client");
+        }
+      });
+    });
   }
 
   private initialize(server: Server): void {
@@ -52,6 +59,10 @@ export class WebSocketService {
         // this.metricsService.recordWebsocketConnection(false);
       });
 
+      ws.on("error", (error: Error) => {
+        logger.warn({ err: error }, "WebSocket client error");
+      });
+
       ws.on("message", (message: string) => {
         logger.debug({ message }, "WebSocket message received");
         // this.metricsService.recordWebsocketMessage("message", "in");
@@ -61,6 +72,10 @@ export class WebSocketService {
         logger.debug({ message }, "WebSocket broadcasting message");
         // this.metricsService.recordWebsocketMessage("message", "in");
       });
+    });
+
+    this.wss.on("error", (error: Error) => {
+      logger.error({ err: error }, "WebSocket server error");
     });
   }
 
