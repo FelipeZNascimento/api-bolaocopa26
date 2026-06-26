@@ -37,25 +37,25 @@ jobs:
       - id: deployProd
         name: 📂 Sync files to prod folder
         continue-on-error: true
-        uses: Dylan700/sftp-upload-action@latest
+        uses: wangyucode/sftp-upload-action@v3
         with:
-          server: ${{ secrets.server }}
+          host: ${{ secrets.server }}
           username: ${{ secrets.username }}
           password: ${{secrets.password}}
+          localDir: "./dist/"
+          remoteDir: "./"
           port: 22
-          uploads: |
-            ./dist/ => ./
 
       - name: 🔁 Retry PROD upload if handshake failed
         if: steps.deployProd.outcome == 'failure'
-        uses: Dylan700/sftp-upload-action@latest
+        uses: wangyucode/sftp-upload-action@v3
         with:
-          server: ${{ secrets.server }}
+          host: ${{ secrets.server }}
           username: ${{ secrets.username }}
           password: ${{secrets.password}}
+          localDir: "./dist/"
+          remoteDir: "./"
           port: 22
-          uploads: |
-            ./dist/ => ./
 
   rerun-failed-jobs:
     runs-on: ubuntu-latest
