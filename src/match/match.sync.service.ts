@@ -164,7 +164,6 @@ export class MatchSyncService {
         this.activeProfile,
       );
 
-      const players = await getPlayersFromCacheOrFetch(this.teamService, currentEdition);
       const closeMatches = matches.filter(
         (m) => m.timestamp - 60 * 60 * TIME_SPAN < nowTimeOnStart && nowTimeOnStart < m.timestamp + 60 * 60 * TIME_SPAN,
         // Only consider matches within 24h before AND 12h
@@ -193,6 +192,7 @@ export class MatchSyncService {
       //   JSON.parse(readFileSync(new URL("./fifaApiResponse.json", import.meta.url), "utf-8")) as IFifaMatch,
       // ];
 
+      const players = await getPlayersFromCacheOrFetch(this.teamService, currentEdition);
       // Parse external match to select wanted fields and convert to internal format
       const parsedMatches: IMatch[] = this.matchesToBeFetched.map((match) => {
         const external = externalAPIMatches.find((m) => m && parseInt(m.IdMatch, 10) === match.idFifa);
@@ -210,6 +210,7 @@ export class MatchSyncService {
           ...match,
           events: parsedEvents,
           gametime: external.MatchTime,
+          loggedUserBets: null,
           score: {
             away: external.AwayTeam.Score === null ? 0 : external.AwayTeam.Score,
             awayPenalties: external.AwayTeamPenaltyScore === null ? 0 : external.AwayTeamPenaltyScore,
@@ -257,9 +258,9 @@ export class MatchSyncService {
       }
 
       // Detect changes
-      const changedMatches = this.detectChanges(this.matchesToBeFetched, parsedMatches);
-      changedMatches.forEach((m) => {
-        //If a match has changed, update it on the iterator array so it compares with the
+      const updatedMatches = this.detectChanges(this.matchesToBeFetched, parsedMatches);
+      updatedMatches.forEach((m) => {
+        // If a match has changed, update it on the iterator array so it compares with the
         // updated match next time around
         const index = this.matchesToBeFetched.findIndex((tbf) => tbf.id === m.id);
         if (index !== -1) {
@@ -267,16 +268,16 @@ export class MatchSyncService {
         }
       });
 
-      this.stats.updated = changedMatches.length;
+      this.stats.updated = updatedMatches.length;
 
-      if (changedMatches.length > 0) {
+      if (updatedMatches.length > 0) {
         // Merge updated close matches back into the full match list before caching
-        const updatedById = new Map(changedMatches.map((m) => [m.id, m]));
-        const updatedAllMatches: IMatch[] = matches.map((m) => updatedById.get(m.id) ?? m);
-        setMatchesCache(updatedAllMatches);
+        const updatedById = new Map(updatedMatches.map((m) => [m.id, m]));
+        const allMatches: IMatch[] = matches.map((m) => updatedById.get(m.id) ?? m);
+        setMatchesCache(allMatches);
 
         // Broadcast to all connected clients
-        this.broadcastMatches(updatedAllMatches, changedMatches);
+        this.broadcastMatches(allMatches, updatedMatches);
       } else {
         // Still update cache to refresh TTL
         if (matches.length > 0) {
