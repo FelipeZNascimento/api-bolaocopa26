@@ -19,7 +19,7 @@ import { WEBSOCKET_EVENTS } from "#websocket/websocket.constants.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
 import { FINISHED_GAME, FOOTBALL_MATCH_STATUS, MATCH_STATUS, STOPPED_GAME } from "./match.constants.js";
 
-const TIME_SPAN = 48;
+const TIME_SPAN = 40;
 export interface IMatchSyncStats {
   duration: number;
   errors: number;
@@ -50,6 +50,7 @@ export class MatchSyncService {
   private editionService: EditionService;
   private externalAPI: MatchExternalAPI;
   private intervalId: NodeJS.Timeout | null = null;
+  private isStarted = false;
   private isSyncing = false;
   private matchesToBeFetched: IMatch[];
   private matchService: MatchService;
@@ -116,21 +117,20 @@ export class MatchSyncService {
 
     logger.info({ edition: SYNC_CONFIG.edition, interval: SYNC_CONFIG.interval }, "Starting match sync service");
 
-    // Set up periodic sync
-    this.intervalId = setInterval(() => {
-      void this.sync();
-    }, SYNC_CONFIG.interval);
+    this.isStarted = true;
+    this.scheduleNextSync();
   }
 
   /**
    * Stop the sync service
    */
   public stop(): void {
+    this.isStarted = false;
     if (this.intervalId) {
-      clearInterval(this.intervalId);
+      clearTimeout(this.intervalId);
       this.intervalId = null;
-      logger.info("Match sync service stopped");
     }
+    logger.info("Match sync service stopped");
   }
 
   /**
@@ -472,6 +472,28 @@ export class MatchSyncService {
     });
 
     return [...homeGoals, ...awayGoals, ...homeCards, ...awayCards];
+  }
+
+  /**
+   * Schedule the next sync iteration using recursive timeout.
+   */
+  private scheduleNextSync(): void {
+    if (!this.isStarted || this.intervalId) {
+      return;
+    }
+
+    this.intervalId = setTimeout(() => {
+      this.intervalId = null;
+      this.sync()
+        .catch((error) => {
+          logger.error({ err: error }, "Unhandled error in match sync timeout");
+        })
+        .finally(() => {
+          if (this.isStarted) {
+            this.scheduleNextSync();
+          }
+        });
+    }, SYNC_CONFIG.interval);
   }
 
   /**
