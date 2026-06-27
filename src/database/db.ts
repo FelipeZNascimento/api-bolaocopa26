@@ -115,27 +115,38 @@ const toDbAppError = (error: unknown): AppError => {
 };
 
 async function query<T = unknown>(sql: string, params: QueryParams = []): Promise<T> {
-  const startTime = Date.now();
+  const acquireStart = Date.now();
+  const conn = await connection.getConnection();
+  const acquireMs = Date.now() - acquireStart;
+
   try {
-    const [results] = await connection.query(sql, params as unknown[]);
-    const duration = Date.now() - startTime;
-    if (duration > 500) {
+    const queryStart = Date.now();
+    const [results] = await conn.query(sql, params as unknown[]);
+    const queryMs = Date.now() - queryStart;
+    const totalMs = acquireMs + queryMs;
+
+    if (totalMs > 500) {
       logger.warn(
         {
+          acquireMs,
           activeConnections,
           connectionLimit: poolOptions.connectionLimit,
-          duration,
           freeConnections: (poolOptions.connectionLimit ?? 20) - activeConnections,
           params,
+          queryMs,
           queuedRequests,
           sql,
+          totalMs,
         },
         "Slow database query",
       );
     }
+
     return results as T;
   } catch (error) {
     throw toDbAppError(error);
+  } finally {
+    conn.release();
   }
 }
 
