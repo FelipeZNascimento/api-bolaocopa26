@@ -530,6 +530,7 @@ export class MatchSyncService {
    */
   private scheduleNextSync(): void {
     if (!this.isStarted || this.intervalId) {
+      logger.warn("MatchSync: Service is already running, sync aborted");
       return;
     }
 
