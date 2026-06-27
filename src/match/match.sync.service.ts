@@ -530,6 +530,7 @@ export class MatchSyncService {
    */
   private scheduleNextSync(): void {
     if (!this.isStarted || this.intervalId) {
+      logger.warn("MatchSync: Service is already running, sync aborted");
       return;
     }
 
@@ -548,12 +549,22 @@ export class MatchSyncService {
   }
 
   private async syncWithTimeout() {
-    return Promise.race([
-      this.sync(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("MatchSync: Timeout - exceeded 2 minutes")), this.SYNC_TIMEOUT_MS),
-      ),
-    ]);
+    let timeoutId: NodeJS.Timeout | undefined;
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        this.isSyncing = false;
+        reject(new Error("MatchSync: Timeout - exceeded 2 minutes"));
+      }, this.SYNC_TIMEOUT_MS);
+    });
+
+    try {
+      return await Promise.race([this.sync(), timeoutPromise]);
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
   }
 
   /**
