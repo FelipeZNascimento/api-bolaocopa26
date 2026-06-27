@@ -205,6 +205,7 @@ export class MatchSyncService {
         if (!external) return match;
 
         const parsedEvents = this.parseEvents(external, match, players, eventsInfo);
+        const parsedSquads = this.parseSquads(external, players);
         const weather = {
           description: external.Weather.TypeLocalized.find((type) => type.Locale === "pt-BR")?.Description || null,
           humidity: external.Weather.Humidity,
@@ -212,10 +213,15 @@ export class MatchSyncService {
           windSpeed: external.Weather.WindSpeed,
         };
 
+        const awayTeam = match.awayTeam ? { ...match.awayTeam, squad: parsedSquads.away } : null;
+        const homeTeam = match.homeTeam ? { ...match.homeTeam, squad: parsedSquads.home } : null;
+
         const parsedMatch = {
           ...match,
+          awayTeam: awayTeam,
           events: parsedEvents,
           gametime: external.MatchTime,
+          homeTeam: homeTeam,
           loggedUserBets: null,
           score: {
             away: external.AwayTeam.Score === null ? 0 : external.AwayTeam.Score,
@@ -478,6 +484,45 @@ export class MatchSyncService {
     });
 
     return [...homeGoals, ...awayGoals, ...homeCards, ...awayCards];
+  }
+  /**
+   * Iterate over home and away teams to define starting squad
+   */
+  private parseSquads(externalMatch: IFifaMatch, players: IPlayer[]): { away: IPlayer[]; home: IPlayer[] } {
+    const homePlayersExternal = externalMatch.HomeTeam.Players;
+    const awayPlayersExternal = externalMatch.AwayTeam.Players;
+
+    const home = homePlayersExternal.flatMap((ep) => {
+      const player = players.find((p) => p.fifa.id === parseInt(ep.IdPlayer, 10));
+      if (!player) {
+        return [];
+      }
+
+      return [
+        {
+          ...player,
+          isCaptain: ep.Captain,
+          isStarting: ep.Status === 1,
+        },
+      ];
+    });
+
+    const away = awayPlayersExternal.flatMap((ep) => {
+      const player = players.find((p) => p.fifa.id === parseInt(ep.IdPlayer, 10));
+      if (!player) {
+        return [];
+      }
+
+      return [
+        {
+          ...player,
+          isCaptain: ep.Captain,
+          isStarting: ep.Status === 1,
+        },
+      ];
+    });
+
+    return { away, home };
   }
 
   /**
