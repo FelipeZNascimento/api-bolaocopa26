@@ -19,7 +19,6 @@ import { WEBSOCKET_EVENTS } from "#websocket/websocket.constants.js";
 import { WebSocketService } from "#websocket/websocket.service.js";
 import { FINISHED_GAME, FOOTBALL_MATCH_STATUS, MATCH_STATUS, STOPPED_GAME } from "./match.constants.js";
 
-const TIME_SPAN = 40;
 export interface IMatchSyncStats {
   duration: number;
   errors: number;
@@ -61,7 +60,9 @@ export class MatchSyncService {
     totalFetched: 0,
     updated: 0,
   };
+  private readonly SYNC_TIMEOUT_MS = 120_000; // 2 minutes
   private teamService: TeamService;
+  private readonly TIME_SPAN = 40;
   private websocketService: WebSocketService;
 
   private constructor() {
@@ -101,21 +102,21 @@ export class MatchSyncService {
    */
   public start(): void {
     if (!SYNC_CONFIG.enabled) {
-      logger.info("Match sync service is disabled via configuration");
+      logger.info("MatchSync: Disabled via configuration");
       return;
     }
 
     if (!SYNC_CONFIG.edition) {
-      logger.error("No edition configured, cannot start match sync service");
+      logger.error("MatchSync: No edition configured, cannot start match sync service");
       return;
     }
 
     if (this.intervalId) {
-      logger.warn("Match sync service is already running");
+      logger.warn("MatchSync: Service is already running");
       return;
     }
 
-    logger.info({ edition: SYNC_CONFIG.edition, interval: SYNC_CONFIG.interval }, "Starting match sync service");
+    logger.info({ edition: SYNC_CONFIG.edition, interval: SYNC_CONFIG.interval }, "MatchSync: Starting");
 
     this.isStarted = true;
     this.scheduleNextSync();
@@ -130,7 +131,7 @@ export class MatchSyncService {
       clearTimeout(this.intervalId);
       this.intervalId = null;
     }
-    logger.info("Match sync service stopped");
+    logger.info("MatchSync: Service stopped");
   }
 
   /**
@@ -139,7 +140,7 @@ export class MatchSyncService {
   async sync(): Promise<void> {
     // Prevent overlapping syncs
     if (this.isSyncing) {
-      logger.debug("Match sync already in progress, skipping");
+      logger.debug("MatchSync: Already in progress, skipping");
       return;
     }
 
@@ -147,7 +148,7 @@ export class MatchSyncService {
     this.isSyncing = true;
 
     try {
-      logger.debug("Starting match sync");
+      logger.debug("MatchSync: Starting");
       const { currentEdition } = await getEditionInfoFromCacheOrFetch(this.editionService);
       const eventsInfo = await getEventsInfoFromCacheOrFetch(this.matchService);
       if (!currentEdition) {
@@ -165,7 +166,9 @@ export class MatchSyncService {
       );
 
       const closeMatches = matches.filter(
-        (m) => m.timestamp - 60 * 60 * TIME_SPAN < nowTimeOnStart && nowTimeOnStart < m.timestamp + 60 * 60 * TIME_SPAN,
+        (m) =>
+          m.timestamp - 60 * 60 * this.TIME_SPAN < nowTimeOnStart &&
+          nowTimeOnStart < m.timestamp + 60 * 60 * this.TIME_SPAN,
         // Only consider matches within 24h before AND 12h
       );
       // Include close matches to the fetch list
@@ -174,12 +177,15 @@ export class MatchSyncService {
           this.matchesToBeFetched.push(m);
         }
       });
-      logger.info({ matchesToBeFetchedLength: this.matchesToBeFetched.length }, "Matches to be fetched");
+      logger.info({ matchesToBeFetchedLength: this.matchesToBeFetched.length }, "MatchSync: Matches to be fetched");
 
       let matchesToBeSaved: IMatch[] = [];
 
       // Fetch matches from external API in parallel for all close matches
-      logger.debug({ matchIds: this.matchesToBeFetched.map((m) => m.idFifa) }, "Fetching match from external API");
+      logger.debug(
+        { matchIds: this.matchesToBeFetched.map((m) => m.idFifa) },
+        "MatchSync: Fetching matches from external API",
+      );
       const externalAPIMatchResponse = await Promise.allSettled(
         this.matchesToBeFetched.map((m) => this.externalAPI.fetchMatch(m.idFifa)),
       );
@@ -223,7 +229,7 @@ export class MatchSyncService {
 
         // Remove matches that started more than 12h ago and are finished from the fetch list, add to the save list
         if (
-          parsedMatch.timestamp < nowTimeOnStart - 60 * 60 * TIME_SPAN &&
+          parsedMatch.timestamp < nowTimeOnStart - 60 * 60 * this.TIME_SPAN &&
           FINISHED_GAME.includes(parsedMatch.status)
         ) {
           logger.info(
@@ -233,7 +239,7 @@ export class MatchSyncService {
               matchTimestamp: parsedMatch.timestamp,
               now: nowTimeOnStart,
             },
-            "Found match that started 4h+ ago, will save on DB and remove from fetch list",
+            "MatchSync: Found match that started 4h+ ago, will save on DB and remove from fetch list",
           );
 
           matchesToBeSaved.push({ ...parsedMatch });
@@ -252,7 +258,7 @@ export class MatchSyncService {
 
       // If there are matches to be saved, update them in the database before fetching new data
       if (matchesToBeSaved.length > 0) {
-        logger.info({ matchesToBeSavedCount: matchesToBeSaved.length }, "Saving old matches to database");
+        logger.info({ matchesToBeSavedCount: matchesToBeSaved.length }, "MatchSync: Saving old matches to database");
         await this.updateDatabase(matchesToBeSaved);
         matchesToBeSaved = [];
       }
@@ -287,10 +293,10 @@ export class MatchSyncService {
 
       this.stats.lastSync = Math.floor(Date.now() / 1000);
       this.stats.duration = Math.floor(Date.now() / 1000) - nowTimeOnStart;
-      logger.info({ duration: `${this.stats.duration}ms`, updated: this.stats.updated }, "Match sync completed");
+      logger.info({ duration: `${this.stats.duration}ms`, updated: this.stats.updated }, "MatchSync: Completed");
     } catch (error) {
       this.stats.errors++;
-      logger.error({ err: error }, "Error during match sync");
+      logger.error({ err: error }, "MatchSync: Error");
 
       // Don't throw - we want the service to continue running
     } finally {
@@ -320,10 +326,10 @@ export class MatchSyncService {
       });
       logger.info(
         { allMatches: allMatches.length, updatedMatches: updatedMatches.length },
-        "Broadcasted matches update to WebSocket clients",
+        "MatchSync: Broadcasted matches update to WebSocket clients",
       );
     } catch (error) {
-      logger.error({ err: error }, "Error broadcasting matches to WebSocket");
+      logger.error({ err: error }, "MatchSync: Error broadcasting matches to WebSocket");
     }
   }
 
@@ -484,9 +490,9 @@ export class MatchSyncService {
 
     this.intervalId = setTimeout(() => {
       this.intervalId = null;
-      this.sync()
+      this.syncWithTimeout()
         .catch((error) => {
-          logger.error({ err: error }, "Unhandled error in match sync timeout");
+          logger.error({ err: error }, "MatchSync: Unhandled error in match sync timeout");
         })
         .finally(() => {
           if (this.isStarted) {
@@ -496,18 +502,27 @@ export class MatchSyncService {
     }, SYNC_CONFIG.interval);
   }
 
+  private async syncWithTimeout() {
+    return Promise.race([
+      this.sync(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("MatchSync: Timeout - exceeded 2 minutes")), this.SYNC_TIMEOUT_MS),
+      ),
+    ]);
+  }
+
   /**
    * Update database with changed matches
    */
   private async updateDatabase(matches: IMatch[]): Promise<void> {
     const updatePromises = matches.map(async (match) => {
       try {
-        logger.debug({ matchId: match.id }, "Match ID being saved");
+        logger.debug({ matchId: match.id }, "MatchSync: Match ID being saved");
         await this.matchService.updateMatch(match);
         await this.matchService.updateEvents(match.events);
-        logger.debug({ matchId: match.id }, "Updated match in database");
+        logger.debug({ matchId: match.id }, "MatchSync: Updated match in database");
       } catch (error) {
-        logger.error({ err: error, matchId: match.id }, "Failed to update match");
+        logger.error({ err: error, matchId: match.id }, "MatchSync: Failed to update match");
         // Don't throw - we want to continue updating other matches
       }
     });

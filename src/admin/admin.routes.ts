@@ -21,7 +21,6 @@ router.use(requireAdmin);
 router.get("/all-users{/:edition}", adminController.getAll);
 router.get("/delete-from-edition", adminController.deleteFromEdition);
 router.get("/flush", adminController.flushAll);
-router.get("/health", adminController.getHealth);
 
 // Post routes
 router.post("/update-active-status", adminController.updateActiveStatus);
