@@ -407,7 +407,9 @@ export class MatchSyncService {
       oldMatch.weather?.humidity !== newMatch.weather?.humidity ||
       oldMatch.weather?.windSpeed !== newMatch.weather?.windSpeed ||
       oldMatch.weather?.description !== newMatch.weather?.description ||
-      oldMatch.events.length !== newMatch.events.length
+      oldMatch.events.length !== newMatch.events.length ||
+      oldMatch.awayTeam?.squad !== newMatch.awayTeam?.squad ||
+      oldMatch.homeTeam?.squad !== newMatch.homeTeam?.squad
     );
   }
 
