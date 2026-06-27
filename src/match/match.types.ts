@@ -75,6 +75,11 @@ export interface IFifaSubstitution {
 export interface IFifaTeam {
   Bookings: IFifaBooking[];
   Goals: IFifaGoal[];
+  Players: {
+    Captain: boolean;
+    IdPlayer: string;
+    Status: number;
+  }[];
   Score: number;
   Substitutions: IFifaSubstitution[];
   Tactics: string;

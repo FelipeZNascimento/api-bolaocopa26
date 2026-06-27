@@ -74,6 +74,7 @@ export interface ITeam {
   isoCode: string;
   name: string;
   nameEn: string;
+  squad?: IPlayer[];
 }
 
 interface ICountry {

@@ -3,7 +3,6 @@ import type { IUser } from "#user/user.types.js";
 import { NextFunction, Request, Response } from "express";
 
 import { deleteFromEditionSchema, updateActiveStatusSchema } from "#admin/admin.schemas.js";
-import { connection, getPoolStats } from "#database/db.js";
 import { EditionService } from "#edition/edition.service.js";
 import { getEditionInfoFromCacheOrFetch } from "#edition/edition.util.js";
 import { MailerService } from "#mailer/mailer.service.js";
@@ -76,18 +75,6 @@ export class AdminController extends BaseController {
       } else {
         const response = await this.userService.getById(parseInt(userId), currentEdition);
         return response;
-      }
-    });
-  };
-
-  getHealth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    await this.handleRequest(req, res, next, async () => {
-      const pool = getPoolStats();
-      try {
-        await connection.query("SELECT 1");
-        return { db: "ok", pool, status: "ok" };
-      } catch {
-        return { db: "unreachable", pool, status: "error" };
       }
     });
   };

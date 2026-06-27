@@ -5,6 +5,7 @@ import expressSession from "express-session";
 import helmet from "helmet";
 
 import adminRoutes from "#admin/admin.routes.js";
+import appRoutes from "#app/app.routes.js";
 import betRoutes from "#bet/bet.routes.js";
 import { connection } from "#database/db.js";
 import editionRoutes from "#edition/edition.routes.js";
@@ -120,6 +121,7 @@ app.use(httpLogger);
 const userService = new UserService();
 app.use(updateUserActivity(userService));
 
+app.use("/app", appRoutes);
 app.use("/admin", adminRoutes);
 app.use("/team", cache(), teamRoutes);
 app.use("/match", matchRoutes);

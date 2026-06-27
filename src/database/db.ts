@@ -12,17 +12,15 @@ export const connection = mysql.createPool(poolOptions);
 
 logger.info({ connectionLimit: poolOptions.connectionLimit }, "Database pool created");
 
-const poolDebug = connection as unknown as {
-  _allConnections?: unknown[];
-  _connectionQueue?: unknown[];
-  _freeConnections?: unknown[];
-};
+// Manual pool stats tracking
+let activeConnections = 0;
+let queuedRequests = 0;
 
 export const getPoolStats = () => ({
-  allConnections: poolDebug._allConnections?.length ?? 0,
+  activeConnections,
   connectionLimit: poolOptions.connectionLimit,
-  freeConnections: poolDebug._freeConnections?.length ?? 0,
-  queueLength: poolDebug._connectionQueue?.length ?? 0,
+  freeConnections: (poolOptions.connectionLimit ?? 20) - activeConnections,
+  queuedRequests,
 });
 
 // Log new connections at debug level
@@ -32,12 +30,13 @@ connection.on("connection", function (connection) {
 
 // Warn when connection pool is exhausted
 connection.on("enqueue", function () {
+  queuedRequests++;
   logger.warn(
     {
-      allConnections: poolDebug._allConnections?.length ?? "unknown",
+      activeConnections,
       connectionLimit: poolOptions.connectionLimit,
-      freeConnections: poolDebug._freeConnections?.length ?? "unknown",
-      queueLength: poolDebug._connectionQueue?.length ?? "unknown",
+      freeConnections: (poolOptions.connectionLimit ?? 20) - activeConnections,
+      queuedRequests,
     },
     "Connection pool exhausted - request queued. Consider increasing SQL_CONNECTION_LIMIT.",
   );
@@ -45,11 +44,14 @@ connection.on("enqueue", function () {
 
 // Log acquire/release at trace level (very verbose, usually disabled)
 connection.on("acquire", function (connection) {
-  logger.trace({ threadId: connection.threadId }, "Connection acquired from pool");
+  activeConnections++;
+  queuedRequests = Math.max(0, queuedRequests - 1);
+  logger.trace({ activeConnections, threadId: connection.threadId }, "Connection acquired from pool");
 });
 
 connection.on("release", function (connection) {
-  logger.trace({ threadId: connection.threadId }, "Connection released to pool");
+  activeConnections = Math.max(0, activeConnections - 1);
+  logger.trace({ activeConnections, threadId: connection.threadId }, "Connection released to pool");
 });
 
 interface MySqlLikeError {
@@ -120,12 +122,12 @@ async function query<T = unknown>(sql: string, params: QueryParams = []): Promis
     if (duration > 500) {
       logger.warn(
         {
-          allConnections: poolDebug._allConnections?.length ?? "unknown",
+          activeConnections,
           connectionLimit: poolOptions.connectionLimit,
           duration,
-          freeConnections: poolDebug._freeConnections?.length ?? "unknown",
+          freeConnections: (poolOptions.connectionLimit ?? 20) - activeConnections,
           params,
-          queueLength: poolDebug._connectionQueue?.length ?? "unknown",
+          queuedRequests,
           sql,
         },
         "Slow database query",

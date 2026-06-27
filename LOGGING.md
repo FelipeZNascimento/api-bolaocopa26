@@ -458,6 +458,10 @@ cat api-bolaocopa26-out.log | jq -R 'fromjson? | select(type == "object") | sele
  grep '"userId":50' api-bolaocopa26-out.log | jq -R 'fromjson? | select(type == "object") | select(.time != null and (.time | startswith("2026-06-23")))'
 
  grep '"userId":9' api-bolaocopa26-error.log | jq -R 'fromjson? | select(type == "object") | select(.req.url != null and (.req.url | startswith("/bet/update"))) | select(.time != null and (.time | startswith("2026-06-23")))'
+
+ grep '"Slow database query"' api-bolaocopa26-out.log
+
+ tail -f api-bolaocopa26-out.log | grep "MatchSync"
 ```
 
 **Using `tail` (real-time monitoring):**
