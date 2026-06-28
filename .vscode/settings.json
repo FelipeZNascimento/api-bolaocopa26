@@ -1,7 +1,7 @@
 // "editor.defaultFormatter": "esbenp.prettier-vscode",
 {
   "editor.codeActionsOnSave": {
-    "editor.formatOnSave": true,
+    "editor.formatOnSave": "explicit",
     "source.fixAll": "explicit"
   },
   "files.exclude": {

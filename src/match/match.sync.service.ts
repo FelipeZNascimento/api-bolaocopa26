@@ -9,9 +9,12 @@ import { logger } from "#logger/logger.service.js";
 import { MatchExternalAPI } from "#match/match.external-api.js";
 import { MatchService } from "#match/match.service.js";
 import { getEventsInfoFromCacheOrFetch, getFormattedMatches, setMatchesCache } from "#match/match.utils.js";
+import { IRanking } from "#ranking/ranking.types.js";
+import { calculateRanking } from "#ranking/ranking.utils.js";
 import { TeamService } from "#team/team.service.js";
 import { IPlayer } from "#team/team.types.js";
 import { getPlayersFromCacheOrFetch } from "#team/team.util.js";
+import { UserService } from "#user/user.service.js";
 import { IUser } from "#user/user.types.js";
 import { AppError } from "#utils/appError.js";
 import { ErrorCode } from "#utils/errorCodes.js";
@@ -63,6 +66,7 @@ export class MatchSyncService {
   private readonly SYNC_TIMEOUT_MS = 120_000; // 2 minutes
   private teamService: TeamService;
   private readonly TIME_SPAN = 40;
+  private userService: UserService;
   private websocketService: WebSocketService;
 
   private constructor() {
@@ -71,6 +75,7 @@ export class MatchSyncService {
     this.teamService = new TeamService();
     this.betService = new BetService();
     this.editionService = new EditionService();
+    this.userService = new UserService();
     this.websocketService = WebSocketService.getInstance();
     this.matchesToBeFetched = [];
     this.activeProfile = null;
@@ -287,9 +292,17 @@ export class MatchSyncService {
         const updatedById = new Map(updatedMatches.map((m) => [m.id, m]));
         const allMatches: IMatch[] = matches.map((m) => updatedById.get(m.id) ?? m);
         setMatchesCache(allMatches);
+        const ranking = await calculateRanking(
+          this.editionService,
+          this.userService,
+          this.betService,
+          this.teamService,
+          this.matchService,
+        );
 
         // Broadcast to all connected clients
         this.broadcastMatches(allMatches, updatedMatches);
+        this.broadcastRanking(ranking);
       } else {
         // Still update cache to refresh TTL
         if (matches.length > 0) {
@@ -336,6 +349,22 @@ export class MatchSyncService {
       );
     } catch (error) {
       logger.error({ err: error }, "MatchSync: Error broadcasting matches to WebSocket");
+    }
+  }
+
+  /**
+   * Broadcast new ranking
+   */
+  private broadcastRanking(ranking: IRanking): void {
+    try {
+      this.websocketService.broadcast(WEBSOCKET_EVENTS.RANKING_UPDATED, {
+        edition: ranking.edition,
+        editionWithoutExtras: ranking.editionWithoutExtras,
+        round: ranking.round,
+      });
+      logger.info("MatchSync: Broadcasted ranking update to WebSocket clients");
+    } catch (error) {
+      logger.error({ err: error }, "MatchSync: Error broadcasting ranking to WebSocket");
     }
   }
 
@@ -408,8 +437,8 @@ export class MatchSyncService {
       oldMatch.weather?.windSpeed !== newMatch.weather?.windSpeed ||
       oldMatch.weather?.description !== newMatch.weather?.description ||
       oldMatch.events.length !== newMatch.events.length ||
-      oldMatch.awayTeam?.squad !== newMatch.awayTeam?.squad ||
-      oldMatch.homeTeam?.squad !== newMatch.homeTeam?.squad
+      oldMatch.awayTeam?.squad?.length !== newMatch.awayTeam?.squad?.length ||
+      oldMatch.homeTeam?.squad?.length !== newMatch.homeTeam?.squad?.length
     );
   }
 

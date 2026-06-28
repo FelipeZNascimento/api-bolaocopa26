@@ -15,6 +15,12 @@ export interface ICumulativePointsByRound {
   totalPoints: number;
 }
 
+export interface IRanking {
+  edition: ICalculatedRankingLine[];
+  editionWithoutExtras: ICalculatedRankingLine[];
+  round: IRoundRanking[];
+}
+
 export interface IRankingScore {
   betCount: number;
   exacts: number;
