@@ -9,9 +9,9 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx --watch --env-file .env.development src/index.ts",
-    "start": "node --env-file .env.development dist/index.js",
-    "start:prod": "pm2 start \"node --env-file=.env index.js\" --name api-bolaocopa26 --watch && pm2 start \"node --env-file=.env database/cleanup-sessions.js\" --name session-cleanup --cron \"0 2 * * *\" --no-autorestart",
-    "start:pprod": "pm2 start \"node --env-file=.env.pprod index.js\" --name api-bolaocopa26-pprod --watch && pm2 start \"node --env-file=.env.pprod database/cleanup-sessions.js\" --name session-cleanup-pprod --cron \"0 2 * * *\" --no-autorestart",
+    "start": "node --env-file .env.development --prof dist/index.js",
+    "start:prod": "pm2 start \"node --env-file=.env --prof index.js\" --name api-bolaocopa26 --watch && pm2 start \"node --env-file=.env database/cleanup-sessions.js\" --name session-cleanup --cron \"0 2 * * *\" --no-autorestart",
+    "start:pprod": "pm2 start \"node --env-file=.env.pprod --prof index.js\" --name api-bolaocopa26-pprod --watch && pm2 start \"node --env-file=.env.pprod database/cleanup-sessions.js\" --name session-cleanup-pprod --cron \"0 2 * * *\" --no-autorestart",
     "build": "tsc -p tsconfig.build.json && tsc-alias",
     "cleanup:sessions": "node --env-file .env database/cleanup-sessions.js",
     "test": "vitest",

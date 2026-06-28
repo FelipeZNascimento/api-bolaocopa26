@@ -28,6 +28,7 @@ export const CACHE_KEYS = {
   EVENTS: 9,
   EDITION_INFO: 10,
   EVENTS_INFO: 11,
+  GLOBAL_RANKING: 12,
 };
 
 export const cachedInfo = new NodeCache();
