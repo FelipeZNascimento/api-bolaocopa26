@@ -291,6 +291,7 @@ export class MatchSyncService {
         // Merge updated close matches back into the full match list before caching
         const updatedById = new Map(updatedMatches.map((m) => [m.id, m]));
         const allMatches: IMatch[] = matches.map((m) => updatedById.get(m.id) ?? m);
+        setMatchesCache(allMatches);
         const ranking = await calculateRanking(
           this.editionService,
           this.userService,
@@ -298,7 +299,6 @@ export class MatchSyncService {
           this.teamService,
           this.matchService,
         );
-        setMatchesCache(allMatches);
 
         // Broadcast to all connected clients
         this.broadcastMatches(allMatches, updatedMatches);
@@ -358,7 +358,9 @@ export class MatchSyncService {
   private broadcastRanking(ranking: IRanking): void {
     try {
       this.websocketService.broadcast(WEBSOCKET_EVENTS.RANKING_UPDATED, {
-        ranking,
+        edition: ranking.edition,
+        editionWithoutExtras: ranking.editionWithoutExtras,
+        round: ranking.round,
       });
       logger.info("MatchSync: Broadcasted ranking update to WebSocket clients");
     } catch (error) {
