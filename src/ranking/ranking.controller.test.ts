@@ -9,7 +9,7 @@ import { AppError } from "#utils/appError.js";
 import { CACHE_KEYS, cachedInfo } from "#utils/dataCache.js";
 import { ErrorCode } from "#utils/errorCodes.js";
 
-import { AWARD_POINTS_2026 } from "./ranking.constants.js";
+import { AWARD_POINTS_2026, ROUND_MULTIPLIERS_2026 } from "./ranking.constants.js";
 import { RankingController } from "./ranking.controller";
 import { ICalculatedRankingLine } from "./ranking.types";
 import { calculateExtraBets, getEditionRanking, getRoundsRanking } from "./ranking.utils";
@@ -353,13 +353,13 @@ describe("RankingController", () => {
         createMatch(100, 2, 1, FOOTBALL_MATCH_STATUS.FINAL, 1), // Multiplier: 1
         createMatch(101, 1, 0, FOOTBALL_MATCH_STATUS.FINAL, 2), // Multiplier: 1
         createMatch(102, 0, 1, FOOTBALL_MATCH_STATUS.FINAL, 3), // Multiplier: 1
-        createMatch(103, 3, 0, FOOTBALL_MATCH_STATUS.FINAL, 4), // Multiplier: 2
+        createMatch(103, 3, 0, FOOTBALL_MATCH_STATUS.FINAL, 4), // Multiplier: 1.5
       ];
       const bets = [
         createBet(1, 1, 100, 2, 1), // Exact score in round 1: 10 * 1 = 10
         createBet(2, 1, 101, 1, 0), // Exact score in round 2: 10 * 1 = 10
         createBet(3, 1, 102, 0, 1), // Exact score in round 3: 10 * 1 = 10
-        createBet(4, 1, 103, 3, 0), // Exact score in round 4: 10 * 2 = 20
+        createBet(4, 1, 103, 3, 0), // Exact score in round 4: 10 * 1.5 = 25
       ];
 
       const ranking = getRoundsRanking(2026, users, matches, matches, bets);
@@ -368,9 +368,14 @@ describe("RankingController", () => {
       const round4 = ranking.find((r) => r.round === 4)?.ranking[0];
 
       expect(round1?.score.points).toBe(AWARD_POINTS_2026.exactScore);
-      expect(round4?.score.points).toBe(AWARD_POINTS_2026.exactScore * 2);
-      // Round 4 accumulated should be 10 + 10 + 10 + 20 = 50
-      expect(round4?.accumulatedScore.points).toBe(AWARD_POINTS_2026.exactScore * 5);
+      expect(round4?.score.points).toBe(AWARD_POINTS_2026.exactScore * ROUND_MULTIPLIERS_2026[4]);
+      // Round 4 accumulated should be 10 + 10 + 10 + 15 = 50
+      expect(round4?.accumulatedScore.points).toBe(
+        AWARD_POINTS_2026.exactScore * ROUND_MULTIPLIERS_2026[1] +
+          AWARD_POINTS_2026.exactScore * ROUND_MULTIPLIERS_2026[2] +
+          AWARD_POINTS_2026.exactScore * ROUND_MULTIPLIERS_2026[3] +
+          AWARD_POINTS_2026.exactScore * ROUND_MULTIPLIERS_2026[4],
+      );
     });
 
     it("should cache finished rounds", () => {
@@ -494,8 +499,8 @@ describe("RankingController", () => {
       const aliceRankR2 = round2Ranking?.find((r) => r.user.id === 1);
       const bobRankR2 = round2Ranking?.find((r) => r.user.id === 2);
 
-      expect(aliceRankR2?.accumulatedScore.points).toBe(AWARD_POINTS_2026.exactScore);
-      expect(bobRankR2?.accumulatedScore.points).toBe(AWARD_POINTS_2026.exactScore);
+      expect(aliceRankR2?.accumulatedScore.points).toBe(AWARD_POINTS_2026.exactScore * ROUND_MULTIPLIERS_2026[2]);
+      expect(bobRankR2?.accumulatedScore.points).toBe(AWARD_POINTS_2026.exactScore * ROUND_MULTIPLIERS_2026[2]);
       expect(aliceRankR2?.accumulatedScore.position).toBe(1);
       expect(bobRankR2?.accumulatedScore.position).toBe(1);
       expect(aliceRankR2?.accumulatedScore.positionVariation).toBe(0);
@@ -1068,7 +1073,7 @@ describe("RankingController", () => {
       const users = [createUser(1, "Alice")];
       const matches = [
         createMatch(100, 2, 1, FOOTBALL_MATCH_STATUS.FINAL, 1), // Round 1: multiplier 1
-        createMatch(101, 1, 0, FOOTBALL_MATCH_STATUS.FINAL, 7), // Round 7: multiplier 5
+        createMatch(101, 1, 0, FOOTBALL_MATCH_STATUS.FINAL, 9), // Round 9: multiplier 5
       ];
       const bets = [
         createBet(1, 1, 100, 2, 1), // Exact: 10 * 1 = 10
@@ -1078,11 +1083,11 @@ describe("RankingController", () => {
       const ranking = getRoundsRanking(2026, users, matches, matches, bets);
 
       const round1 = ranking.find((r) => r.round === 1)?.ranking[0];
-      const round7 = ranking.find((r) => r.round === 7)?.ranking[0];
+      const round9 = ranking.find((r) => r.round === 9)?.ranking[0];
 
       expect(round1?.score.points).toBe(10); // 10 * 1
-      expect(round7?.score.points).toBe(50); // 10 * 5
-      expect(round7?.accumulatedScore.points).toBe(50); // Only round 7 points (round 1 is separate)
+      expect(round9?.score.points).toBe(50); // 10 * 5
+      expect(round9?.accumulatedScore.points).toBe(50); // Only round 7 points (round 1 is separate)
     });
 
     it("should maintain correct bet statistics across rounds", () => {

@@ -29,7 +29,7 @@ import {
   DEFAULT_ROUND_MULTIPLIER,
   EXTRAS_FACTORS_ON_CHANGE,
   EXTRAS_PROGRESSIVE_FACTORS,
-  ROUND_MULTIPLIERS,
+  ROUND_MULTIPLIERS_2026,
 } from "./ranking.constants.js";
 import {
   ICalculatedRankingLine,
@@ -341,7 +341,7 @@ const calculateRound = (
 };
 
 export const getRoundMultiplier = (round: number): number => {
-  return ROUND_MULTIPLIERS[round] ?? DEFAULT_ROUND_MULTIPLIER;
+  return ROUND_MULTIPLIERS_2026[round] ?? DEFAULT_ROUND_MULTIPLIER;
 };
 
 const getWinner = (scoreHome: number, scoreAway: number): TRankingWinner => {

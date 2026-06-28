@@ -54,12 +54,14 @@ export const ROUND_MULTIPLIERS: Record<number, number> = {
 
 export const ROUND_MULTIPLIERS_2026: Record<number, number> = {
   1: 1,
-  2: 1.5,
-  3: 2,
-  4: 3,
-  5: 4,
-  6: 2,
-  7: 5,
+  2: 1,
+  3: 1,
+  4: 1.5,
+  5: 2,
+  6: 3,
+  7: 4,
+  8: 2,
+  9: 5,
 };
 
 export const DEFAULT_ROUND_MULTIPLIER = 1;
