@@ -25,6 +25,11 @@ const mockMailerService = {
   sendActivationEmail: vi.fn(),
 };
 
+const mockMatchSyncService = {
+  getInstance: vi.fn(),
+  restart: vi.fn(),
+};
+
 const getEditionInfoFromCacheOrFetch = vi.hoisted(() =>
   vi.fn(() => ({
     currentEdition: 2026,
@@ -35,6 +40,7 @@ const getEditionInfoFromCacheOrFetch = vi.hoisted(() =>
 
 vi.mock("#user/user.service.js", () => ({ UserService: vi.fn(() => mockUserService) }));
 vi.mock("#mailer/mailer.service.js", () => ({ MailerService: vi.fn(() => mockMailerService) }));
+vi.mock("#match/match.sync.service.js", () => ({ MatchSyncService: vi.fn(() => mockMatchSyncService) }));
 vi.mock("#utils/apiResponse.js", () => ({
   ApiResponse: {
     error: vi.fn(),

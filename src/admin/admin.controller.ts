@@ -6,6 +6,7 @@ import { deleteFromEditionSchema, updateActiveStatusSchema } from "#admin/admin.
 import { EditionService } from "#edition/edition.service.js";
 import { getEditionInfoFromCacheOrFetch } from "#edition/edition.util.js";
 import { MailerService } from "#mailer/mailer.service.js";
+import { MatchSyncService } from "#match/match.sync.service.js";
 import { BaseController } from "#shared/base.controller.js";
 import { UserService } from "#user/user.service.js";
 import { AppError } from "#utils/appError.js";
@@ -44,10 +45,13 @@ export class AdminController extends BaseController {
     });
   };
 
-  flushAll = (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    return this.handleRequest(req, res, next, () => {
+  flushAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    return this.handleRequest(req, res, next, async () => {
+      const matchSyncService = MatchSyncService.getInstance();
+
       cachedInfo.flushAll();
-      return warmUpCache();
+      await warmUpCache();
+      matchSyncService.restart();
     });
   };
 

@@ -96,6 +96,15 @@ export class MatchSyncService {
   }
 
   /**
+   * Restart the sync service
+   */
+  public restart(): void {
+    this.stop();
+    this.matchesToBeFetched = [];
+    this.start();
+  }
+
+  /**
    * Set active profile
    */
   public setActiveProfile(user: IUser | null) {
@@ -188,7 +197,11 @@ export class MatchSyncService {
 
       // Fetch matches from external API in parallel for all close matches
       logger.debug(
-        { matchIds: this.matchesToBeFetched.map((m) => m.idFifa) },
+        {
+          matches: this.matchesToBeFetched.map((m) => {
+            return { idFifa: m.idFifa, score: `${m.score.home} x ${m.score.away}`, status: m.status };
+          }),
+        },
         "MatchSync: Fetching matches from external API",
       );
       const externalAPIMatchResponse = await Promise.allSettled(

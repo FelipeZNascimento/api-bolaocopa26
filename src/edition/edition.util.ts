@@ -44,6 +44,7 @@ export const getStadiumsFromCacheOrFetch = async (
     return cachedStadiums;
   }
 
+  logger.debug("Fetching stadiums from database");
   const stadiums = await editionService.getStadiums(requestedEdition);
 
   if (requestedEdition === currentEdition) {
@@ -72,6 +73,7 @@ export const getRefereesFromCacheOrFetch = async (
     return cachedReferees;
   }
 
+  logger.debug("Fetching referees from database");
   const referees = await editionService.getReferees(requestedEdition);
 
   if (requestedEdition === currentEdition) {

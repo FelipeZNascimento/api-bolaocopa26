@@ -34,6 +34,8 @@ export const CACHE_KEYS = {
 export const cachedInfo = new NodeCache();
 
 export const warmUpCache = async (): Promise<void> => {
+  logger.info("Cache warm-up initiated");
+
   const editionService = new EditionService();
   const matchService = new MatchService();
   const teamService = new TeamService();
