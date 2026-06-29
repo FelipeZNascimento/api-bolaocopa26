@@ -24,7 +24,7 @@ export class AppController extends BaseController {
       const cacheStats = cachedInfo.getStats();
       try {
         await connection.query("SELECT 1");
-        return { db: "ok", pool, status: "ok" };
+        return { cacheStats, db: "ok", pool, status: "ok" };
       } catch {
         return { cacheStats, db: "unreachable", pool, status: "error" };
       }
