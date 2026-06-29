@@ -150,6 +150,7 @@ export const getEventsFromCacheOrFetch = async (
     return cachedEvents;
   }
 
+  logger.debug("Fetching events from database");
   const eventsRaw: IEventRaw[] = await matchService.getEvents(editionId);
   const eventsInfo = await getEventsInfoFromCacheOrFetch(matchService);
 
@@ -168,6 +169,7 @@ export const getEventsInfoFromCacheOrFetch = async (matchService: MatchService):
     return cachedEventInfo;
   }
 
+  logger.debug("Fetching event info from database");
   const eventsInfo: IEventInfo[] = await matchService.getEventsInfo();
   cachedInfo.set(CACHE_KEYS.EVENTS_INFO, eventsInfo, 60 * 60 * 24 * 14); // Cache for 14 days
   return [...eventsInfo];
@@ -196,6 +198,7 @@ export const getMatchesFromCacheOrFetch = async (
     return []; // Return empty array if any of the required data is missing to prevent errors, and log the issue
   }
 
+  logger.debug("Fetching matches from database");
   const matchesRaw: IMatchRaw[] = await matchService.getByEdition(requestedEdition);
   const parsedMatches: IMatch[] = matchesRaw.map((match) => parseRawMatch(match, teams, stadiums, referees));
 

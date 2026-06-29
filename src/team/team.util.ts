@@ -72,6 +72,7 @@ export const getPlayersFromCacheOrFetch = async (
     return [];
   }
 
+  logger.debug("Fetching players from database");
   const playersRaw = await teamService.getPlayers(requestedEdition);
   const clubsIdList = playersRaw.map((player) => player.idClub);
   const clubs = await getClubsFromCacheOrFetch(teamService, clubsIdList);
