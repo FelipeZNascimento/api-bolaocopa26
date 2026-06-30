@@ -51,6 +51,7 @@ export const parseRawMatch = (match: IMatchRaw, teams: ITeam[], stadiums: IStadi
   const homeTeam = teams.find((team) => team.id === match.idHome);
 
   const parsedMatch: IMatch = {
+    attendance: null,
     awayTeam: awayTeam ?? null,
     bets: [],
     events: [],
@@ -70,6 +71,7 @@ export const parseRawMatch = (match: IMatchRaw, teams: ITeam[], stadiums: IStadi
     },
     stadium: stadiums.find((stadium) => stadium.id === match.idStadium) ?? null,
     status: match.status,
+    subs: [],
     timestamp: parseInt(match.timestamp),
     weather: {
       description: null,

@@ -4,7 +4,6 @@ import { IPlayer, ITeam } from "#team/team.types.js";
 // import { RowDataPacket } from "mysql2/promise";
 
 export interface IEvent {
-  coach?: boolean;
   event: IEventInfo | null;
   gametime: string;
   id?: number;
@@ -40,6 +39,7 @@ export interface IFifaBooking {
   IdTeam: string;
   Minute: string;
 }
+
 export interface IFifaGoal {
   IdAssistPlayer: string;
   IdPlayer: string;
@@ -48,7 +48,6 @@ export interface IFifaGoal {
   Period: number;
   Type: number; // 1 for penalty, 2 for regular goal, 3 for own goal (tbc)
 }
-
 export interface IFifaMatch {
   Attendance: string;
   AwayTeam: IFifaTeam;
@@ -70,6 +69,7 @@ export interface IFifaSubstitution {
   IdPlayerOn: string;
   IdTeam: string;
   Minute: string;
+  Period: number;
 }
 
 export interface IFifaTeam {
@@ -93,6 +93,7 @@ export interface IFifaWeather {
 }
 
 export interface IMatch {
+  attendance: null | string;
   awayTeam: ITeam | null;
   bets: IBet[];
   events: IEvent[];
@@ -113,6 +114,8 @@ export interface IMatch {
   score: IScore;
   stadium: IStadium | null;
   status: number;
+  subs: ISub[];
+  tactics?: string;
   timestamp: number;
   weather: IWeather;
 }
@@ -139,6 +142,14 @@ export interface IScore {
   awayPenalties: number;
   home: number;
   homePenalties: number;
+}
+
+export interface ISub {
+  event: IEventInfo | null;
+  gametime: string;
+  player: IPlayer;
+  playerAssist: IPlayer | null;
+  teamId: number;
 }
 
 export interface IWeather {

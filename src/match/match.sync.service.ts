@@ -1,4 +1,4 @@
-import type { IEvent, IEventInfo, IFifaMatch, IMatch } from "#match/match.types.js";
+import type { IEvent, IEventInfo, IFifaMatch, IMatch, ISub } from "#match/match.types.js";
 
 // import { readFileSync } from "fs";
 
@@ -224,6 +224,7 @@ export class MatchSyncService {
 
         const parsedEvents = this.parseEvents(external, match, players, eventsInfo);
         const parsedSquads = this.parseSquads(external, players);
+        const parsedSubs = this.parseSubs(external, players, eventsInfo);
         const weather = {
           description: external.Weather.TypeLocalized.find((type) => type.Locale === "pt-BR")?.Description || null,
           humidity: external.Weather.Humidity,
@@ -231,11 +232,16 @@ export class MatchSyncService {
           windSpeed: external.Weather.WindSpeed,
         };
 
-        const awayTeam = match.awayTeam ? { ...match.awayTeam, squad: parsedSquads.away } : null;
-        const homeTeam = match.homeTeam ? { ...match.homeTeam, squad: parsedSquads.home } : null;
+        const awayTeam = match.awayTeam
+          ? { ...match.awayTeam, squad: parsedSquads.away, tactics: external.AwayTeam.Tactics }
+          : null;
+        const homeTeam = match.homeTeam
+          ? { ...match.homeTeam, squad: parsedSquads.home, tactics: external.HomeTeam.Tactics }
+          : null;
 
         const parsedMatch = {
           ...match,
+          attendance: external.Attendance,
           awayTeam: awayTeam,
           events: parsedEvents,
           gametime: external.MatchTime,
@@ -248,6 +254,7 @@ export class MatchSyncService {
             homePenalties: external.HomeTeamPenaltyScore === null ? 0 : external.HomeTeamPenaltyScore,
           },
           status: this.convertPeriodToStatus(external.Period),
+          subs: parsedSubs,
           weather: weather,
         };
 
@@ -465,43 +472,45 @@ export class MatchSyncService {
     eventsInfo: IEventInfo[],
   ): IEvent[] {
     const undefinedPlayer = players.find((p) => p.fifa.id === 864); // FIFA ID 864 is used for "undefined player"
-    const homeGoals: IEvent[] = externalMatch.HomeTeam.Goals.map((goal) => {
+    const events: IEvent[] = [];
+
+    externalMatch.HomeTeam.Goals.forEach((goal) => {
       let event = eventsInfo.find((e) => e.fifaId === goal.Type) ?? null;
       if (goal.Period === 11) {
         event = eventsInfo.find((e) => e.id === 8) ?? null; // Penalty shootout if period === 11
       }
 
-      return {
+      events.push({
         event: event,
         gametime: goal.Minute,
         matchId: match.id,
         player: players.find((p) => p.fifa.id === parseInt(goal.IdPlayer, 10)) ?? undefinedPlayer!,
         playerAssist: players.find((p) => p.fifa.id === parseInt(goal.IdAssistPlayer, 10)) ?? null,
         teamId: match.homeTeam!.id,
-      };
+      });
     });
 
-    const awayGoals: IEvent[] = externalMatch.AwayTeam.Goals.map((goal) => {
+    externalMatch.AwayTeam.Goals.forEach((goal) => {
       let event = eventsInfo.find((e) => e.fifaId === goal.Type) ?? null;
       if (goal.Period === 11) {
         event = eventsInfo.find((e) => e.id === 8) ?? null; // Penalty shootout if period === 11
       }
 
-      return {
+      events.push({
         event: event,
         gametime: goal.Minute,
         matchId: match.id,
         player: players.find((p) => p.fifa.id === parseInt(goal.IdPlayer, 10)) ?? undefinedPlayer!,
         playerAssist: players.find((p) => p.fifa.id === parseInt(goal.IdAssistPlayer, 10)) ?? null,
         teamId: match.awayTeam!.id,
-      };
+      });
     });
 
-    const homeCards: IEvent[] = externalMatch.HomeTeam.Bookings.map((booking) => {
-      let event = booking.Card === 1 ? eventsInfo.find((e) => e.id === 4) : eventsInfo.find((e) => e.id === 5);
+    externalMatch.HomeTeam.Bookings.forEach((booking) => {
+      if (booking.IdCoach) return;
 
-      return {
-        coach: booking.IdCoach ? true : false,
+      let event = booking.Card === 1 ? eventsInfo.find((e) => e.id === 4) : eventsInfo.find((e) => e.id === 5);
+      events.push({
         event: event ?? null,
         gametime: booking.Minute,
         matchId: match.id,
@@ -509,14 +518,14 @@ export class MatchSyncService {
         playerAssist: null,
         staff: booking.IdStaff ? true : false,
         teamId: match.homeTeam!.id,
-      };
+      });
     });
 
-    const awayCards: IEvent[] = externalMatch.AwayTeam.Bookings.map((booking) => {
-      let event = booking.Card === 1 ? eventsInfo.find((e) => e.id === 4) : eventsInfo.find((e) => e.id === 5);
+    externalMatch.AwayTeam.Bookings.forEach((booking) => {
+      if (booking.IdCoach) return;
 
-      return {
-        coach: booking.IdCoach ? true : false,
+      let event = booking.Card === 1 ? eventsInfo.find((e) => e.id === 4) : eventsInfo.find((e) => e.id === 5);
+      events.push({
         event: event ?? null,
         gametime: booking.Minute,
         matchId: match.id,
@@ -524,11 +533,12 @@ export class MatchSyncService {
         playerAssist: null,
         staff: booking.IdStaff ? true : false,
         teamId: match.awayTeam!.id,
-      };
+      });
     });
 
-    return [...homeGoals, ...awayGoals, ...homeCards, ...awayCards];
+    return events;
   }
+
   /**
    * Iterate over home and away teams to define starting squad
    */
@@ -567,6 +577,63 @@ export class MatchSyncService {
     });
 
     return { away, home };
+  }
+
+  /**
+   * Iterate over home and away teams to parse substitutions
+   */
+  private parseSubs(externalMatch: IFifaMatch, players: IPlayer[], eventsInfo: IEventInfo[]): ISub[] {
+    const subs: ISub[] = [];
+    const subEventInfo = eventsInfo.find((e) => e.id === 7) as IEventInfo;
+    externalMatch.HomeTeam.Substitutions.forEach((sub) => {
+      const playerIn = players.find((p) => p.fifa.id === parseInt(sub.IdPlayerOn, 10));
+      const playerOut = players.find((p) => p.fifa.id === parseInt(sub.IdPlayerOff, 10));
+
+      if (playerIn && playerOut && playerIn.team) {
+        let subMinute = sub.Minute;
+        if (sub.Period === 4) {
+          subMinute = "46'";
+        } else if (sub.Period === 6) {
+          subMinute = "91'";
+        } else if (sub.Period === 8) {
+          subMinute = "106'";
+        }
+
+        subs.push({
+          event: subEventInfo,
+          gametime: subMinute,
+          player: playerIn,
+          playerAssist: playerOut,
+          teamId: playerIn.team.id,
+        });
+      }
+    });
+
+    externalMatch.AwayTeam.Substitutions.forEach((sub) => {
+      const playerIn = players.find((p) => p.fifa.id === parseInt(sub.IdPlayerOn, 10));
+      const playerOut = players.find((p) => p.fifa.id === parseInt(sub.IdPlayerOff, 10));
+
+      if (playerIn && playerOut && playerIn.team) {
+        let subMinute = sub.Minute;
+        if (sub.Period === 4) {
+          subMinute = "46'";
+        } else if (sub.Period === 6) {
+          subMinute = "91'";
+        } else if (sub.Period === 8) {
+          subMinute = "106'";
+        }
+
+        subs.push({
+          event: subEventInfo,
+          gametime: subMinute,
+          player: playerIn,
+          playerAssist: playerOut,
+          teamId: playerIn.team.id,
+        });
+      }
+    });
+
+    return subs;
   }
 
   /**
