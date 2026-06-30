@@ -78,6 +78,7 @@ const createMatch = (
   status = FOOTBALL_MATCH_STATUS.FINAL,
   round = 1,
 ): IMatch => ({
+  attendance: null,
   awayTeam: null,
   bets: [],
   events: [],
@@ -97,6 +98,7 @@ const createMatch = (
   },
   stadium: null,
   status,
+  subs: [],
   timestamp: 1,
   weather: {
     description: "",
